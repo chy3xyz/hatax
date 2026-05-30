@@ -1,0 +1,10 @@
+<!-- 表单项参考：用 Alpine.js x-data + x-model 实现校验，无需自定义元素 -->
+<div class="mb-4" x-data="formRule">
+  <label class="block text-sm font-medium mb-1">字段标签</label>
+  <input 
+    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-800 transition-colors"
+    :class="{ 'border-red-400': errMsg }"
+    x-model="fieldVal"
+    @blur="checkRequired(fieldVal)">
+  <div x-show="errMsg" class="form-error" x-text="errMsg"></div>
+</div>

@@ -1,0 +1,19 @@
+<!-- 弹窗参考：用 Alpine.js x-data + $dispatch 实现，无需自定义元素 -->
+<!-- 触发方式：任意元素上写 @click="$dispatch('open-modal', '弹窗标题')" 即可打开 -->
+<div x-data="modal" @open-modal.window="openModal($event.detail)" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center" style="display: none;">
+  <div class="absolute inset-0 bg-black/40" @click="closeModal"></div>
+  <div class="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-lg relative z-10 border border-gray-200 dark:border-gray-700">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold" x-text="title"></h3>
+      <button @click="closeModal" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <!-- 内容区域：在引用此文件的页面中直接覆盖即可 -->
+    <div class="modal-body">
+      <p class="text-gray-500">弹窗内容插槽——请在使用处直接覆盖此区域。</p>
+    </div>
+    <div class="flex justify-end mt-6 gap-3">
+      <button type="button" class="px-3 py-1 btn-default rounded" @click="closeModal">取消</button>
+      <button class="px-3 py-1 bg-primary text-white rounded">确认</button>
+    </div>
+  </div>
+</div>

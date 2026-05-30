@@ -1,0 +1,62 @@
+<!-- 表格参考：搜索 + HTMX 局部刷新 + 分页 -->
+<div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+  <!-- 搜索区域 -->
+  <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
+    <input 
+      name="keyword" 
+      placeholder="搜索用户名" 
+      class="px-3 py-2 border rounded flex-1 max-w-xs dark:bg-gray-800 dark:border-gray-600">
+    <button 
+      class="px-4 py-2 bg-primary text-white rounded"
+      hx-get="/mock-api/user-list.html"
+      hx-include="[name='keyword']"
+      hx-target="#user-table-body">
+      搜索
+    </button>
+    <button 
+      class="px-4 py-2 btn-default rounded"
+      hx-get="/mock-api/user-list.html"
+      hx-target="#user-table-body">
+      重置
+    </button>
+  </div>
+
+  <!-- 表格主体 -->
+  <table class="w-full text-left">
+    <thead class="bg-gray-50 dark:bg-gray-800">
+      <tr class="border-b border-gray-200 dark:border-gray-700">
+        <th class="px-6 py-3 w-16">ID</th>
+        <th class="px-6 py-3">用户名</th>
+        <th class="px-6 py-3">角色</th>
+        <th class="px-6 py-3">状态</th>
+        <th class="px-6 py-3 w-40">操作</th>
+      </tr>
+    </thead>
+    <tbody id="user-table-body" hx-get="/mock-api/user-list.html" hx-trigger="load">
+      <!-- HTMX 页面加载时自动拉取初始数据 -->
+    </tbody>
+  </table>
+
+  <!-- 分页区域 -->
+  <div class="p-4 flex justify-center gap-2 border-t border-gray-200 dark:border-gray-700">
+    <button 
+      class="px-3 py-1 btn-default rounded"
+      hx-get="/mock-api/user-list?page=1.html"
+      hx-target="#user-table-body">
+      上一页
+    </button>
+    <button class="px-3 py-1 bg-primary text-white rounded">1</button>
+    <button 
+      class="px-3 py-1 btn-default rounded"
+      hx-get="/mock-api/user-list?page=2.html"
+      hx-target="#user-table-body">
+      2
+    </button>
+    <button 
+      class="px-3 py-1 btn-default rounded"
+      hx-get="/mock-api/user-list?page=2.html"
+      hx-target="#user-table-body">
+      下一页
+    </button>
+  </div>
+</div>

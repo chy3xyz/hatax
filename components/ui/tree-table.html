@@ -1,0 +1,126 @@
+<div x-data="treeTable" class="overflow-hidden">
+  <table class="w-full text-left text-sm">
+    <thead class="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+      <tr>
+        <template x-for="col in columns" :key="col.key">
+          <th class="px-4 py-3 font-medium whitespace-nowrap"
+              :class="col.width ? `w-[${col.width}px]` : ''"
+              x-text="col.title"></th>
+        </template>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+      <template x-for="row in flatData" :key="row._id">
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            :class="selectedIds.includes(row._id) ? 'bg-primary/5' : ''"
+            :style="`padding-left: ${(row._depth - 1) * 24 + 12}px`">
+          <template x-for="col in columns" :key="col.key">
+            <td class="px-4 py-3 whitespace-nowrap"
+                :class="col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : ''">
+              <!-- Tree toggle -->
+              <template x-if="col.key === '$tree' && row._children?.length">
+                <button @click="toggle(row._id)" class="inline-flex items-center gap-1 mr-1">
+                  <svg class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                       :class="expandedIds.includes(row._id) ? 'rotate-90' : ''"
+                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                </button>
+              </template>
+              <template x-if="col.key === '$tree' && !row._children?.length">
+                <span class="w-6 inline-block"></span>
+              </template>
+              <!-- Checkbox -->
+              <template x-if="col.key === '$checkbox'">
+                <input type="checkbox"
+                       :checked="selectedIds.includes(row._id)"
+                       @change="toggleSelect(row._id)"
+                       class="w-4 h-4 rounded">
+              </template>
+              <!-- Action col -->
+              <template x-if="col.key === '$action'">
+                <div class="flex items-center gap-1 justify-end">
+                  <button @click="$dispatch('row-edit', row)" class="text-blue-500 hover:text-blue-700 text-xs px-1.5 py-0.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">编辑</button>
+                  <button @click="$dispatch('row-delete', row)" class="text-red-500 hover:text-red-700 text-xs px-1.5 py-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20">删除</button>
+                  <template x-if="row._children?.length">
+                    <button @click="addChild(row)" class="text-green-500 hover:text-green-700 text-xs px-1.5 py-0.5 rounded hover:bg-green-50 dark:hover:bg-green-900/20">新增子级</button>
+                  </template>
+                </div>
+              </template>
+              <!-- Normal cell slot -->
+              <template x-if="col.key !== '$tree' && col.key !== '$checkbox' && col.key !== '$action'">
+                <span x-html="col.render ? col.render(row[col.key], row) : (row[col.key] ?? '-')"></span>
+              </template>
+            </td>
+          </template>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</div>
+
+<script type="module">
+  Alpine.data('treeTable', () => ({
+    columns: [],
+    sourceData: [],
+    expandedIds: new Set(),
+    selectedIds: [],
+
+    get flatData() {
+      const result = []
+      const traverse = (node, depth) => {
+        const flat = { ...node, _id: node.id || node._id || Math.random(), _depth: depth }
+        if (node._children && node._children.length && this.expandedIds.has(flat._id)) {
+          flat._children = node._children
+        }
+        result.push(flat)
+        if (node._children?.length && this.expandedIds.has(flat._id)) {
+          node._children.forEach(c => traverse(c, depth + 1))
+        }
+      }
+      this.sourceData.forEach(n => traverse(n, 1))
+      return result
+    },
+
+    init(columns, data) {
+      this.columns = columns
+      this.sourceData = data
+      const autoExpand = (nodes) => {
+        nodes.forEach(n => {
+          if (n._children?.length) {
+            this.expandedIds.add(n.id || n._id || Math.random())
+            autoExpand(n._children)
+          }
+        })
+      }
+      autoExpand(data)
+    },
+
+    toggle(id) {
+      if (this.expandedIds.has(id)) this.expandedIds.delete(id)
+      else this.expandedIds.add(id)
+    },
+
+    toggleSelect(id) {
+      if (this.selectedIds.includes(id)) this.selectedIds = this.selectedIds.filter(i => i !== id)
+      else this.selectedIds.push(id)
+    },
+
+    expandAll() {
+      const collect = (nodes) => {
+        nodes.forEach(n => {
+          if (n._children?.length) { this.expandedIds.add(n.id || n._id || Math.random()); collect(n._children) }
+        })
+      }
+      collect(this.sourceData)
+    },
+
+    collapseAll() {
+      this.expandedIds.clear()
+    },
+
+    addChild(parent) {
+      this.$dispatch('tree-add-child', { parent })
+    }
+  }))
+</script>

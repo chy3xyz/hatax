@@ -1,0 +1,36 @@
+<div class="fixed top-0 left-0 bottom-0 bg-white dark:bg-gray-900 border-r z-40 transition-all duration-300 overflow-y-auto"
+     :class="$store.app.sidebarOpen
+       ? ($store.app.mobileMenuOpen ? 'translate-x-0 w-64' : 'hidden lg:block lg:w-64')
+       : ($store.app.mobileMenuOpen ? '-translate-x-full w-64' : 'hidden lg:block lg:w-0 lg:overflow-hidden')">
+  <div class="p-3">
+    <template x-for="group in $store.app.menuGroups" :key="group.title">
+      <div class="mb-3">
+        <div class="px-4 py-1.5 text-[10px] font-bold text-gray-300 dark:text-gray-600 uppercase tracking-widest"
+             x-show="$store.app.sidebarOpen"
+             x-transition>
+          <span x-text="group.title"></span>
+        </div>
+        <div class="space-y-0.5">
+          <template x-for="item in group.items" :key="item.name">
+            <div class="sidebar-item"
+                 :class="{ active: $store.app.activeMenu === item.name }"
+                 @click="$store.app.navigate(item); $store.app.mobileMenuOpen = false">
+              <div class="w-5 h-5 flex-shrink-0" x-html="item.icon"></div>
+              <span x-show="$store.app.sidebarOpen || !$store.app.mobileMenuOpen" x-text="item.title"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+<!-- Mobile overlay -->
+<div x-show="$store.app.mobileMenuOpen"
+     @click="$store.app.mobileMenuOpen = false"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 bg-black/50 z-30 lg:hidden"></div>

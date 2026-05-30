@@ -1,0 +1,398 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>仪表盘</title>
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 pb-8 p-6 animate-fade-in"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto" aria-label="Breadcrumb">
+ <a href="/pages/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+</nav>
+
+
+ <div class="mb-6 flex justify-between items-start">
+ <div>
+ <h1 class="text-2xl font-bold">仪表盘</h1>
+ <p class="text-gray-500 text-sm mt-1">欢迎回来，管理员！以下是系统概览。</p>
+ </div>
+ <div class="flex gap-2">
+ <button onclick="window._pageRefreshFns['dashboard'] ? window._pageRefreshFns['dashboard']() : window.refreshPage()" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+ 刷新
+ </button>
+ <button onclick="Alpine.store('app').drawerOpen = true" class="px-3 py-1.5 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+ 导出报告
+ </button>
+ </div>
+ </div>
+
+ <div x-data="{ activeTab: 'analytics' }" class="space-y-6">
+ <div class="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 -mx-6 px-6">
+ <button @click="activeTab = 'analytics'; window.resizeDashCharts()"
+ class="relative px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+ :class="activeTab === 'analytics' ? 'text-primary border-primary' : 'text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300'">
+ <span class="flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+ 数据分析
+ </span>
+ </button>
+ <button @click="activeTab = 'workspace'"
+ class="relative px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
+ :class="activeTab === 'workspace' ? 'text-primary border-primary' : 'text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300'">
+ <span class="flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+ 工作台
+ </span>
+ </button>
+ </div>
+
+ <div x-show="activeTab === 'analytics'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+ <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+ <div class="bg-white dark:bg-gray-900 rounded-xl border p-5 hover:shadow-md transition-shadow">
+ <div class="flex items-center justify-between">
+ <div>
+ <div class="text-sm text-gray-500 mb-1">总用户</div>
+ <div class="text-2xl font-bold">12,893</div>
+ <div class="text-xs text-green-500 mt-1 flex items-center gap-0.5">
+ <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+ ↑ 12.5% 较上月
+ </div>
+ </div>
+ <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+ <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+ </div>
+ </div>
+ </div>
+ <div class="bg-white dark:bg-gray-900 rounded-xl border p-5 hover:shadow-md transition-shadow">
+ <div class="flex items-center justify-between">
+ <div>
+ <div class="text-sm text-gray-500 mb-1">活跃用户</div>
+ <div class="text-2xl font-bold text-green-500">8,642</div>
+ <div class="text-xs text-green-500 mt-1 flex items-center gap-0.5">
+ <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+ ↑ 8.3% 较上月
+ </div>
+ </div>
+ <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+ <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+ </div>
+ </div>
+ </div>
+ <div class="bg-white dark:bg-gray-900 rounded-xl border p-5 hover:shadow-md transition-shadow">
+ <div class="flex items-center justify-between">
+ <div>
+ <div class="text-sm text-gray-500 mb-1">订单总数</div>
+ <div class="text-2xl font-bold">3,284</div>
+ <div class="text-xs text-red-500 mt-1 flex items-center gap-0.5">
+ <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+ ↓ 3.1% 较上月
+ </div>
+ </div>
+ <div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+ <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+ </div>
+ </div>
+ </div>
+ <div class="bg-white dark:bg-gray-900 rounded-xl border p-5 hover:shadow-md transition-shadow">
+ <div class="flex items-center justify-between">
+ <div>
+ <div class="text-sm text-gray-500 mb-1">总销售额</div>
+ <div class="text-2xl font-bold">¥ 892,540</div>
+ <div class="text-xs text-green-500 mt-1 flex items-center gap-0.5">
+ <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+ ↑ 15.2% 较上月
+ </div>
+ </div>
+ <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+ <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+ <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border p-5">
+ <div class="flex justify-between items-center mb-4">
+ <h3 class="font-semibold">销售额趋势</h3>
+ <div class="flex gap-2">
+ <button class="px-3 py-1 text-xs bg-primary/10 text-primary rounded-full font-medium">近7天</button>
+ <button class="px-3 py-1 text-xs border rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">近30天</button>
+ </div>
+ </div>
+ <div id="sales-chart" class="w-full" style="height:300px"></div>
+ </div>
+ <div class="bg-white dark:bg-gray-900 rounded-xl border p-5">
+ <h3 class="font-semibold mb-4">用户分布</h3>
+ <div id="user-pie-chart" class="w-full" style="height:300px"></div>
+ </div>
+ </div>
+ </div>
+
+ <div x-show="activeTab === 'workspace'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+ <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+ <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-xl border overflow-hidden">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+ <h3 class="font-semibold flex items-center gap-2">
+ <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+ 最新动态
+ </h3>
+ <button class="text-sm text-primary hover:underline">查看更多</button>
+ </div>
+ <div class="divide-y divide-gray-100 dark:divide-gray-800">
+ <div class="flex items-start gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+ <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm flex-shrink-0">李</div>
+ <div class="flex-1 min-w-0">
+ <div class="text-sm"><span class="font-medium">李明</span> 创建了新用户 <span class="text-primary">张伟</span></div>
+ <div class="text-xs text-gray-400 mt-0.5">3 分钟前</div>
+ </div>
+ <span class="px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs rounded">成功</span>
+ </div>
+ <div class="flex items-start gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+ <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm flex-shrink-0">王</div>
+ <div class="flex-1 min-w-0">
+ <div class="text-sm"><span class="font-medium">王芳</span> 审批通过了 <span class="text-primary">月度报告</span></div>
+ <div class="text-xs text-gray-400 mt-0.5">15 分钟前</div>
+ </div>
+ <span class="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs rounded">审批</span>
+ </div>
+ <div class="flex items-start gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+ <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm flex-shrink-0">陈</div>
+ <div class="flex-1 min-w-0">
+ <div class="text-sm"><span class="font-medium">陈刚</span> 更新了系统配置</div>
+ <div class="text-xs text-gray-400 mt-0.5">1 小时前</div>
+ </div>
+ <span class="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs rounded">更新</span>
+ </div>
+ <div class="flex items-start gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+ <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm flex-shrink-0">赵</div>
+ <div class="flex-1 min-w-0">
+ <div class="text-sm"><span class="font-medium">赵丽</span> 提交了 <span class="text-primary">请假申请</span></div>
+ <div class="text-xs text-gray-400 mt-0.5">2 小时前</div>
+ </div>
+ <span class="px-2 py-0.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-xs rounded">新建</span>
+ </div>
+ </div>
+ </div>
+
+ <div class="space-y-6">
+ <div class="bg-white dark:bg-gray-900 rounded-xl border overflow-hidden">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+ <h3 class="font-semibold flex items-center gap-2">
+ <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v-4m0 4l-8-8-4 4-6-6"></path></svg>
+ 待办事项
+ </h3>
+ </div>
+ <div class="divide-y divide-gray-100 dark:divide-gray-800">
+ <div class="flex items-center gap-3 p-4">
+ <input type="checkbox" class="w-4 h-4 rounded text-primary">
+ <div class="flex-1">
+ <div class="text-sm">审核新用户注册</div>
+ <div class="text-xs text-gray-400">3 项待处理</div>
+ </div>
+ </div>
+ <div class="flex items-center gap-3 p-4">
+ <input type="checkbox" class="w-4 h-4 rounded text-primary" checked>
+ <div class="flex-1">
+ <div class="text-sm line-through text-gray-400">月度数据导出</div>
+ <div class="text-xs text-green-500">已完成</div>
+ </div>
+ </div>
+ <div class="flex items-center gap-3 p-4">
+ <input type="checkbox" class="w-4 h-4 rounded text-primary">
+ <div class="flex-1">
+ <div class="text-sm">更新权限配置</div>
+ <div class="text-xs text-gray-400">1 项待处理</div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-xl border overflow-hidden">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+ <h3 class="font-semibold flex items-center gap-2">
+ <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+ 日程安排
+ </h3>
+ </div>
+ <div class="p-4 space-y-3">
+ <div class="flex items-start gap-2">
+ <div class="text-center w-10 flex-shrink-0">
+ <div class="text-xs text-gray-400">今天</div>
+ <div class="text-lg font-bold text-primary">29</div>
+ </div>
+ <div class="flex-1 min-w-0 border-l-2 border-primary pl-3">
+ <div class="text-sm font-medium">系统安全检查</div>
+ <div class="text-xs text-gray-400">14:00 - 15:00 · 线上会议</div>
+ </div>
+ </div>
+ <div class="flex items-start gap-2">
+ <div class="text-center w-10 flex-shrink-0">
+ <div class="text-xs text-gray-400">明天</div>
+ <div class="text-lg font-bold">30</div>
+ </div>
+ <div class="flex-1 min-w-0 border-l-2 border-green-500 pl-3">
+ <div class="text-sm font-medium">月度汇报</div>
+ <div class="text-xs text-gray-400">09:30 - 11:00 · 会议室A</div>
+ </div>
+ </div>
+ <div class="flex items-start gap-2">
+ <div class="text-center w-10 flex-shrink-0">
+ <div class="text-xs text-gray-400">周一</div>
+ <div class="text-lg font-bold">2</div>
+ </div>
+ <div class="flex-1 min-w-0 border-l-2 border-orange-500 pl-3">
+ <div class="text-sm font-medium">版本发布评审</div>
+ <div class="text-xs text-gray-400">10:00 - 11:30 · 线上</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-xl border overflow-hidden">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+ <h3 class="font-semibold flex items-center gap-2">
+ <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+ 快捷入口
+ </h3>
+ </div>
+ <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+ <button onclick="$store.app.addTab('user','用户管理');location.href='/pages/user.html'" class="flex items-center gap-3 p-3 border rounded-lg hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all group">
+ <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+ <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H9v-1a3 3 0 016 0v1zm0 0h6v-1a9 9 0 00-18 0v1h6"></path></svg>
+ </div>
+ <span class="text-sm font-medium">用户管理</span>
+ </button>
+ <button onclick="$store.app.addTab('role','角色权限');location.href='/pages/role.html'" class="flex items-center gap-3 p-3 border rounded-lg hover:border-green-500 hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-all group">
+ <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+ <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+ </div>
+ <span class="text-sm font-medium">角色权限</span>
+ </button>
+ <button onclick="$store.app.addTab('form-basic','基础表单');location.href='/pages/form-basic.html'" class="flex items-center gap-3 p-3 border rounded-lg hover:border-orange-500 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all group">
+ <div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+ <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+ </div>
+ <span class="text-sm font-medium">基础表单</span>
+ </button>
+ <button onclick="$store.app.addTab('table','表格列表');location.href='/pages/table.html'" class="flex items-center gap-3 p-3 border rounded-lg hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-900/10 transition-all group">
+ <div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+ <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+ </div>
+ <span class="text-sm font-medium">表格列表</span>
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+<script type="module">
+import * as echarts from 'echarts'
+window.echarts = echarts
+
+function getChartColors(isDark) {
+  return {
+    text: isDark ? '#9ca3af' : '#6b7280',
+    splitLine: isDark ? '#374151' : '#e5e7eb',
+    primary: '#1890ff',
+    green: '#10b981',
+  }
+}
+
+function initCharts() {
+  const isDark = document.documentElement.classList.contains('dark')
+  const c = getChartColors(isDark)
+  const salesChart = echarts.init(document.getElementById('sales-chart'))
+  salesChart.setOption({
+    tooltip: { trigger: 'axis', backgroundColor: isDark ? '#1f2937' : '#fff', textStyle: { color: c.text } },
+    legend: { data: ['销售额', '订单量'], textStyle: { color: c.text }, top: 0 },
+    grid: { left: '3%', right: '4%', bottom: '3%', top: 40, containLabel: true },
+    xAxis: { type: 'category', boundaryGap: false, data: ['周一','周二','周三','周四','周五','周六','周日'], axisLine: { lineStyle: { color: c.splitLine } }, axisLabel: { color: c.text } },
+    yAxis: [{ type: 'value', axisLine: { show: false }, splitLine: { lineStyle: { color: c.splitLine } }, axisLabel: { color: c.text } }],
+    series: [
+      { name: '销售额', type: 'line', smooth: true, data: [8200, 9320, 12901, 13920, 18230, 23100, 25890], areaStyle: { color: 'rgba(24,144,255,0.08)' }, itemStyle: { color: c.primary } },
+      { name: '订单量', type: 'line', smooth: true, data: [320, 1132, 901, 1934, 2290, 3300, 3210], areaStyle: { color: 'rgba(16,185,129,0.08)' }, itemStyle: { color: c.green } }
+    ]
+  })
+  const pieChart = echarts.init(document.getElementById('user-pie-chart'))
+  pieChart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', backgroundColor: isDark ? '#1f2937' : '#fff', textStyle: { color: c.text } },
+    legend: { bottom: 0, textStyle: { color: c.text } },
+    series: [{ type: 'pie', radius: ['38%', '68%'], label: { color: c.text, fontSize: 11 },
+      data: [
+        { value: 4520, name: '华东地区', itemStyle: { color: '#1890ff' } },
+        { value: 3340, name: '华南地区', itemStyle: { color: '#10b981' } },
+        { value: 2280, name: '华北地区', itemStyle: { color: '#f59e0b' } },
+        { value: 1520, name: '西南地区', itemStyle: { color: '#8b5cf6' } },
+        { value: 1240, name: '其他地区', itemStyle: { color: '#ef4444' } }
+      ]
+    }]
+  })
+  window._salesChart = salesChart
+  window._pieChart = pieChart
+}
+
+window.initCharts = initCharts
+window.resizeDashCharts = function() {
+  const s = window._salesChart, p = window._pieChart
+  if (s) { s.resize(); if (p) p.resize() }
+  else initCharts()
+}
+window._registerPageRefresh('dashboard', () => {
+  Alpine.store('app').loading = true
+  setTimeout(() => {
+    window._salesChart = null
+    window._pieChart = null
+    document.getElementById('sales-chart').innerHTML = ''
+    document.getElementById('user-pie-chart').innerHTML = ''
+    initCharts()
+    Alpine.store('app').loading = false
+    Alpine.notify.success('数据已刷新')
+  }, 400)
+})
+
+// Init charts immediately
+initCharts()
+// Watch dark mode changes
+const _chartObserver = new MutationObserver(() => {
+  if (window._salesChart && window._pieChart) {
+    const isDark = document.documentElement.classList.contains('dark')
+    const c = getChartColors(isDark)
+    window._salesChart.setOption({
+      tooltip: { backgroundColor: isDark ? '#1f2937' : '#fff', textStyle: { color: c.text } },
+      legend: { textStyle: { color: c.text } },
+      xAxis: [{ axisLine: { lineStyle: { color: c.splitLine } }, axisLabel: { color: c.text } }],
+      yAxis: [{ splitLine: { lineStyle: { color: c.splitLine } }, axisLabel: { color: c.text } }]
+    })
+    window._pieChart.setOption({
+      tooltip: { backgroundColor: isDark ? '#1f2937' : '#fff', textStyle: { color: c.text } },
+      legend: { textStyle: { color: c.text } },
+      series: [{ label: { color: c.text } }]
+    })
+  }
+})
+_chartObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+window.addEventListener('resize', () => { window._salesChart?.resize(); window._pieChart?.resize() })
+</script>
+</body>
+</html>

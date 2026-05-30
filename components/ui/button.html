@@ -1,0 +1,17 @@
+<!-- 按钮样式参考：页面中直接使用 Tailwind utility 类即可，无需封装为自定义元素 -->
+<button class="px-4 py-2 rounded-lg flex items-center gap-1 transition-colors bg-primary text-white hover:opacity-90">
+  <span>主按钮</span>
+</button>
+
+<button class="px-4 py-2 rounded-lg flex items-center gap-1 transition-colors border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800">
+  <span>默认按钮</span>
+</button>
+
+<button class="px-4 py-2 rounded-lg flex items-center gap-1 transition-colors bg-red-500 hover:bg-red-600 text-white">
+  <span>危险按钮</span>
+</button>
+
+<button class="px-4 py-2 rounded-lg flex items-center gap-1 transition-colors bg-primary text-white hover:opacity-90" disabled>
+  <span class="inline-block w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></span>
+  <span>加载中</span>
+</button>

@@ -1,0 +1,89 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>基础表单</title>
+  
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto" aria-label="Breadcrumb">
+ <a href="/pages/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+</nav>
+
+
+ <div class="flex justify-between items-center mb-6">
+ <h1 class="text-2xl font-bold">基础表单</h1>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6 max-w-2xl">
+ <form @submit.prevent="handleSubmit" x-data="{ submitted: false }" class="space-y-5">
+ <div>
+ <label class="block text-sm font-medium mb-1.5">用户名 <span class="text-red-500">*</span></label>
+ <input type="text" x-model="form.username" placeholder="请输入用户名"
+ class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">邮箱</label>
+ <input type="email" x-model="form.email" placeholder="请输入邮箱"
+ class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">手机号</label>
+ <input type="tel" x-model="form.phone" placeholder="请输入手机号"
+ class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">部门</label>
+ <select x-model="form.dept" class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600">
+ <option value="">请选择部门</option>
+ <option>技术部</option>
+ <option>运营部</option>
+ <option>市场部</option>
+ <option>财务部</option>
+ </select>
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">状态</label>
+ <div class="flex gap-4 mt-2">
+ <label class="flex items-center gap-2 cursor-pointer">
+ <input type="radio" x-model="form.status" value="active" class="text-primary">
+ <span>启用</span>
+ </label>
+ <label class="flex items-center gap-2 cursor-pointer">
+ <input type="radio" x-model="form.status" value="inactive" class="text-primary">
+ <span>禁用</span>
+ </label>
+ </div>
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">备注</label>
+ <textarea x-model="form.remark" rows="3" placeholder="请输入备注信息"
+ class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"></textarea>
+ </div>
+ <div class="flex justify-end gap-3 pt-2">
+ <button type="button" onclick="history.back()" class="px-6 py-2.5 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">取消</button>
+ <button type="submit" class="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">提交</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+</body>
+</html>

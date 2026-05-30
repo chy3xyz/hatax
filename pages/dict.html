@@ -1,0 +1,117 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>字典管理</title>
+  
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`"
+ x-data="dictPage">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto" aria-label="Breadcrumb">
+ <a href="/pages/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+</nav>
+
+ <div class="flex justify-between items-center mb-6">
+ <h1 class="text-2xl font-bold">字典管理</h1>
+ <button @click="openModal()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">+ 新增字典</button>
+ </div>
+
+ <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+ <div class="lg:col-span-1">
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+ <div class="text-xs font-medium text-gray-400 mb-3 px-1">字典类型</div>
+ <div class="space-y-1">
+ <template x-for="type in dictTypes" :key="type.code">
+ <div class="sidebar-item"
+ :class="{ active: selectedType && selectedType.code === type.code }"
+ @click="selectType(type)">
+ <span x-text="type.name"></span>
+ <span class="ml-auto text-xs text-gray-400" x-text="'(' + type.items.length + ')'"></span>
+ </div>
+ </template>
+ </div>
+ </div>
+ </div>
+
+ <div class="lg:col-span-2">
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+ <div>
+ <h3 class="font-semibold" x-text="selectedType ? selectedType.name : '请选择字典类型'"></h3>
+ <p class="text-sm text-gray-500 mt-0.5" x-text="selectedType ? selectedType.code : ''"></p>
+ </div>
+ <button x-show="selectedType" @click="openModal()" class="px-3 py-1.5 bg-primary/10 text-primary text-sm rounded-lg hover:bg-primary/20 transition-colors">+ 新增条目</button>
+ </div>
+ <div class="overflow-x-auto">
+ <table class="w-full text-sm">
+ <thead class="bg-gray-50 dark:bg-gray-800/50">
+ <tr>
+ <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">标签</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">字典值</th>
+ <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">排序</th>
+ <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">状态</th>
+ <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
+ </tr>
+ </thead>
+ <tbody class="divide-y divide-gray-100 dark:divide-gray-800" x-show="selectedType">
+ <template x-for="item in selectedType.items" :key="item.id">
+ <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+ <td class="px-4 py-3 font-medium" x-text="item.label"></td>
+ <td class="px-4 py-3 text-gray-500 font-mono text-xs" x-text="item.value"></td>
+ <td class="px-4 py-3 text-center" x-text="item.sort"></td>
+ <td class="px-4 py-3 text-center">
+ <button @click="toggleStatus(item)" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-colors"
+ :class="item.status === 1
+ ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+ : 'bg-gray-100 dark:bg-gray-700 text-gray-500'">
+ <span class="w-1.5 h-1.5 rounded-full" :class="item.status === 1 ? 'bg-green-500' : 'bg-gray-400'"></span>
+ <span x-text="item.status === 1 ? '启用' : '禁用'"></span>
+ </button>
+ </td>
+ <td class="px-4 py-3 text-center">
+ <div class="flex items-center justify-center gap-1">
+ <button @click="openModal(item)" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors" title="编辑">
+ <svg class="w-4 h-4 text-gray-400 hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+ </button>
+ <button @click="deleteItem(item)" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors" title="删除">
+ <svg class="w-4 h-4 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+ </button>
+ </div>
+ </td>
+ </tr>
+ </template>
+ </tbody>
+ <tbody x-show="!selectedType">
+ <tr>
+ <td colspan="5" class="px-4 py-12 text-center text-gray-400">
+ <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+ <div>请从左侧选择字典类型</div>
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ </div>
+</div>
+
+</body>
+</html>
