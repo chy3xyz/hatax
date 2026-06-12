@@ -1,0 +1,127 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>33buy - 地址管理</title></head>
+<body>
+<div id="page-content" x-data="addressBook" x-init="loadAddresses(Alpine.store('app').walletAddress)"
+  class="pt-14 pb-16 animate-fade-in">
+
+  <!-- Header -->
+  <div class="px-4 py-4 flex items-center gap-3">
+    <a href="/pages/site/me.html" class="w-9 h-9 rounded-full bg-void-card flex items-center justify-center text-gray-300">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    </a>
+    <h1 class="text-lg font-semibold">地址管理</h1>
+  </div>
+
+  <!-- Address List -->
+  <div class="px-4 space-y-3">
+    <div x-show="loading" class="text-center text-gray-400 text-sm py-12">加载中...</div>
+    <div x-show="!loading && addresses.length === 0" class="text-center text-gray-400 text-sm py-12">
+      <div class="text-4xl mb-3">📦</div>
+      <p>暂无收货地址</p>
+      <p class="text-xs mt-1">点击下方按钮添加</p>
+    </div>
+
+    <template x-for="a in addresses" :key="a.id">
+      <div class="glass-card p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold" x-text="a.recipientName"></span>
+              <span class="text-sm text-gray-400" x-text="a.phone"></span>
+              <span x-show="a.isDefault" class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">默认</span>
+            </div>
+            <div class="text-sm text-gray-400 mt-1.5 leading-relaxed" x-text="(a.country || '中国') + ' ' + a.province + a.city + a.district + a.addressLine1 + (a.postalCode ? ' （邮编：' + a.postalCode + '）' : '')"></div>
+          </div>
+          <div class="flex flex-col items-end gap-2">
+            <button @click="openEdit(a)" class="text-xs text-primary font-medium px-2 py-1 rounded-lg bg-primary/5">编辑</button>
+            <button x-show="!a.isDefault" @click="setDefault(a.id, Alpine.store('app').walletAddress)" class="text-xs text-gray-400 font-medium px-2 py-1">设默认</button>
+            <button @click="removeAddress(a.id, Alpine.store('app').walletAddress)" class="text-xs text-red-400 font-medium px-2 py-1">删除</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <!-- Add Button -->
+  <div class="fixed bottom-20 left-0 right-0 px-4">
+    <button @click="openAdd()" class="w-full py-3.5 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+      新增收货地址
+    </button>
+  </div>
+
+  <!-- Address Form Modal -->
+  <div x-cloak style="display:none" x-show="formOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-void-card w-full sm:w-[calc(100%-2rem)] sm:max-w-md rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-y-auto animate-slide-up" @click.stop="">
+      <div class="px-4 py-4 border-b border-void-edge/40 text-center">
+        <span class="font-semibold text-base" x-text="editingId ? '编辑地址' : '新增地址'"></span>
+      </div>
+      <div class="p-5 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">姓名 *</label>
+            <input x-model="form.recipientName" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.recipientName" class="text-[10px] text-red-500 mt-0.5" x-text="errors.recipientName"></p>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500">电话 *</label>
+            <input x-model="form.phone" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.phone" class="text-[10px] text-red-500 mt-0.5" x-text="errors.phone"></p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">国家</label>
+            <input x-model="form.country" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500">省 *</label>
+            <input x-model="form.province" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.province" class="text-[10px] text-red-500 mt-0.5" x-text="errors.province"></p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">市 *</label>
+            <input x-model="form.city" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.city" class="text-[10px] text-red-500 mt-0.5" x-text="errors.city"></p>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500">区 *</label>
+            <input x-model="form.district" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.district" class="text-[10px] text-red-500 mt-0.5" x-text="errors.district"></p>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500">详细地址 *</label>
+          <input x-model="form.addressLine1" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+          <p x-show="errors.addressLine1" class="text-[10px] text-red-500 mt-0.5" x-text="errors.addressLine1"></p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">邮编</label>
+            <input x-model="form.postalCode" class="w-full px-3 py-2.5 border border-void-edge/50 rounded-xl text-sm bg-void-card/60 mt-1">
+          </div>
+          <div class="flex items-end pb-2">
+            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+              <input type="checkbox" x-model="form.isDefault" class="w-4 h-4 rounded border-void-edge/50 bg-void-card/60 text-primary focus:ring-primary">
+              设为默认地址
+            </label>
+          </div>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button @click="closeForm()" class="flex-1 py-3 border border-void-edge/40 rounded-xl text-sm font-medium">取消</button>
+          <button @click="saveAddress(Alpine.store('app').walletAddress)" :disabled="saving" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50">
+            <span x-show="!saving">保存</span>
+            <span x-show="saving">保存中...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">import '/main.js'</script>
+</div>
+</body>
+</html>
