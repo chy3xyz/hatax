@@ -98,9 +98,9 @@
         <details class="mb-3">
           <summary class="text-xs text-gray-400 cursor-pointer hover:text-primary" x-text="$store.i18n.t('site.upgradeTable')">查看升级价格表</summary>
           <div class="mt-2 grid grid-cols-5 gap-1 text-[10px]">
-            <template x-for="(price, lv) in priceTable" :key="lv">
+            <template x-for="lv in [1,2,3,4,5,6,7,8,9,10]" :key="lv">
               <div class="p-1 text-center rounded" :class="lv === nextLevel ? 'bg-primary/10 text-primary font-bold' : 'bg-void-card/60'">
-                <div x-text="lv + '★'"></div><div x-text="price + 'U'"></div>
+                <div x-text="lv + '★'"></div><div x-text="getPrice(lv) + 'U'"></div>
               </div>
             </template>
           </div>
@@ -398,7 +398,7 @@
       _pendingUpgrade: false,
       _pendingRef: '',
       _openUpgradeAfterSave: false,
-      priceTable: {1:60,2:300,3:450,4:600,5:1000,6:1000,7:1000,8:1000,9:1000,10:1000},
+      upgradePrices: {},
       products: [],
       selectedProduct: null,
       stats: { teamNum: 0, subNum: 0, amount: 0 },
@@ -434,8 +434,7 @@
         this.$watch('$store.app.walletAddress', async (addr) => {
           if (addr) {
             this.loadError = ''
-            await this.loadUser()
-            await this.loadProducts()
+            await Promise.all([this.loadUser(), this.loadProducts(), this.loadUpgradePrices()])
             if (!this.isBound) {
               this.openRegisterModal(this._pendingRef)
             } else if (this._pendingUpgrade) {
@@ -453,8 +452,7 @@
         })
         if (Alpine.store('app').walletAddress) {
           this.loadError = ''
-          await this.loadUser()
-          await this.loadProducts()
+          await Promise.all([this.loadUser(), this.loadProducts(), this.loadUpgradePrices()])
           if (!this.isBound) {
             this.openRegisterModal(this._pendingRef)
           } else if (this._pendingUpgrade) {
@@ -530,8 +528,27 @@
       },
 
       getPrice(lv) {
-        const prices = {1:60,2:300,3:450,4:600,5:1000,6:1000,7:1000,8:1000,9:1000,10:1000}
-        return prices[lv] || 0
+        return this.upgradePrices[lv] || 0
+      },
+
+      async loadUpgradePrices() {
+        try {
+          const prices = {}
+          for (let lv = 1; lv <= 10; lv++) {
+            const p = await readContract({
+              address: ADDRESSES.triDao,
+              abi: TRIDAO_ABI,
+              functionName: 'upgradePrice',
+              args: [BigInt(lv)],
+            })
+            prices[lv] = Number(p) / 1e18
+          }
+          this.upgradePrices = prices
+        } catch (e) {
+          console.error('loadUpgradePrices:', e)
+          // Fallback if contract unavailable
+          this.upgradePrices = {1:60,2:130,3:180,4:300,5:500,6:700,7:1000,8:1500,9:1800,10:2000}
+        }
       },
 
       async openUpgrade() {
