@@ -51,13 +51,12 @@
        <span>BSC Mainnet</span>
       </button>
       <button @click="$store.app.switchToChain('hardhat'); open = false" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-void-edge/50 transition-colors" :class="$store.app.currentChainName === 'Hardhat Local' ? 'text-primary font-semibold bg-void-edge/40' : 'text-gray-300'">
-       <span class="w-2 h-2 rounded-full bg-gray-500"></span>
-       <span>Hardhat</span>
-      </button>
-      <button @click="$store.app.switchToChain('hardhat'); open = false" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-void-edge/50 transition-colors" :class="$store.app.currentChainName === 'Hardhat Local' || $store.app.currentChainName === 'Local EVM' ? 'text-primary font-semibold bg-void-edge/40' : 'text-gray-300'">
        <span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]"></span>
        <span>Local EVM</span>
       </button>
+      <div class="px-3 py-2 text-[10px] text-gray-500 border-t border-void-edge/30 mt-1 pt-1">
+        网络状态跟随钱包，切换后页面自动刷新
+      </div>
      </div>
     </div>
 
