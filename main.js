@@ -220,9 +220,12 @@ Alpine.store('app', {
         this.currentChainName = getChainDisplayName(getCurrentChain())
       }
     })
-    // Sync chain on startup if wallet was previously connected
-    if (this.walletAddress) {
-      syncChainFromWallet().catch(() => {})
+    // Sync chain on startup: auto-detect wallet chain and follow it.
+    // This works even before wallet connect because MetaMask still reports eth_chainId.
+    if (typeof window !== 'undefined' && window.ethereum) {
+      syncChainFromWallet().then(() => {
+        this.currentChainName = getChainDisplayName(getCurrentChain())
+      }).catch(() => {})
     }
   },
 
