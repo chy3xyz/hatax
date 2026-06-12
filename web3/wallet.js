@@ -130,14 +130,14 @@ export async function disconnectWallet() {
 }
 
 export async function readContract({ address, abi, functionName, args = [] }) {
-  await syncChainFromWallet()
+  // Use the dapp's current chain (set/enforced by the app) instead of following
+  // the wallet, so local testing doesn't accidentally switch to BSC mid-flow.
   const client = getPublicClient()
   console.log('[readContract]', functionName, 'chain:', client.chain.name, 'addr:', address)
   return client.readContract({ address, abi, functionName, args })
 }
 
 export async function writeContract({ address, abi, functionName, args = [], value }) {
-  await syncChainFromWallet()
   const walletClient = getWalletClient()
   const account = getAddress()
   if (!account) throw new Error('Wallet not connected')
