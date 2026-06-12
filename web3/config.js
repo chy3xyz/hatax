@@ -26,3 +26,4 @@ export const CHAIN_CONFIG = {
 // Default to local Anvil/Hardhat chain (chainId 31337) for now.
 // BSC will be enabled later.
 export const DEFAULT_CHAIN = hardhat
+export const DEFAULT_CHAIN_KEY = 'hardhat'

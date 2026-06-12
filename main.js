@@ -2,6 +2,7 @@ import './style.css'
 import Alpine from 'alpinejs'
 import htmx from 'htmx.org'
 import { getAddress, connectWallet, disconnectWallet, switchChain, getCurrentChain, syncChainFromWallet, getChainDisplayName } from './web3/wallet.js'
+import { DEFAULT_CHAIN, DEFAULT_CHAIN_KEY } from './web3/config.js'
 import { addressBook } from './components/site/address-book.js'
 window.htmx = htmx
 
@@ -220,11 +221,14 @@ Alpine.store('app', {
         this.currentChainName = getChainDisplayName(getCurrentChain())
       }
     })
-    // Sync chain on startup: auto-detect wallet chain and follow it.
-    // This works even before wallet connect because MetaMask still reports eth_chainId.
+    // Sync chain on startup: auto-detect wallet chain, then enforce default chain.
+    // This prevents MetaMask being on BSC from overriding the local Anvil default.
     if (typeof window !== 'undefined' && window.ethereum) {
       syncChainFromWallet().then(() => {
         this.currentChainName = getChainDisplayName(getCurrentChain())
+        if (getCurrentChain().id !== DEFAULT_CHAIN.id) {
+          this.switchToChain(DEFAULT_CHAIN_KEY).catch(() => {})
+        }
       }).catch(() => {})
     }
   },
