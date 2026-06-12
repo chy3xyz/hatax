@@ -377,7 +377,7 @@
   </script>
   <script type="module">
     import '/main.js'
-    import { readContract, writeContract, approveToken, ADDRESSES, ERC20_ABI, TRIDAO_ABI, PRODUCT_REGISTRY_ABI, formatEther } from '/web3/wallet.js'
+    import { readContract, writeContract, approveToken, waitForTransaction, ADDRESSES, ERC20_ABI, TRIDAO_ABI, PRODUCT_REGISTRY_ABI, formatEther } from '/web3/wallet.js'
     import { DEFAULT_REFERRER } from '/web3/contracts.js'
     import { createOrder } from '/api.js'
 
@@ -652,6 +652,8 @@
           // Call placeOrder
           Alpine.notify.info(Alpine.store('i18n').t('site.chainConfirming'))
           const hash = await writeContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'placeOrder', args: [this.selectedProduct.id, orderData.orderRef] })
+          // Wait for the transaction to be mined so grade/amount updates are visible.
+          await waitForTransaction(hash)
           Alpine.notify.success('🎉 ' + Alpine.store('i18n').t('site.orderSuccess') + ' ' + hash.slice(0,10))
           // Reset modal + auto-refresh
           this._savedStep = null

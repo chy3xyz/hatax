@@ -161,6 +161,11 @@ export async function approveToken(tokenAddress, spender) {
   return writeContract({ address: tokenAddress, abi: ERC20_ABI, functionName: 'approve', args: [spender, MAX_APPROVE] })
 }
 
+export async function waitForTransaction(hash) {
+  const client = getPublicClient()
+  return client.waitForTransactionReceipt({ hash })
+}
+
 export async function switchChain(chainKey) {
   const map = { bsc, hardhat, localhost }
   const chain = map[chainKey] || bsc
