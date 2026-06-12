@@ -1,0 +1,143 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>红包</title></head>
+<body>
+<div id="page-content" x-data="dappRedpacket" x-init="init()" class="pt-28 pb-8 p-6 animate-fade-in"
+  :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+  :style="'transition: margin-left 0.3s ease;'">
+
+  <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto mb-4" aria-label="Breadcrumb">
+    <a href="/pages/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+      <span class="hidden sm:inline">首页</span>
+    </a>
+    <div class="flex items-center gap-1 flex-shrink-0">
+      <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+      <span class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap">红包</span>
+    </div>
+  </nav>
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold">红包</h1>
+    <p class="text-gray-500 text-sm mt-1">抢红包，领奖励</p>
+  </div>
+
+  <div x-show="!address" class="bg-white dark:bg-gray-900 rounded-xl border p-8 text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+      <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+    </div>
+    <h3 class="text-lg font-semibold mb-2">连接钱包</h3>
+    <button @click="connect()" :disabled="connecting" class="px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">
+      <span x-text="connecting ? '连接中...' : '连接 MetaMask'"></span>
+    </button>
+  </div>
+
+  <div x-show="address" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <template x-for="item in dataList" :key="item.id">
+        <div class="bg-white dark:bg-gray-900 rounded-xl border p-5 hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-2xl font-bold text-primary">#<span x-text="String(item.id).padStart(2,'0')"></span></div>
+            <div class="px-2 py-1 rounded text-xs font-medium"
+              :class="item.redNum - item.redReceivedNum <= 0 ? 'bg-gray-100 text-gray-500 dark:bg-gray-800' : 'bg-green-100 text-green-700 dark:bg-green-900/30'"
+              x-text="item.redNum - item.redReceivedNum <= 0 ? '已抢完' : '可抢'"></div>
+          </div>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">红包数量</span>
+              <span class="font-medium">x<span x-text="item.redNum"></span></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">已抢</span>
+              <span class="font-medium"><span x-text="item.redReceivedNum"></span></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">金额</span>
+              <span class="font-medium text-amber-500"><span x-text="formatEther(item.amount)"></span></span>
+            </div>
+          </div>
+          <button
+            x-show="item.redNum - item.redReceivedNum > 0"
+            @click="rob(item.id)"
+            :disabled="loading"
+            class="mt-4 w-full py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+          >抢红包</button>
+          <button
+            x-show="item.redNum - item.redReceivedNum <= 0"
+            disabled
+            class="mt-4 w-full py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded-lg font-medium cursor-not-allowed"
+          >已抢完</button>
+        </div>
+      </template>
+    </div>
+
+    <div x-show="dataList.length===0" class="bg-white dark:bg-gray-900 rounded-xl border p-8 text-center text-gray-400">
+      暂无红包
+    </div>
+  </div>
+
+  <script type="module">
+    import '/main.js'
+    import {
+      connectWallet, getAddress, readContract, writeContract,
+      ADDRESSES, REWARD_ABI, formatEther
+    } from '/web3/wallet.js'
+
+    Alpine.data('dappRedpacket', () => ({
+      loading: false,
+      connecting: false,
+      address: getAddress(),
+      dataList: [],
+
+      async init() {
+        if (this.address) {
+          await this.getList()
+        }
+      },
+
+      async connect() {
+        this.connecting = true
+        try {
+          this.address = await connectWallet()
+          Alpine.notify.success('钱包连接成功')
+          await this.getList()
+        } catch (e) {
+          Alpine.notify.error(e.message || '连接失败')
+        }
+        this.connecting = false
+      },
+
+      async getList() {
+        try {
+          const res = await readContract({ address: ADDRESSES.reward, abi: REWARD_ABI, functionName: 'getReds' })
+          this.dataList = (res || []).map(r => ({
+            id: Number(r[0]),
+            redNum: Number(r[1]),
+            redReceivedNum: Number(r[2]),
+            amount: r[3],
+            time: Number(r[4])
+          }))
+        } catch (e) { console.error(e) }
+      },
+
+      async rob(id) {
+        this.loading = true
+        try {
+          const hash = await writeContract({ address: ADDRESSES.reward, abi: REWARD_ABI, functionName: 'redReceive', args: [id] })
+          Alpine.notify.success('抢红包成功')
+          await this.getList()
+        } catch (e) {
+          Alpine.notify.error(e.message || '抢红包失败')
+        }
+        this.loading = false
+      }
+    }))
+    queueMicrotask(() => {
+      const el = document.getElementById("page-content")
+      if (el) { try { Alpine.destroyTree(el) } catch(e) {}; Alpine.initTree(el) }
+    })
+  Alpine.start()
+</script>
+</div>
+</body>
+</html>

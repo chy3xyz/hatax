@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  <title>AI云端链商 - 33buy</title>
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.35), 0 0 60px rgba(196,30,58,0.15); }
+      50% { box-shadow: 0 0 35px rgba(245,158,11,0.55), 0 0 80px rgba(245,158,11,0.25); }
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scale-in {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes shimmer-sweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .animate-float { animation: float 3.5s ease-in-out infinite; }
+    .animate-fade-up { animation: fade-up 0.6s ease-out both; }
+    .animate-scale-in { animation: scale-in 0.5s ease-out both; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.35s; }
+    .delay-4 { animation-delay: 0.5s; }
+    .delay-5 { animation-delay: 0.65s; }
+    .delay-6 { animation-delay: 0.8s; }
+    .title-gradient {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 30%, #ea580c 70%, #dc2626 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .card-dark {
+      background: rgba(17, 24, 39, 0.6);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(75, 85, 99, 0.25);
+    }
+    .card-dark:hover {
+      border-color: rgba(245, 158, 11, 0.3);
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.08);
+    }
+    .number-ring {
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      box-shadow: 0 4px 15px rgba(196, 30, 58, 0.35);
+    }
+    .cta-pill {
+      background: linear-gradient(135deg, #c41e3a 0%, #8b1a2b 100%);
+      transition: all 0.3s ease;
+    }
+    .cta-pill:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(245, 158, 11, 0.45);
+    }
+    .cta-pill:active { transform: translateY(0) scale(0.98); }
+    .floating-cta {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      animation: pulse-glow 2.2s ease-in-out infinite;
+    }
+    .hero-glow {
+      background: radial-gradient(ellipse 80% 50% at 50% 30%, rgba(196,30,58,0.12) 0%, transparent 70%),
+                  radial-gradient(ellipse 60% 40% at 70% 70%, rgba(220,38,38,0.06) 0%, transparent 60%),
+                  #0a0a0f;
+    }
+    .shimmer-line {
+      position: relative;
+      overflow: hidden;
+    }
+    .shimmer-line::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+      animation: shimmer-sweep 3s ease-in-out infinite;
+    }
+    .dot {
+      width: 3px; height: 3px;
+      background: rgba(245,158,11,0.5);
+      border-radius: 50%;
+      position: absolute;
+      animation: float 5s ease-in-out infinite;
+    }
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(245,158,11,0.25), transparent);
+    }
+  </style>
+</head>
+<body class="hero-glow text-gray-100 min-h-screen antialiased">
+
+  <!-- Ambient Dots -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden" style="z-index:0;">
+    <div class="dot" style="top:8%;left:12%;animation-delay:0s;animation-duration:7s;"></div>
+    <div class="dot" style="top:15%;left:85%;animation-delay:1.2s;animation-duration:9s;"></div>
+    <div class="dot" style="top:35%;left:8%;animation-delay:2.1s;animation-duration:6s;"></div>
+    <div class="dot" style="top:55%;left:75%;animation-delay:0.6s;animation-duration:8s;"></div>
+    <div class="dot" style="top:78%;left:25%;animation-delay:1.8s;animation-duration:10s;"></div>
+    <div class="dot" style="top:28%;left:55%;animation-delay:3s;animation-duration:7.5s;"></div>
+    <div class="dot" style="top:68%;left:88%;animation-delay:0.3s;animation-duration:9s;"></div>
+    <div class="dot" style="top:48%;left:18%;animation-delay:2.5s;animation-duration:8.5s;"></div>
+  </div>
+
+  <div class="relative" style="z-index:1;">
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- HERO -->
+    <!-- ═══════════════════════════════════════ -->
+    <section class="pt-20 pb-12 flex flex-col items-center justify-center px-5 text-center">
+      <div class="max-w-lg mx-auto">
+        <!-- Badge -->
+        <div class="animate-fade-up delay-1 mb-6">
+          <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider"
+                style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#f87171;">
+            <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background:#f59e0b;"></span>
+            2026 最强轻创风口
+          </span>
+        </div>
+
+        <!-- Main Title -->
+        <h1 class="text-5xl sm:text-6xl font-extrabold title-gradient animate-float animate-fade-up delay-2 leading-tight tracking-tight">
+          AI云端链商
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="text-base text-gray-400 mt-4 animate-fade-up delay-3">
+          由新加坡实力派技术团队全新研发运营
+        </p>
+        <p class="text-sm text-gray-500 mt-2 leading-relaxed animate-fade-up delay-3 max-w-sm mx-auto">
+          依托区块链智能合约结算，正规消费增值模式、全自动运作、倍增裂变、全程团队帮扶
+        </p>
+
+        <!-- CTAs -->
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-up delay-4">
+          <a href="/pages/site/index.html" class="cta-pill px-10 py-3.5 rounded-2xl text-white font-bold text-base flex items-center gap-2">
+            立即参与
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+          </a>
+          <a href="#highlights" class="px-8 py-3.5 rounded-2xl text-sm font-medium text-gray-400 border border-gray-700 hover:border-gray-500 hover:text-gray-200 transition-colors">
+            了解详情
+          </a>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="mt-10 grid grid-cols-3 gap-3 animate-fade-up delay-5">
+          <div class="card-dark rounded-2xl p-3.5 shimmer-line">
+            <div class="text-xl font-extrabold title-gradient">60U</div>
+            <div class="text-[11px] text-gray-500 mt-1">低门槛入局</div>
+          </div>
+          <div class="card-dark rounded-2xl p-3.5 shimmer-line">
+            <div class="text-xl font-extrabold title-gradient">10层</div>
+            <div class="text-[11px] text-gray-500 mt-1">感恩躺赚</div>
+          </div>
+          <div class="card-dark rounded-2xl p-3.5 shimmer-line">
+            <div class="text-xl font-extrabold title-gradient">全自动</div>
+            <div class="text-[11px] text-gray-500 mt-1">智能合约结算</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- INTRO -->
+    <!-- ═══════════════════════════════════════ -->
+    <section class="py-14 px-5">
+      <div class="max-w-lg mx-auto text-center animate-fade-up">
+        <div class="section-divider mb-8"></div>
+        <h2 class="text-2xl font-bold text-white mb-2">十大核心亮点</h2>
+        <p class="text-sm text-gray-500 leading-relaxed">
+          低门槛入局，全民零压力参与<br>宝妈、上班族、零基础小白也能轻松打造财富管道
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- 10 HIGHLIGHTS -->
+    <!-- ═══════════════════════════════════════ -->
+    <section id="highlights" class="pb-28 px-5">
+      <div class="max-w-lg mx-auto space-y-3.5">
+
+        <!-- ① -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up delay-1">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">①</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">真实落地、价值不虚</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">产品实力扎实，效果看得见、摸得着！没有虚假包装、没有套路噱头，权益真实、价值落地，创业赚钱两不误，稳定靠谱出结果！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up delay-2">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">②</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">链上自动结算、资金绝对安全</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">智能合约全自动执行，链上公开透明、自动分发！无资金池、无资金沉淀、全程零手续费！每一笔收益实时到账，可查可溯源！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ③ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up delay-3">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">③</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">十层感恩奖励、收益无上限</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">打破传统局限！十级见点分红层层拿、点点赚！深度裂变、无限躺赚，团队越大收益越恐怖，被动收入源源不断！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ④ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up delay-4">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">④</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">三三自动复制、搭建超强社区</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">模式简单、极易复制！人人可推广、人人可裂变，自动抱团、自动锁粉！快速打造高活跃、高黏性、高稳定的万人私域团队！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑤ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up delay-5">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">⑤</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">滑落互助借力、新人极速升星</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">自带团队滑落帮扶机制！新人不用单打独斗，自动借力、自动帮扶、快速突破、快速晋级！新人起盘快、老人收益稳，全员共赢！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑥ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up delay-6">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">⑥</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">双轨财富体系 现金流＋长期资产</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">升星晋级＋通证增值双收益！晋级拿高额动态分红，持仓享长期增值！一边赚当下现金流，一边赚未来资产红利，锁定终身财富！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑦ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">⑦</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">超低门槛、全民可参与</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">仅需 60U 直接入局！全套产品＋完整收益模型！宝妈、上班族、零基础小白轻松轻创业！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑧ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">⑧</div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-[15px] text-white">顶级超高分配、让利给到个人</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed mb-3">60U 透明分配，全网最良心拆分：</p>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="flex items-center gap-2 rounded-xl px-3 py-2.5" style="background:rgba(245,158,11,0.08);border:1px solid rgba(196,30,58,0.15);">
+                  <span class="text-base font-extrabold" style="color:#f87171;">50%</span>
+                  <span class="text-[11px] text-gray-400">匹配奖励</span>
+                </div>
+                <div class="flex items-center gap-2 rounded-xl px-3 py-2.5" style="background:rgba(245,158,11,0.08);border:1px solid rgba(196,30,58,0.15);">
+                  <span class="text-base font-extrabold" style="color:#f87171;">10%</span>
+                  <span class="text-[11px] text-gray-400">直推奖励</span>
+                </div>
+                <div class="flex items-center gap-2 rounded-xl px-3 py-2.5" style="background:rgba(245,158,11,0.08);border:1px solid rgba(196,30,58,0.15);">
+                  <span class="text-base font-extrabold" style="color:#f87171;">10%</span>
+                  <span class="text-[11px] text-gray-400">十层见点</span>
+                </div>
+                <div class="flex items-center gap-2 rounded-xl px-3 py-2.5" style="background:rgba(245,158,11,0.08);border:1px solid rgba(196,30,58,0.15);">
+                  <span class="text-base font-extrabold" style="color:#f87171;">10%</span>
+                  <span class="text-[11px] text-gray-400">通证权益</span>
+                </div>
+                <div class="flex items-center gap-2 rounded-xl px-3 py-2.5 col-span-2" style="background:rgba(245,158,11,0.08);border:1px solid rgba(196,30,58,0.15);">
+                  <span class="text-base font-extrabold" style="color:#f87171;">20%</span>
+                  <span class="text-[11px] text-gray-400">产品权益 — 等值落地，不虚一分投入</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑨ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">⑨</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">全自动化运行、真正省心躺赚</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">全自动裂变、全自动滑落、全自动结算、全自动到账！不用人工对账、不用繁琐操作，一部手机、轻松躺赚、持续增收！</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑩ -->
+        <div class="card-dark rounded-2xl p-5 animate-fade-up">
+          <div class="flex items-start gap-3.5">
+            <div class="number-ring w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0 mt-0.5">⑩</div>
+            <div>
+              <h3 class="font-bold text-[15px] text-white">全员共赢模式、长久稳定可传承</h3>
+              <p class="text-[13px] text-gray-400 mt-1.5 leading-relaxed">制度公平透明、机制稳定可持续！社区裂变＋通证增值双引擎驱动，稳、久、强、长久可做、代代可传承！</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- SUMMARY -->
+    <!-- ═══════════════════════════════════════ -->
+    <section class="py-14 px-5">
+      <div class="max-w-lg mx-auto animate-fade-up">
+        <div class="relative overflow-hidden rounded-3xl border p-6 sm:p-8" style="background:linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(17,24,39,0.8) 50%, rgba(17,24,39,0.8) 100%);border-color:rgba(196,30,58,0.2);">
+          <div class="shimmer-line absolute inset-0"></div>
+          <div class="relative z-10 text-center">
+            <h2 class="text-xl font-extrabold title-gradient mb-4">终极总结</h2>
+            <div class="space-y-1.5 text-sm" style="color:#d1d5db;">
+              <p>零沉淀、零风险、零手续费！</p>
+              <p>全自动、高裂变、十层躺赚、互助升星、通证增值！</p>
+            </div>
+            <div class="mt-5 p-4 rounded-2xl" style="background:rgba(245,158,11,0.08);border:1px solid rgba(196,30,58,0.18);">
+              <p class="text-sm font-bold text-white">AI云端链商，2026 普通人最稳的翻身轻创赛道！</p>
+              <p class="text-xs mt-1.5" style="color:#9ca3af;">合约护航安全，模式碾压同行，入局即卡位，早做早吃肉！</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pb-24 pt-4 text-center">
+      <div class="section-divider mb-4 max-w-lg mx-auto"></div>
+      <p class="text-xs" style="color:#4b5563;">© 2026 33buy · AI云端链商</p>
+    </footer>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- FLOATING CTA -->
+  <!-- ═══════════════════════════════════════ -->
+  <a href="/pages/site/index.html" class="floating-cta cta-pill px-8 py-3.5 rounded-full text-white font-bold text-[15px] flex items-center gap-2">
+    <span>立即参与</span>
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+  </a>
+
+</body>
+</html>

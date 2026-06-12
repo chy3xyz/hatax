@@ -1,0 +1,221 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>单币挖矿</title></head>
+<body>
+<div id="page-content" x-data="dappMings" x-init="init()" class="pt-28 pb-8 p-6 animate-fade-in"
+  :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+  :style="'transition: margin-left 0.3s ease;'">
+
+  <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto mb-4" aria-label="Breadcrumb">
+    <a href="/pages/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+      <span class="hidden sm:inline">首页</span>
+    </a>
+    <div class="flex items-center gap-1 flex-shrink-0">
+      <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+      <span class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap">单币挖矿</span>
+    </div>
+  </nav>
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold">单币挖矿</h1>
+    <p class="text-gray-500 text-sm mt-1">ATC 单币质押挖矿</p>
+  </div>
+
+  <div x-show="!address" class="bg-white dark:bg-gray-900 rounded-xl border p-8 text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+      <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+    </div>
+    <h3 class="text-lg font-semibold mb-2">连接钱包</h3>
+    <button @click="connect()" :disabled="connecting" class="px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">
+      <span x-text="connecting ? '连接中...' : '连接 MetaMask'"></span>
+    </button>
+  </div>
+
+  <div x-show="address" class="space-y-6 max-w-2xl">
+    <!-- Stake Form -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl border p-6">
+      <h3 class="text-lg font-semibold mb-4">ATC 挖矿</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">ATC 数量</label>
+          <div class="flex gap-2">
+            <input type="number" x-model="zy_a" placeholder="输入数量" class="flex-1 px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30">
+            <button @click="maxToken()" class="px-3 py-2.5 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm">MAX</button>
+          </div>
+          <div class="text-xs text-gray-500 mt-1">余额: <span x-text="aBalance">0</span></div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex gap-3">
+        <button x-show="!isApprovedA" @click="approve()" :disabled="loading" class="px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">授权 ATC</button>
+        <button x-show="isApprovedA && ATCAmount > 0" @click="leave()" :disabled="loading" class="px-5 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50">解除质押</button>
+        <button x-show="isApprovedA && ATCAmount <= 0" @click="deposit()" :disabled="loading" class="px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">质押</button>
+      </div>
+    </div>
+
+    <!-- Earnings -->
+    <div x-show="is_show" class="bg-white dark:bg-gray-900 rounded-xl border p-6">
+      <h3 class="text-lg font-semibold mb-4">收益信息</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div class="text-xs text-gray-500 mb-1">待领取收益 (ATLP)</div>
+          <div class="text-xl font-bold text-amber-500" x-text="fetchAmount">0</div>
+        </div>
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div class="text-xs text-gray-500 mb-1">算力</div>
+          <div class="text-xl font-bold" x-text="slAmount">0</div>
+        </div>
+      </div>
+      <button @click="extract()" :disabled="loading || parseFloat(fetchAmount)==0" class="mt-4 px-5 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50">提取收益</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import '/main.js'
+    import {
+      connectWallet, getAddress, readContract, writeContract,
+      getTokenBalance, getAllowance, approveToken,
+      ADDRESSES, ERC20_ABI, MINGS_ABI, formatEther, parseEther
+    } from '/web3/wallet.js'
+
+    Alpine.data('dappMings', () => ({
+      loading: false,
+      connecting: false,
+      address: getAddress(),
+      isApprovedA: false,
+      zy_a: '',
+      aBalance: '0',
+      slAmount: '0',
+      ATCAmount: '0',
+      fetchAmount: '0',
+      is_show: false,
+
+      async init() {
+        if (this.address) {
+          await this.getBalanceA()
+          await this.getApproveA()
+          await this.getPaddingFetch()
+          await this.getUserInfo()
+        }
+      },
+
+      async connect() {
+        this.connecting = true
+        try {
+          this.address = await connectWallet()
+          Alpine.notify.success('钱包连接成功')
+          await this.init()
+        } catch (e) {
+          Alpine.notify.error(e.message || '连接失败')
+        }
+        this.connecting = false
+      },
+
+      async maxToken() {
+        this.zy_a = this.aBalance
+      },
+
+      async getBalanceA() {
+        try {
+          const bal = await getTokenBalance(ADDRESSES.atc, this.address)
+          this.aBalance = parseFloat(bal).toFixed(4)
+        } catch (e) {}
+      },
+
+      async getApproveA() {
+        try {
+          const all = await getAllowance(ADDRESSES.atc, this.address, ADDRESSES.mings)
+          this.isApprovedA = parseFloat(all) >= 100000000
+        } catch (e) {}
+      },
+
+      async getUserInfo() {
+        try {
+          const res = await readContract({ address: ADDRESSES.mings, abi: MINGS_ABI, functionName: 'userInfo', args: [this.address] })
+          this.ATCAmount = res[0].toString()
+          this.slAmount = parseFloat(formatEther(res[0])).toFixed(2)
+          this.is_show = true
+        } catch (e) {}
+      },
+
+      async getPaddingFetch() {
+        try {
+          const val = await readContract({ address: ADDRESSES.mings, abi: MINGS_ABI, functionName: 'pending', args: [this.address] })
+          this.fetchAmount = parseFloat(formatEther(val)).toFixed(4)
+        } catch (e) {}
+      },
+
+      async approve() {
+        this.loading = true
+        try {
+          const hash = await approveToken(ADDRESSES.atc, ADDRESSES.mings)
+          Alpine.notify.success('授权成功')
+          this.isApprovedA = true
+        } catch (e) {
+          Alpine.notify.error(e.message || '授权失败')
+        }
+        this.loading = false
+      },
+
+      async deposit() {
+        if (!this.zy_a || this.zy_a <= 0) {
+          Alpine.notify.warning('请输入数量')
+          return
+        }
+        this.loading = true
+        try {
+          const hash = await writeContract({ address: ADDRESSES.mings, abi: MINGS_ABI, functionName: 'deposit', args: [parseEther(String(this.zy_a))] })
+          Alpine.notify.success('质押成功')
+          this.zy_a = ''
+          await this.getBalanceA()
+          await this.getPaddingFetch()
+          await this.getUserInfo()
+        } catch (e) {
+          Alpine.notify.error(e.message || '质押失败')
+        }
+        this.loading = false
+      },
+
+      async leave() {
+        this.loading = true
+        try {
+          const hash = await writeContract({ address: ADDRESSES.mings, abi: MINGS_ABI, functionName: 'leave' })
+          Alpine.notify.success('解除质押成功')
+          this.zy_a = ''
+          await this.getBalanceA()
+          await this.getPaddingFetch()
+          await this.getUserInfo()
+        } catch (e) {
+          Alpine.notify.error(e.message || '解除质押失败')
+        }
+        this.loading = false
+      },
+
+      async extract() {
+        if (parseFloat(this.fetchAmount) == 0) {
+          Alpine.notify.warning('无可提取收益')
+          return
+        }
+        this.loading = true
+        try {
+          const hash = await writeContract({ address: ADDRESSES.mings, abi: MINGS_ABI, functionName: 'withdrawReward' })
+          Alpine.notify.success('提取成功')
+          await this.getPaddingFetch()
+          await this.getUserInfo()
+        } catch (e) {
+          Alpine.notify.error(e.message || '提取失败')
+        }
+        this.loading = false
+      }
+    }))
+    queueMicrotask(() => {
+      const el = document.getElementById("page-content")
+      if (el) { try { Alpine.destroyTree(el) } catch(e) {}; Alpine.initTree(el) }
+    })
+  Alpine.start()
+</script>
+</div>
+</body>
+</html>

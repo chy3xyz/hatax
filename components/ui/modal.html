@@ -2,7 +2,7 @@
 <!-- 触发方式：任意元素上写 @click="$dispatch('open-modal', '弹窗标题')" 即可打开 -->
 <div x-data="modal" @open-modal.window="openModal($event.detail)" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center" style="display: none;">
   <div class="absolute inset-0 bg-black/40" @click="closeModal"></div>
-  <div class="bg-white dark:bg-gray-900 rounded-xl p-6 w-full max-w-lg relative z-10 border border-gray-200 dark:border-gray-700">
+  <div class="bg-white dark:bg-gray-900 rounded-xl p-6 w-[calc(100%-2rem)] max-w-lg relative z-10 border border-gray-200 dark:border-gray-700">
     <div class="flex justify-between items-center mb-4">
       <h3 class="text-lg font-bold" x-text="title"></h3>
       <button @click="closeModal" class="text-gray-400 hover:text-gray-600">✕</button>

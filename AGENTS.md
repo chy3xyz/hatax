@@ -8,7 +8,7 @@
 
 本项目是一个**纯前端、轻量化管理后台模板**，对标 Vben Admin 的页面结构，但技术栈极度精简：
 
-- **Vite**：构建工具与开发服务器（端口 3000）
+- **Vite**：构建工具与开发服务器（端口 3034）
 - **Alpine.js**：轻量级响应式框架，负责全局状态、组件交互、弹窗/表单校验逻辑
 - **HTMX**：通过 HTML 属性实现无刷新局部更新，直接对接后端接口
 - **Tailwind CSS**：原子化 CSS 框架，内置暗黑模式支持
@@ -29,7 +29,7 @@
 
 ### 关键配置文件
 
-- **`vite.config.js`**：开发服务器端口 3000，多页面入口扫描（`pages/` 目录下所有 HTML）
+- **`vite.config.js`**：开发服务器端口 3034，多页面入口扫描（`pages/` 目录下所有 HTML）
 - **`tailwind.config.js`**：启用 `darkMode: 'class'`，内容扫描 `./*.html`、`./pages/**/*.html`、`./components/**/*.html`，主色调 `primary: '#1890ff'`
 - **`package.json`**：`type: "module"`，脚本仅 `dev` / `build` / `preview`
 
@@ -87,7 +87,7 @@
 # 安装依赖
 npm install
 
-# 启动开发服务器（热更新，端口 3000）
+# 启动开发服务器（热更新，端口 3034）
 npm run dev
 
 # 生产构建（输出到 dist/）

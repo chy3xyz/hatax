@@ -4,89 +4,209 @@
 
 [x-cloak] { display: none !important; }
 
-:root {
-  --primary: #1890ff;
+/* ============================================================
+   Dark Theme Base
+   ============================================================ */
+html.dark, .dark body {
+  background-color: #0a0a0f;
+  color: #e5e7eb;
 }
 
-@layer base {
-  * { box-sizing: border-box; }
-  body {
-    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300;
-  }
-  /* Sidebar-aware content margin (stable across HTMX swaps) */
-  html.sidebar-open #page-content {
-    @apply lg:ml-64;
-  }
-  html:not(.sidebar-open) #page-content {
-    @apply lg:ml-0;
-  }
+/* ============================================================
+   Glass Card (Dark-first for male vitality theme)
+   ============================================================ */
+.glass-card {
+  @apply bg-void-card/80 backdrop-blur-xl border border-void-edge/50 shadow-xl shadow-black/20 rounded-3xl;
 }
 
-@layer components {
-  /* Dynamic theme — override Tailwind primary with CSS variable */
-  .bg-primary { background-color: var(--primary) !important; }
-  .text-primary { color: var(--primary) !important; }
-  .border-primary { border-color: var(--primary) !important; }
-  .ring-primary { --tw-ring-color: var(--primary) !important; }
-  .from-primary\/5 { --tw-gradient-from: color-mix(in srgb, var(--primary) 5%, transparent) !important; }
-
-  .global-loading {
-    @apply fixed inset-0 bg-black/20 z-[9999] flex items-center justify-center;
-  }
-  .sidebar-item {
-    @apply flex items-center gap-2 px-4 py-2.5 rounded-lg cursor-pointer transition-all hover:bg-primary/10 text-sm;
-  }
-  .sidebar-item.active { @apply bg-primary/15 text-primary font-medium; }
-  .form-error { @apply text-red-500 text-sm mt-1; }
-  .btn-danger { @apply bg-red-500 hover:bg-red-600 text-white; }
-  .btn-default { @apply border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800; }
-
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-  .dark ::-webkit-scrollbar-thumb { background: #374151; }
-  .dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-
-  .page-enter { animation: page-in 0.25s ease-out; }
-  .page-leave { animation: page-out 0.15s ease-in; }
-
-  .sidebar-item > * { transition: none !important; }
-
-  .sidebar-item svg,
-  .sidebar-item .icon { width: 1.25rem !important; height: 1.25rem !important; flex-shrink: 0; }
+.glass-card-light {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl rounded-3xl;
 }
 
+/* ============================================================
+   Gradient Text — Crimson + Gold for male vitality
+   ============================================================ */
+.gradient-text {
+  background: linear-gradient(135deg, #c41e3a 0%, #e11d48 40%, #d4a017 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================
+   Floating Capsule Nav
+   ============================================================ */
+.capsule-nav {
+  @apply fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex gap-1 p-1
+    bg-void-card/90 backdrop-blur-xl
+    border border-void-edge/40
+    shadow-xl shadow-black/30 rounded-full;
+}
+
+.capsule-nav a {
+  @apply flex flex-col items-center justify-center gap-0.5 px-6 py-2.5 rounded-full text-xs transition-all duration-300 whitespace-nowrap min-w-[72px];
+}
+
+.capsule-nav a.active {
+  @apply text-white shadow-lg font-semibold;
+  background: linear-gradient(135deg, #c41e3a, #a51d2d);
+  box-shadow: 0 4px 20px rgba(196,30,58,0.35);
+}
+
+.capsule-nav a:not(.active) {
+  @apply text-gray-500 hover:text-gray-300;
+}
+
+/* ============================================================
+   Glow Button (Crimson gradient)
+   ============================================================ */
+.glow-btn {
+  @apply relative overflow-hidden text-white font-bold rounded-2xl
+    shadow-lg transition-all duration-300 active:scale-[0.97];
+  background: linear-gradient(135deg, #c41e3a, #8b1a2b);
+  box-shadow: 0 4px 20px rgba(196,30,58,0.3);
+}
+
+.glow-btn:hover {
+  box-shadow: 0 6px 30px rgba(196,30,58,0.45);
+}
+
+.glow-btn::after {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full;
+  animation: shimmer 2s infinite;
+}
+
+/* ============================================================
+   Gold Accent Button
+   ============================================================ */
+.gold-btn {
+  @apply relative overflow-hidden text-white font-bold rounded-2xl transition-all duration-300 active:scale-[0.97];
+  background: linear-gradient(135deg, #d4a017, #b8860b);
+  box-shadow: 0 4px 20px rgba(212,160,23,0.3);
+}
+
+.gold-btn:hover {
+  box-shadow: 0 6px 30px rgba(212,160,23,0.45);
+}
+
+/* ============================================================
+   Shimmer Skeleton
+   ============================================================ */
+.skeleton {
+  @apply rounded-xl;
+  background: linear-gradient(90deg, #1a1a24, #111118, #1a1a24);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ============================================================
+   Pulse Dot
+   ============================================================ */
+.pulse-dot {
+  @apply w-2 h-2 rounded-full;
+  background: #22c55e;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   Bottom safe area (iPhone notch)
+   ============================================================ */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ============================================================
+   Page transition
+   ============================================================ */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* ============================================================
+   Step indicator
+   ============================================================ */
+.step-dot {
+  @apply w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300;
+}
+
+.step-dot.active {
+  @apply text-white scale-110 shadow-md;
+  background: linear-gradient(135deg, #c41e3a, #e11d48);
+  box-shadow: 0 2px 12px rgba(196,30,58,0.35);
+}
+
+.step-dot.done {
+  @apply text-primary;
+  background: rgba(196,30,58,0.2);
+}
+
+/* ============================================================
+   Product card hover
+   ============================================================ */
+.product-card {
+  @apply glass-card overflow-hidden cursor-pointer transition-all duration-300;
+}
+
+.product-card:hover {
+  @apply -translate-y-1;
+  box-shadow: 0 12px 40px rgba(196,30,58,0.1);
+  border-color: rgba(196,30,58,0.25);
+}
+
+/* ============================================================
+   Admin sidebar glow (active item)
+   ============================================================ */
+.sidebar-item.active {
+  @apply text-white font-semibold rounded-xl;
+  background: rgba(196,30,58,0.12);
+  box-shadow: 0 2px 8px rgba(196,30,58,0.08);
+}
+
+/* ============================================================
+   Scrollbar hide
+   ============================================================ */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ============================================================
+   Modal overlay
+   ============================================================ */
+.modal-overlay {
+  @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+}
+
+.modal-sheet {
+  @apply bg-void-card w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto;
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(26,26,36,0.6);
+}
+
+/* ============================================================
+   Notify Progress Bar Animation
+   ============================================================ */
 @keyframes notify-progress {
   from { width: 100%; }
-  to { width: 0%; }
+  to   { width: 0%; }
 }
 
-@keyframes page-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ============================================================
+   Crimson gradient border glow for special cards
+   ============================================================ */
+.crimson-glow {
+  position: relative;
 }
-
-@keyframes page-out {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-4px); }
+.crimson-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(196,30,58,0.4), rgba(212,160,23,0.2), rgba(196,30,58,0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.animate-fade-in { animation: fade-in 0.2s ease-out; }
-.animate-slide-up { animation: slide-up 0.3s ease-out; }
-.animate-scale-in { animation: scale-in 0.2s ease-out; }

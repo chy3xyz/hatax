@@ -1,0 +1,153 @@
+<!-- layout: app-shell -->
+<html>
+<head><title>产品入驻</title></head>
+<body>
+<div id="page-content" x-data="productReg" x-init="init()" class="pt-6 p-6 animate-fade-in">
+
+  <div class="mb-6 flex justify-between items-start">
+    <div>
+      <h1 class="text-2xl font-bold">产品入驻</h1>
+      <p class="text-gray-500 text-sm mt-1">入驻费 100,000 USDT | 链上登记 | 管理员审核</p>
+    </div>
+  </div>
+
+  <!-- Register form -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border p-6 mb-6">
+    <h3 class="font-semibold mb-4">新增产品</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="text-xs text-gray-500">产品名称 *</label>
+        <input x-model="form.name" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500">价格 (USDT) *</label>
+        <input x-model.number="form.price" type="number" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500">图片链接</label>
+        <input x-model="form.imageUrl" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30">
+      </div>
+      <div>
+        <label class="text-xs text-gray-500">供应商名称 *</label>
+        <input x-model="form.supplierName" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30">
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500">供应商钱包 *</label>
+        <input x-model="form.supplierWallet" placeholder="0x..." class="w-full px-3 py-2 border rounded-lg text-sm font-mono dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30">
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500">产品简介</label>
+        <textarea x-model="form.description" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30"></textarea>
+      </div>
+    </div>
+    <div class="mt-4 flex items-center gap-3">
+      <button @click="register()" :disabled="loading" class="px-6 py-2.5 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors">
+        <span x-text="loading ? '提交中...' : '注册产品 (100,000 USDT)'"></span>
+      </button>
+      <span class="text-xs text-gray-400">入驻费从调用者钱包扣除</span>
+    </div>
+  </div>
+
+  <!-- Product list -->
+  <div class="bg-white dark:bg-gray-900 rounded-xl border overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 dark:bg-gray-800 text-left">
+        <tr>
+          <th class="px-4 py-3">ID</th>
+          <th class="px-4 py-3">名称</th>
+          <th class="px-4 py-3">价格</th>
+          <th class="px-4 py-3">供应商</th>
+          <th class="px-4 py-3">状态</th>
+          <th class="px-4 py-3">操作</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+        <template x-for="p in products" :key="p.id">
+          <tr>
+            <td class="px-4 py-3" x-text="p.id"></td>
+            <td class="px-4 py-3 font-medium" x-text="p.name"></td>
+            <td class="px-4 py-3" x-text="(Number(p.price)/1e18).toFixed(0)+' USDT'"></td>
+            <td class="px-4 py-3 text-xs font-mono" x-text="p.supplierWallet?.slice(0,8)+'...'"></td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-0.5 rounded-full text-xs" :class="p.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'" x-text="p.active ? '上架' : '下架'"></span>
+            </td>
+            <td class="px-4 py-3">
+              <button @click="toggleActive(p)" class="px-3 py-1 border rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-800" x-text="p.active ? '下架' : '上架'"></button>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <div x-show="products.length===0" class="text-center py-8 text-sm text-gray-400">暂无产品</div>
+  </div>
+
+  <script type="module">
+    import '/main.js'
+    import { readContract, writeContract, approveToken, ADDRESSES, ERC20_ABI, PRODUCT_REGISTRY_ABI, formatEther } from '/web3/wallet.js'
+
+    Alpine.data('productReg', () => ({
+      loading: false,
+      products: [],
+      form: { name:'', imageUrl:'', description:'', price:0, supplierWallet:'', supplierName:'' },
+
+      async init() {
+        await this.loadProducts()
+      },
+
+      async loadProducts() {
+        try {
+          const count = await readContract({ address:ADDRESSES.productRegistry, abi:PRODUCT_REGISTRY_ABI, functionName:'productCount' })
+          const n = Number(count)
+          if (n === 0) return
+          const batch = await readContract({ address:ADDRESSES.productRegistry, abi:PRODUCT_REGISTRY_ABI, functionName:'getProducts', args:[0, Math.min(n, 50)] })
+          this.products = Array.isArray(batch) ? batch : []
+        } catch (e) {
+          console.error('loadProducts:', e)
+          // Fallback: use demo data
+          this.products = []
+        }
+      },
+
+      async register() {
+        if (!this.form.name || !this.form.supplierWallet || !this.form.supplierName) {
+          Alpine.notify.warning('请填写必填项'); return
+        }
+        this.loading = true
+        try {
+          // Approve listing fee
+          const fee = await readContract({ address:ADDRESSES.productRegistry, abi:PRODUCT_REGISTRY_ABI, functionName:'listingFee' })
+          await approveToken(ADDRESSES.usdt, ADDRESSES.productRegistry)
+          Alpine.notify.info('正在注册产品...')
+
+          const hash = await writeContract({
+            address: ADDRESSES.productRegistry, abi: PRODUCT_REGISTRY_ABI,
+            functionName: 'registerProduct',
+            args: [this.form.name, this.form.imageUrl, this.form.description, BigInt(Math.round(this.form.price * 1e18)), this.form.supplierWallet, this.form.supplierName]
+          })
+          Alpine.notify.success('产品注册成功: ' + hash.slice(0,10) + '...')
+          this.form = { name:'', imageUrl:'', description:'', price:0, supplierWallet:'', supplierName:'' }
+          await this.loadProducts()
+        } catch (e) { Alpine.notify.error(e.message || '注册失败') }
+        this.loading = false
+      },
+
+      async toggleActive(p) {
+        try {
+          const hash = await writeContract({
+            address: ADDRESSES.productRegistry, abi: PRODUCT_REGISTRY_ABI,
+            functionName: 'setProductActive', args: [p.id, !p.active]
+          })
+          Alpine.notify.success(p.active ? '已下架' : '已上架')
+          await this.loadProducts()
+        } catch (e) { Alpine.notify.error(e.message) }
+      }
+    }))
+    queueMicrotask(() => {
+      const el = document.getElementById("page-content")
+      if (el) { try { Alpine.destroyTree(el) } catch(e) {}; Alpine.initTree(el) }
+    })
+  Alpine.start()
+</script>
+</div>
+</body>
+</html>

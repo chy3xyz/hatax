@@ -1,0 +1,133 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>新增部门</title>
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 p-6 space-y-6 animate-fade-in"
+     :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'">
+
+  <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400" aria-label="Breadcrumb">
+    <a href="/pages/admin/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+      <span>首页</span>
+    </a>
+    <span class="text-gray-300">/</span>
+    <a href="/pages/admin/dept.html" class="hover:text-primary transition-colors">部门管理</a>
+    <span class="text-gray-300">/</span>
+    <span class="text-gray-700 dark:text-gray-200 font-medium">新增部门</span>
+  </nav>
+
+  <h1 class="text-2xl font-bold">新增部门</h1>
+
+  <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 max-w-2xl"
+       x-data="deptForm">
+    <form @submit.prevent="handleSubmit" class="space-y-5">
+      <div>
+        <label class="block text-sm font-medium mb-1.5">上级部门</label>
+        <select x-model="form.parentId"
+          class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+          <option value="">顶级部门</option>
+          <option value="1">公司总部</option>
+          <option value="2">├ 技术研发中心</option>
+          <option value="5">├ 市场运营部</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1.5">部门名称 <span class="text-red-500">*</span></label>
+        <input type="text" x-model="form.name" placeholder="请输入部门名称"
+          class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          :class="{ 'border-red-400': errors.name }">
+        <div x-show="errors.name" class="form-error" x-text="errors.name"></div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1.5">部门编码 <span class="text-red-500">*</span></label>
+        <input type="text" x-model="form.code" placeholder="如：tech、marketing"
+          class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          :class="{ 'border-red-400': errors.code }">
+        <div x-show="errors.code" class="form-error" x-text="errors.code"></div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium mb-1.5">负责人</label>
+          <select x-model="form.leader"
+            class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+            <option value="">请选择负责人</option>
+            <option value="admin">admin</option>
+            <option value="zhangwei">张伟</option>
+            <option value="lihua">李华</option>
+            <option value="wangfang">王芳</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5">排序</label>
+          <input type="number" x-model="form.sort" placeholder="数字越小越靠前"
+            class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1.5">状态</label>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" x-model="form.status" value="启用" class="w-4 h-4 text-primary">
+            <span class="text-sm">启用</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" x-model="form.status" value="禁用" class="w-4 h-4 text-primary">
+            <span class="text-sm">禁用</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1.5">备注</label>
+        <textarea x-model="form.remark" rows="3" placeholder="请输入备注信息"
+          class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <a href="/pages/admin/dept.html" class="px-5 py-2.5 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm">取消</a>
+        <button type="submit" :disabled="submitting"
+          class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors text-sm flex items-center gap-2">
+          <svg x-show="submitting" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+          <span x-text="submitting ? '提交中...' : '提交'"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+Alpine.data('deptForm', () => ({
+  form: { parentId: '', name: '', code: '', leader: '', sort: 0, status: '启用', remark: '' },
+  errors: {},
+  submitting: false,
+
+  validate() {
+    this.errors = {}
+    if (!this.form.name.trim()) this.errors.name = '请输入部门名称'
+    if (!this.form.code.trim()) this.errors.code = '请输入部门编码'
+    return Object.keys(this.errors).length === 0
+  },
+
+  handleSubmit() {
+    if (!this.validate()) return
+    this.submitting = true
+    setTimeout(() => {
+      this.submitting = false
+      Alpine.notify.success('部门创建成功')
+      location.href = '/pages/admin/dept.html'
+    }, 600)
+  }
+}))
+  queueMicrotask(() => {
+    const el = document.getElementById("page-content")
+    if (el) { try { Alpine.destroyTree(el) } catch(e) {}; Alpine.initTree(el) }
+  })
+</script>
+</body>
+</html>

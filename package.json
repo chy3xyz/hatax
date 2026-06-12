@@ -29,7 +29,8 @@
   "dependencies": {
     "alpinejs": "^3.14.7",
     "echarts": "^6.1.0",
-    "htmx.org": "^1.9.12"
+    "htmx.org": "^1.9.12",
+    "viem": "^2.51.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",

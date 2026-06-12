@@ -1,0 +1,182 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>33buy - 产品</title></head>
+<body>
+<div id="page-content" x-data="productsPage" x-init="init()"
+  class="pt-14 pb-16 animate-fade-in">
+
+  <!-- ============================================ -->
+  <!-- Banner -->
+  <!-- ============================================ -->
+  <div class="px-4 pt-3">
+    <div class="w-full h-32 bg-gradient-to-br from-amber-400/20 via-primary/10 to-primary/5 rounded-2xl flex items-center justify-center">
+      <div class="text-center">
+        <h1 class="text-3xl font-extrabold gradient-text" x-text="$store.i18n.t('site.globalGoods')">全球尖货</h1>
+        <div class="text-gray-500 text-xs mt-1" x-text="$store.i18n.t('site.qualityGuarantee')">品质保证 · 货源稳定</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Announcement -->
+  <!-- ============================================ -->
+  <div class="px-4 mt-4">
+    <div class="glass-card px-4 py-3 flex items-center gap-2 rounded-2xl">
+      <span class="text-lg">📢</span>
+      <span class="text-sm text-primary/80 font-medium" x-text="$store.i18n.t('site.qualityDesc')">只推荐全球尖货，品质保证，货源稳定</span>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Product Grid -->
+  <!-- ============================================ -->
+  <div class="px-4 mt-4">
+    <div class="grid grid-cols-1 gap-3" x-show="products.length > 0">
+      <template x-for="p in products" :key="p.id">
+        <a :href="'/pages/site/product-detail.html?id=' + p.id" class="product-card block">
+          <div class="w-full h-48 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 flex items-center justify-center text-6xl">🌿</div>
+          <div class="p-4">
+            <div class="text-base font-bold truncate" x-text="p.name"></div>
+            <div class="text-xs text-gray-400 mt-1 truncate" x-text="p.supplierName || $store.i18n.t('site.supplier')"></div>
+            <div class="flex items-center justify-between mt-3">
+              <div class="gradient-text text-lg font-extrabold" x-text="formatPrice(p.price) + ' USDT'"></div>
+              <span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">查看详情</span>
+            </div>
+          </div>
+        </a>
+      </template>
+    </div>
+    <div x-show="products.length === 0" class="text-center text-gray-400 py-12 text-sm">
+      <div class="text-4xl mb-3">📦</div>
+      <div x-text="$store.i18n.t('site.noProducts')">暂无产品</div>
+      <div class="text-xs mt-1" x-text="$store.i18n.t('site.beSupplier')">点击右下角"我要上品"成为首批供应商</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Floating Button -->
+  <!-- ============================================ -->
+  <div class="fixed bottom-24 right-4 z-40 flex items-center gap-2" x-show="!listModalOpen">
+    <div class="glass-card text-xs px-3 py-1.5 rounded-full whitespace-nowrap" x-text="$store.i18n.t('site.listProduct')">我要上品</div>
+    <button @click="openListModal()"
+      class="w-14 h-14 glow-btn rounded-full flex items-center justify-center active:scale-95 shadow-lg">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+    </button>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- List Product Modal -->
+  <!-- ============================================ -->
+  <div x-cloak style="display:none" x-show="listModalOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="listModalOpen = false">
+    <div class="bg-void-card w-[calc(100%-2rem)] max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto" @click.stop="">
+      <div class="sticky top-0 bg-void-card border-b border-void-edge/40 px-4 py-3 flex items-center justify-between z-10">
+        <button @click="listModalOpen = false" class="p-1 -ml-1"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        <span class="font-semibold text-sm" x-text="$store.i18n.t('site.productListing')">产品上架</span>
+        <div class="w-6"></div>
+      </div>
+
+      <div class="p-4 space-y-3">
+        <div class="text-xs text-amber-400 bg-amber-900/20 rounded-lg px-3 py-2">
+          <span x-text="$store.i18n.t('site.entryFee') + ': 100,000 USDT · ' + $store.i18n.t('site.chainRegister') + ' · ' + $store.i18n.t('site.permanentListing')">入驻费: 100,000 USDT · 链上登记 · 永久上架</span>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500"><span x-text="$store.i18n.t('site.productName')">产品名称</span> *</label>
+          <input x-model="listForm.name" class="w-full px-3 py-2 border rounded-lg text-sm bg-gray-800 border-gray-600 mt-1">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500"><span x-text="$store.i18n.t('site.imageLink')">图片链接</span></label>
+          <input x-model="listForm.imageUrl" placeholder="https://..." class="w-full px-3 py-2 border rounded-lg text-sm bg-gray-800 border-gray-600 mt-1">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500"><span x-text="$store.i18n.t('site.description')">简介</span></label>
+          <textarea x-model="listForm.description" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm bg-gray-800 border-gray-600 mt-1"></textarea>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500"><span x-text="$store.i18n.t('site.price')">价格</span> (USDT) *</label>
+          <input x-model.number="listForm.price" type="number" class="w-full px-3 py-2 border rounded-lg text-sm bg-gray-800 border-gray-600 mt-1">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500"><span x-text="$store.i18n.t('site.supplierWallet')">供应商钱包</span> *</label>
+          <input x-model="listForm.supplierWallet" placeholder="0x..." class="w-full px-3 py-2 border rounded-lg text-sm font-mono bg-gray-800 border-gray-600 mt-1">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500"><span x-text="$store.i18n.t('site.supplierName')">供应商名称</span> *</label>
+          <input x-model="listForm.supplierName" class="w-full px-3 py-2 border rounded-lg text-sm bg-gray-800 border-gray-600 mt-1">
+        </div>
+
+        <button @click="doRegister()" :disabled="loading"
+          class="w-full py-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50">
+          <span x-show="!loading" x-text="$store.i18n.t('site.confirmList') + ' (100,000 USDT)'">确认上架 (100,000 USDT)</span>
+          <span x-show="loading" x-text="$store.i18n.t('site.processing')">处理中...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import '/main.js'
+    import { readContract, writeContract, approveToken, ADDRESSES, ERC20_ABI, PRODUCT_REGISTRY_ABI, formatEther } from '/web3/wallet.js'
+
+    Alpine.data('productsPage', () => ({
+      loading: false,
+      products: [],
+      listModalOpen: false,
+      listForm: { name:'', imageUrl:'', description:'', price:0, supplierWallet:'', supplierName:'' },
+
+      async init() {
+        await this.loadProducts()
+      },
+
+      async loadProducts() {
+        try {
+          const count = await readContract({ address: ADDRESSES.productRegistry, abi: PRODUCT_REGISTRY_ABI, functionName: 'productCount' })
+          const n = Number(count)
+          if (n > 0) {
+            const batch = await readContract({ address: ADDRESSES.productRegistry, abi: PRODUCT_REGISTRY_ABI, functionName: 'getProducts', args: [0, Math.min(n, 50)] })
+            this.products = Array.isArray(batch) ? batch.filter(p => p.active) : []
+          }
+        } catch(e) {
+          // Fallback demo products
+          this.products = [
+            { id:0, name:'养生茶礼盒', imageUrl:'', price:60e18, supplierName:'茶农世家', active:true },
+            { id:1, name:'智能健康手环', imageUrl:'', price:300e18, supplierName:'科技生活', active:true },
+            { id:2, name:'有机蜂蜜套装', imageUrl:'', price:450e18, supplierName:'甜蜜蜂场', active:true },
+            { id:3, name:'筋膜枪按摩器', imageUrl:'', price:600e18, supplierName:'运动康复', active:true },
+            { id:4, name:'高端空气净化器', imageUrl:'', price:1000e18, supplierName:'清新科技', active:true },
+          ]
+        }
+      },
+
+      openListModal() {
+        if (!Alpine.store('app').walletAddress) { Alpine.notify.warning(Alpine.store('i18n').t('site.pleaseConnectWallet')); return }
+        this.listModalOpen = true
+      },
+
+      async doRegister() {
+        const f = this.listForm
+        if (!f.name || !f.supplierWallet || !f.supplierName || !f.price) {
+          Alpine.notify.warning(Alpine.store('i18n').t('site.fillRequired')); return
+        }
+        this.loading = true
+        try {
+          await approveToken(ADDRESSES.usdt, ADDRESSES.productRegistry)
+          const hash = await writeContract({ address: ADDRESSES.productRegistry, abi: PRODUCT_REGISTRY_ABI, functionName: 'registerProduct',
+            args: [f.name, f.imageUrl, f.description, BigInt(Math.round(f.price * 1e18)), f.supplierWallet, f.supplierName] })
+          Alpine.notify.success(Alpine.store('i18n').t('site.listSuccess') + ': ' + hash.slice(0,10))
+          this.listModalOpen = false
+          this.listForm = { name:'', imageUrl:'', description:'', price:0, supplierWallet:'', supplierName:'' }
+          await this.loadProducts()
+        } catch(e) { Alpine.notify.error(e.message || Alpine.store('i18n').t('site.listFailed')) }
+        this.loading = false
+      },
+
+      formatPrice(v) {
+        if (!v) return '0'
+        const n = typeof v === 'bigint' ? Number(v) / 1e18 : Number(v) / 1e18
+        return n < 1000 ? n.toFixed(0) : n.toLocaleString('en-US', {maximumFractionDigits:0})
+      }
+    }))
+  </script>
+</div>
+</body>
+</html>

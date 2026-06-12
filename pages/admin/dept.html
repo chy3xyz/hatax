@@ -1,0 +1,74 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>部门管理</title>
+  
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto mb-4" aria-label="Breadcrumb">
+ <a href="/pages/admin/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+ </nav>
+
+ <div class="flex justify-between items-center mb-4">
+ <h1 class="text-2xl font-bold">部门管理</h1>
+ <div class="flex items-center gap-2">
+ <button onclick="expandAll()" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+ 展开全部
+ </button>
+ <button onclick="collapseAll()" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+ 折叠全部
+ </button>
+ <button onclick="openAddDept(null)" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+ 新增部门
+ </button>
+ </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+ <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+ <span class="text-sm text-gray-500">点击展开行查看子部门，拖拽可调整排序</span>
+ </div>
+ <div class="overflow-x-auto">
+ <table class="w-full text-left">
+ <thead class="bg-gray-50 dark:bg-gray-800 text-sm">
+ <tr class="border-b border-gray-200 dark:border-gray-700">
+ <th class="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 w-16">展开</th>
+ <th class="px-4 py-3 font-medium text-gray-500 dark:text-gray-400">部门名称</th>
+ <th class="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 w-24 text-center">排序</th>
+ <th class="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 w-24 text-center">状态</th>
+ <th class="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 w-48 text-right">操作</th>
+ </tr>
+ </thead>
+ <tbody id="dept-tree-container" hx-get="/mock-api/dept/list.html" hx-trigger="load" hx-swap="innerHTML" class="divide-y divide-gray-100 dark:divide-gray-800 text-sm"><tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">加载中...</td></tr></tbody>
+ </table>
+ </div>
+ <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between">
+ <span class="text-sm text-gray-500">共 5 个一级部门，13 个部门</span>
+ <button onclick="Alpine.notify.success('部门结构已保存')" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">保存修改</button>
+ </div>
+ </div>
+</div>
+
+</body>
+</html>

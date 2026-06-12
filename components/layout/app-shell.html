@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html x-data="{}" :class="{ 'dark': $store.app.dark, 'sidebar-open': $store.app.sidebarOpen }">
+<html :class="{ 'dark': $store.app.dark, 'sidebar-open': $store.app.sidebarOpen }">
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -102,9 +102,17 @@
  </div>
 
  <!-- Language -->
- <button @click="$store.i18n.toggleLocale()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-xs font-bold" :title="$store.i18n.locale === 'zh' ? 'Switch to English' : '切换到中文'">
-  <span x-text="$store.i18n.locale === 'zh' ? 'EN' : '中'"></span>
- </button>
+ <div class="relative" x-data="{ open: false }">
+  <button @click.stop="open = !open" class="px-3 py-2.5 min-w-[44px] min-h-[44px] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-xs font-bold flex items-center justify-center gap-1">
+   <span x-text="$store.i18n.locale === 'zh' ? '中' : $store.i18n.locale === 'zh-TW' ? '繁' : $store.i18n.locale === 'en' ? 'EN' : $store.i18n.locale.toUpperCase().slice(0,2)"></span>
+   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+  </button>
+  <div x-cloak style="display:none" x-show="open" @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-36 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-1 z-50 max-h-64 overflow-y-auto">
+   <template x-for="l in $store.i18n.locales" :key="l">
+    <button @click="$store.i18n.setLocale(l); open = false" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :class="$store.i18n.locale === l ? 'text-primary font-semibold bg-primary/5' : ''" x-text="$store.i18n.localeLabels[l]"></button>
+   </template>
+  </div>
+ </div>
 
  <!-- Settings -->
  <button @click="$store.app.settingOpen = true" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" :title="$store.i18n.t('header.settings')">
@@ -165,6 +173,47 @@
  </div>
  </div>
 
+ <!-- Chain Selector -->
+ <div class="relative" x-data="{ open: false }">
+  <button @click.stop="open = !open" class="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
+   <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+   <span x-text="$store.app.currentChainName">BSC Mainnet</span>
+   <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+  </button>
+  <div x-cloak style="display:none" x-show="open" @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-1 z-50">
+   <button @click="$store.app.switchToChain('bsc'); open = false" class="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :class="$store.app.currentChainName === 'BSC Mainnet' ? 'text-primary font-medium' : ''">
+    <span class="w-2 h-2 bg-green-500 rounded-full"></span> BSC Mainnet
+   </button>
+   <button @click="$store.app.switchToChain('hardhat'); open = false" class="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :class="$store.app.currentChainName === 'Hardhat Local' ? 'text-primary font-medium' : ''">
+    <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> Hardhat Local
+   </button>
+   <button @click="$store.app.switchToChain('local'); open = false" class="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" :class="$store.app.currentChainName === 'Local EVM' ? 'text-primary font-medium' : ''">
+    <span class="w-2 h-2 bg-gray-500 rounded-full"></span> Local EVM
+   </button>
+  </div>
+ </div>
+
+ <!-- Wallet -->
+ <div>
+  <button x-show="!$store.app.walletAddress" @click="$store.app.connectWallet()" :disabled="$store.app.walletConnecting" class="px-4 py-2.5 min-h-[44px] bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-medium transition-colors disabled:opacity-50">
+   <span x-show="!$store.app.walletConnecting">连接钱包</span>
+   <span x-show="$store.app.walletConnecting">连接中...</span>
+  </button>
+  <div x-show="$store.app.walletAddress" class="relative" x-data="{ open: false }">
+   <button @click.stop="open = !open" class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors">
+    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+    <span class="text-xs font-mono" x-text="$store.app.walletAddress ? $store.app.walletAddress.slice(0,6)+'...'+$store.app.walletAddress.slice(-4) : ''"></span>
+   </button>
+   <div x-cloak style="display:none" x-show="open" @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-1 z-50">
+    <div class="px-4 py-2 text-xs text-gray-500 border-b border-gray-200 dark:border-gray-700 font-mono break-all" x-text="$store.app.walletAddress"></div>
+    <button @click="$store.app.disconnectWallet(); open = false" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+     断开钱包
+    </button>
+   </div>
+  </div>
+ </div>
+
  <!-- User Menu -->
  <div class="relative" x-data="{ open: false }">
  <button @click.stop="open = !open" class="flex items-center gap-2 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
@@ -182,7 +231,7 @@
  账号设置
  </a>
  <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
- <button onclick="sessionStorage.removeItem('hatax_token');location.href='/pages/login.html'" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+ <button onclick="sessionStorage.removeItem('hatax_token');location.href='/pages/admin/login.html'" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
  退出登录
  </button>
@@ -350,7 +399,7 @@
 
  __PAGE_CONTENT__<div class="fixed bottom-0 left-0 right-0 h-8 border-t border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 flex items-center justify-between px-4 text-xs text-gray-400 transition-all duration-300"
  :class="$store.app.sidebarOpen ? 'lg:left-64' : 'lg:left-0'">
- <span x-text="$store.i18n.t('footer.copyright')">HatTax Admin © 2024</span>
+ <span x-text="$store.i18n.t('footer.copyright')">33buy © 2025</span>
  <div class="flex items-center gap-3">
  <span x-text="$store.i18n.t('footer.style')">Vben Admin Style</span>
  <span>|</span>

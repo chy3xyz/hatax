@@ -1,0 +1,92 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>我的团队</title></head>
+<body>
+<div id="page-content" x-data="friendsPage" x-init="init()"
+  class="pt-24 pb-8 px-4 max-w-lg mx-auto animate-fade-in">
+
+  <h1 class="text-2xl font-bold text-center mb-6">我的团队</h1>
+
+  <!-- Not connected -->
+  <div x-show="!address" class="bg-white dark:bg-gray-900 rounded-2xl border p-8 text-center">
+    <button @click="connect()" class="px-6 py-3 bg-primary text-white rounded-xl font-bold">连接 MetaMask</button>
+  </div>
+
+  <div x-show="address" class="space-y-4">
+
+    <!-- Invite -->
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border p-4">
+      <h3 class="font-semibold mb-2">邀请链接</h3>
+      <div class="flex gap-2">
+        <input :value="inviteUrl" readonly class="flex-1 px-3 py-2 border rounded-lg text-xs font-mono bg-gray-50 dark:bg-gray-800 dark:border-gray-600">
+        <button @click="copy(inviteUrl)" class="px-4 py-2 bg-primary text-white rounded-lg text-sm">复制</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border p-4 text-center">
+        <div class="text-2xl font-bold text-primary" x-text="stats.teamNum"></div>
+        <div class="text-xs text-gray-500 mt-1">团队人数</div>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border p-4 text-center">
+        <div class="text-2xl font-bold text-green-500" x-text="stats.subNum"></div>
+        <div class="text-xs text-gray-500 mt-1">直推人数</div>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border p-4 text-center">
+        <div class="text-2xl font-bold text-amber-500" x-text="stats.amount"></div>
+        <div class="text-xs text-gray-500 mt-1">个人业绩</div>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border p-4 text-center">
+        <div class="text-2xl font-bold text-amber-500" x-text="stats.teamAmount"></div>
+        <div class="text-xs text-gray-500 mt-1">团队业绩</div>
+      </div>
+    </div>
+
+    <!-- Direct subs -->
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border p-4">
+      <h3 class="font-semibold mb-3">直推列表 (<span x-text="subs.length"></span>)</h3>
+      <div x-show="subs.length===0" class="text-sm text-gray-400 text-center py-4">暂无直推</div>
+      <template x-for="(s,i) in subs" :key="i">
+        <div class="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0 text-sm">
+          <span class="font-mono text-xs text-gray-500" x-text="s.addr?.slice(0,8)+'...'+s.addr?.slice(-6)"></span>
+          <span class="text-xs" x-text="s.grade+'★ | '+s.amount+' USDT | 团'+s.teamNum+'人'"></span>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <script type="module">
+    import '/main.js'
+    import { readContract, ADDRESSES, TRIDAO_ABI, formatEther } from '/web3/wallet.js'
+    Alpine.data('friendsPage', () => ({
+      get address() { return Alpine.store('app').walletAddress },
+      stats: { teamNum:0, subNum:0, amount:'0', teamAmount:'0' },
+      subs: [],
+      get inviteUrl() { return location.origin + '/?ref=' + this.address },
+      async init() { if (this.address) await this.loadAll() },
+      async connect() { try { await Alpine.store('app').connectWallet(); await this.loadAll() } catch(e){ Alpine.notify.error(e.message) } },
+      async loadAll() {
+        if (!this.address) return
+        const u = await readContract({ address:ADDRESSES.triDao, abi:TRIDAO_ABI, functionName:'userMap', args:[this.address] })
+        this.stats = { teamNum:Number(u[2]), subNum:Number(u[3]), amount:Number(formatEther(u[4])).toLocaleString(), teamAmount:Number(formatEther(u[5])).toLocaleString() }
+        const list = await readContract({ address:ADDRESSES.triDao, abi:TRIDAO_ABI, functionName:'getSubordinates', args:[this.address] })
+        this.subs = await Promise.all(list.map(async a => {
+          try { const su = await readContract({ address:ADDRESSES.triDao, abi:TRIDAO_ABI, functionName:'userMap', args:[a] }); return { addr:a, grade:Number(su[6]), amount:Number(formatEther(su[4])).toFixed(0), teamNum:Number(su[2]) } }
+          catch(e) { return { addr:a, grade:0, amount:'0', teamNum:0 } }
+        }))
+      },
+      async copy(t) {
+        const ok = await Alpine.copyText(t)
+        Alpine.notify.success(ok ? '已复制' : '复制失败')
+      }
+    }))
+    queueMicrotask(() => {
+      const el = document.getElementById("page-content")
+      if (el) { try { Alpine.destroyTree(el) } catch(e) {}; Alpine.initTree(el) }
+    })
+  Alpine.start()
+</script>
+</div>
+</body>
+</html>

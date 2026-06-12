@@ -45,7 +45,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` — redirects to dashboard.
+Open `http://localhost:3034` — redirects to dashboard.
 
 **Test credentials**: `admin` / `123456` (demo only; replace with real auth in production).
 

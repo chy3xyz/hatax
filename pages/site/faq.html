@@ -1,0 +1,56 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>33buy - FAQ</title></head>
+<body>
+<div id="page-content" x-data="faqPage" x-init="init()" class="pt-14 pb-24 px-4 animate-fade-in">
+  <!-- Header -->
+  <div class="fixed top-0 left-0 right-0 z-40 bg-void-card/80 backdrop-blur-xl border-b border-void-edge/40">
+    <div class="max-w-lg mx-auto h-14 flex items-center justify-between px-4">
+      <h1 class="text-lg font-bold" x-text="$store.i18n.t('faq.title')">常见问题</h1>
+      <div class="w-8"></div>
+    </div>
+  </div>
+
+  <!-- FAQ List -->
+  <div class="mt-4 space-y-3">
+    <template x-for="(item, idx) in items" :key="idx">
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <button @click="toggle(idx)" class="w-full flex items-center justify-between p-4 text-left">
+          <div class="flex items-center gap-3 pr-4">
+            <span class="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0" x-text="idx + 1"></span>
+            <span class="text-sm font-semibold text-gray-100" x-text="item.q"></span>
+          </div>
+          <svg class="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-300" :class="openIdx === idx ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        <div x-show="openIdx === idx" x-transition.opacity.duration.200ms class="px-4 pb-4">
+          <div class="pl-9 text-sm text-gray-500 leading-relaxed" x-text="item.a"></div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+
+<script type="module">
+  import Alpine from 'alpinejs'
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('faqPage', () => ({
+      openIdx: 0,
+      items: [],
+      init() {
+        this.loadItems()
+        this.$watch('$store.i18n.locale', () => this.loadItems())
+      },
+      loadItems() {
+        this.items = Array.from({ length: 10 }, (_, i) => ({
+          q: Alpine.store('i18n').t(`faq.q${i + 1}`),
+          a: Alpine.store('i18n').t(`faq.a${i + 1}`),
+        }))
+      },
+      toggle(idx) {
+        this.openIdx = this.openIdx === idx ? -1 : idx
+      },
+    }))
+  })
+</script>
+</body>
+</html>

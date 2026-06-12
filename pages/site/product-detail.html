@@ -1,0 +1,279 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>33buy - 产品详情</title></head>
+<body>
+<div id="page-content" x-data="productDetailPage" x-init="init()" class="pt-14 pb-16 animate-fade-in">
+
+  <!-- Header -->
+  <div class="fixed top-0 left-0 right-0 z-40 bg-void-card/80 backdrop-blur-xl border-b border-void-edge/40">
+    <div class="max-w-lg mx-auto h-14 flex items-center justify-between px-4">
+      <a href="/pages/site/products.html" class="flex items-center gap-1 text-gray-500 hover:text-gray-300">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+      </a>
+      <h1 class="text-base font-bold" x-text="$store.i18n.t('product.detail')">产品详情</h1>
+      <div class="w-5"></div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div x-show="loading" class="flex items-center justify-center min-h-[50vh] px-4">
+    <div class="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+  </div>
+
+  <!-- Product Detail -->
+  <div x-show="!loading && product" class="px-4 space-y-4">
+
+    <!-- Image -->
+    <div class="w-full h-56 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 rounded-2xl flex items-center justify-center overflow-hidden mt-2">
+      <img x-show="product.imageUrl" :src="product.imageUrl" class="w-full h-full object-cover" @error="product.imageUrl = ''">
+      <span x-show="!product.imageUrl" class="text-6xl">🌿</span>
+    </div>
+
+    <!-- Basic Info -->
+    <div class="glass-card p-4">
+      <h2 class="text-lg font-bold text-gray-100" x-text="product.name"></h2>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="text-xs text-gray-400" x-text="product.supplierName || $store.i18n.t('site.supplier')"></span>
+      </div>
+      <div class="flex items-center justify-between mt-4">
+        <div class="gradient-text text-2xl font-extrabold" x-text="formatPrice(product.price) + ' USDT'"></div>
+        <button @click="buy()" class="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-sm active:scale-95 transition-transform" x-text="$store.i18n.t('product.upgradeToGet')">立即升级获取</button>
+      </div>
+    </div>
+
+    <!-- Specs -->
+    <div class="glass-card p-4">
+      <h3 class="text-sm font-bold mb-3 text-gray-100" x-text="$store.i18n.t('product.detailInfo')">详细信息</h3>
+      <div class="space-y-0">
+        <template x-for="row in specRows" :key="row.key">
+          <div class="flex items-center justify-between py-2.5 border-b border-void-edge/30 last:border-0">
+            <span class="text-xs text-gray-400 flex-shrink-0" x-text="row.label"></span>
+            <span class="text-sm font-medium text-gray-100 text-right ml-4" x-text="row.value"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="glass-card p-4" x-show="product.description && !product.name.includes('二氢槲皮素')">
+      <h3 class="text-sm font-bold mb-2 text-gray-100" x-text="$store.i18n.t('product.description')">产品描述</h3>
+      <p class="text-xs text-gray-500 leading-relaxed" x-text="product.description"></p>
+    </div>
+
+    <!-- Marketing Content for 二氢槲皮素 -->
+    <div x-show="product.name.includes('二氢槲皮素')" class="space-y-4">
+      <!-- Hero Card -->
+      <div class="glass-card p-5 crimson-glow">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-lg">🔥</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">肺部养护</span>
+        </div>
+        <h3 class="text-lg font-bold text-white leading-snug">你的肺部，需要这样一位「硬核守护者」</h3>
+        <p class="text-sm font-medium gradient-text mt-1">鹊慈堂二氢槲皮素 | 俄罗斯进口原料・99% 高纯萃取</p>
+        <p class="text-xs text-gray-400 mt-3 leading-relaxed">专为长期用嗓、粉尘环境、烟民及呼吸不适人群打造的天然肺部清道夫</p>
+      </div>
+
+      <!-- Core Selling Points -->
+      <div class="glass-card p-4">
+        <h3 class="text-sm font-bold text-gray-100 mb-3 flex items-center gap-2"><span>✨</span> 核心卖点</h3>
+        <div class="space-y-3">
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-sm">🇷🇺</div>
+            <div>
+              <div class="text-sm font-semibold text-gray-100">99% 俄罗斯进口高纯原料</div>
+              <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">甄选俄罗斯西伯利亚落叶松原料，专利工艺萃取，原料纯度高达 99%，活性成分更纯粹。</p>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-sm">🌿</div>
+            <div>
+              <div class="text-sm font-semibold text-gray-100">天然草本萃取，温和养护</div>
+              <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">植物来源的黄酮类活性成分，区别于化学合成制剂，不刺激肠胃，长期饮用也安心。</p>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-sm">🛡️</div>
+            <div>
+              <div class="text-sm font-semibold text-gray-100">全链路守护呼吸</div>
+              <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">不止清除肺部沉积杂质，更能帮助减轻氧化损伤、舒缓呼吸不适，告别晨起痰多、干咳、胸闷。</p>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary text-sm">☕</div>
+            <div>
+              <div class="text-sm font-semibold text-gray-100">固体饮料剂型，便携易存</div>
+              <p class="text-xs text-gray-400 mt-0.5 leading-relaxed">独立分装 / 易溶粉末设计，温水冲泡即饮，随时随地都能喝，把肺部养护融入每一天。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Why Need It -->
+      <div class="glass-card p-4">
+        <h3 class="text-sm font-bold text-gray-100 mb-3 flex items-center gap-2"><span>🫁</span> 为什么说，你的肺部急需二氢槲皮素？</h3>
+        <p class="text-xs text-gray-400 leading-relaxed mb-3">长期吸烟、二手烟、厨房油烟、粉尘环境、熬夜、雾霾、长期用嗓… 这些都在悄悄伤害你的肺部：</p>
+        <div class="grid grid-cols-2 gap-2 mb-3">
+          <div class="bg-void-edge/30 rounded-lg px-3 py-2 text-xs text-gray-300">晨起喉咙干痒、咳嗽痰多</div>
+          <div class="bg-void-edge/30 rounded-lg px-3 py-2 text-xs text-gray-300">运动后胸闷气短、呼吸不畅</div>
+          <div class="bg-void-edge/30 rounded-lg px-3 py-2 text-xs text-gray-300">换季 / 感冒后咳嗽反复难愈</div>
+          <div class="bg-void-edge/30 rounded-lg px-3 py-2 text-xs text-gray-300">长期吸烟 / 接触油烟，肺部负担重</div>
+        </div>
+        <p class="text-xs text-gray-400 leading-relaxed mb-2">而二氢槲皮素，凭借天然抗氧化与抗炎活性，成为全球公认的「肺部友好型成分」，帮助：</p>
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2 text-xs text-gray-300"><span class="text-green-500">✅</span> 清除肺部自由基，减轻氧化损伤</div>
+          <div class="flex items-center gap-2 text-xs text-gray-300"><span class="text-green-500">✅</span> 舒缓呼吸道炎症，缓解干痒咳嗽</div>
+          <div class="flex items-center gap-2 text-xs text-gray-300"><span class="text-green-500">✅</span> 改善肺部微循环，提升呼吸舒适度</div>
+          <div class="flex items-center gap-2 text-xs text-gray-300"><span class="text-green-500">✅</span> 辅助减轻吸烟 / 油烟带来的肺部负担</div>
+        </div>
+      </div>
+
+      <!-- Brand Trust -->
+      <div class="glass-card p-4">
+        <h3 class="text-sm font-bold text-gray-100 mb-3 flex items-center gap-2"><span>🌿</span> 关于鹊慈堂・品质背书看得见</h3>
+        <div class="space-y-2">
+          <div class="flex items-start gap-2 text-xs text-gray-300"><span class="text-primary font-bold">【原料溯源】</span><span class="text-gray-400">俄罗斯进口原料，严选高活性落叶松，源头把控品质</span></div>
+          <div class="flex items-start gap-2 text-xs text-gray-300"><span class="text-primary font-bold">【工艺保障】</span><span class="text-gray-400">科学萃取技术，保留高纯度活性成分，拒绝杂质</span></div>
+          <div class="flex items-start gap-2 text-xs text-gray-300"><span class="text-primary font-bold">【合规安心】</span><span class="text-gray-400">固体饮料合规剂型，标注清晰，不夸大宣传，饮用更放心</span></div>
+          <div class="flex items-start gap-2 text-xs text-gray-300"><span class="text-primary font-bold">【品牌理念】</span><span class="text-gray-400">以天然草本之力，为国人的呼吸健康保驾护航</span></div>
+        </div>
+      </div>
+
+      <!-- Target Audience -->
+      <div class="glass-card p-4">
+        <h3 class="text-sm font-bold text-gray-100 mb-3 flex items-center gap-2"><span>💬</span> 谁更需要这款肺部守护者？</h3>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">烟民 / 二手烟人群</span>
+          <span class="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">厨房油烟环境</span>
+          <span class="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">粉尘 / 雾霾环境工作者</span>
+          <span class="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">教师 / 主播 / 销售</span>
+          <span class="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">呼吸道敏感人群</span>
+          <span class="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs">中老年人</span>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="glass-card p-4 border-l-4 border-l-yellow-600/60">
+        <h3 class="text-xs font-bold text-yellow-500 mb-2 flex items-center gap-2"><span>📌</span> 温馨提示</h3>
+        <p class="text-xs text-gray-500 leading-relaxed">本品为固体饮料，不能代替特殊医学用途配方食品、婴幼儿配方食品、保健食品等特殊食品，请理性看待产品功效，保持良好生活习惯。</p>
+      </div>
+    </div>
+
+    <!-- Spacer -->
+    <div class="h-4"></div>
+  </div>
+
+  <!-- Not Found -->
+  <div x-show="!loading && !product" class="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center">
+    <div class="text-5xl mb-4">🌿</div>
+    <p class="text-gray-400 text-sm" x-text="$store.i18n.t('site.noProducts')">暂无产品</p>
+    <a href="/pages/site/products.html" class="mt-6 px-8 py-3 bg-primary text-white rounded-xl text-sm font-bold" x-text="$store.i18n.t('product.back')">返回产品列表</a>
+  </div>
+
+  <script type="module">
+    import '/main.js'
+    import { readContract, ADDRESSES, PRODUCT_REGISTRY_ABI, formatEther } from '/web3/wallet.js'
+
+    Alpine.data('productDetailPage', () => ({
+      loading: true,
+      product: null,
+      productId: null,
+
+      async init() {
+        const params = new URLSearchParams(location.search)
+        this.productId = params.get('id')
+        if (!this.productId) {
+          this.loading = false
+          return
+        }
+        try {
+          const p = await readContract({
+            address: ADDRESSES.productRegistry,
+            abi: PRODUCT_REGISTRY_ABI,
+            functionName: 'getProduct',
+            args: [BigInt(this.productId)]
+          })
+          this.product = {
+            id: Number(p[0]),
+            name: p[1],
+            imageUrl: p[2],
+            description: p[3],
+            price: Number(formatEther(p[4])),
+            supplierWallet: p[5],
+            supplierName: p[6],
+            active: p[7],
+          }
+        } catch(e) {
+          console.error('loadProduct:', e)
+          // Fallback demo data matching user skeleton
+          this.product = {
+            id: Number(this.productId),
+            name: '鹊慈堂二氢槲皮素',
+            imageUrl: '',
+            description: '俄罗斯进口原料・99% 高纯萃取，天然肺部清道夫',
+            price: 60,
+            supplierWallet: '',
+            supplierName: '鹊慈堂',
+            active: true,
+            details: {
+              brand: '鹊慈堂',
+              category: '固体饮料',
+              usage: '保健',
+              nutrient: '生物素',
+              ingredients: '详细咨询客服',
+              storageCondition: '常温',
+              origin: '河南',
+              imported: false,
+              shelfLife: '24个月',
+              netContent: '60克',
+              type: '固体饮料',
+              targetAudience: '详细咨询客服',
+              productionDate: '2025.5.10',
+              storageMethod: '详细咨询客服',
+              notSuitable: '详细咨询客服',
+            }
+          }
+        }
+        this.loading = false
+      },
+
+      get specRows() {
+        if (!this.product) return []
+        const i18n = Alpine.store('i18n')
+        const d = this.product.details || {}
+        const rows = []
+        if (d.brand || this.product.supplierName) rows.push({ key:'brand', label:i18n.t('product.brand'), value:d.brand || this.product.supplierName })
+        if (d.category) rows.push({ key:'category', label:i18n.t('product.category'), value:d.category })
+        if (d.usage) rows.push({ key:'usage', label:i18n.t('product.usage'), value:d.usage })
+        if (d.nutrient) rows.push({ key:'nutrient', label:i18n.t('product.nutrient'), value:d.nutrient })
+        if (d.ingredients) rows.push({ key:'ingredients', label:i18n.t('product.ingredients'), value:d.ingredients })
+        if (d.storageCondition) rows.push({ key:'storageCondition', label:i18n.t('product.storageCondition'), value:d.storageCondition })
+        if (d.origin) rows.push({ key:'origin', label:i18n.t('product.origin'), value:d.origin })
+        if (d.imported !== undefined) rows.push({ key:'imported', label:i18n.t('product.imported'), value:d.imported ? i18n.t('product.yes') : i18n.t('product.no') })
+        if (d.shelfLife) rows.push({ key:'shelfLife', label:i18n.t('product.shelfLife'), value:d.shelfLife })
+        if (d.netContent) rows.push({ key:'netContent', label:i18n.t('product.netContent'), value:d.netContent })
+        if (d.type) rows.push({ key:'type', label:i18n.t('product.type'), value:d.type })
+        if (d.targetAudience) rows.push({ key:'targetAudience', label:i18n.t('product.targetAudience'), value:d.targetAudience })
+        if (d.productionDate) rows.push({ key:'productionDate', label:i18n.t('product.productionDate'), value:d.productionDate })
+        if (d.storageMethod) rows.push({ key:'storageMethod', label:i18n.t('product.storageMethod'), value:d.storageMethod })
+        if (d.notSuitable) rows.push({ key:'notSuitable', label:i18n.t('product.notSuitable'), value:d.notSuitable })
+        // Fallback: if no details, show basic description
+        if (rows.length === 0 && this.product.description) {
+          rows.push({ key:'desc', label:i18n.t('product.description'), value:this.product.description })
+        }
+        return rows
+      },
+
+      formatPrice(v) {
+        if (!v) return '0'
+        return Number(v).toLocaleString('en-US', {maximumFractionDigits: 0})
+      },
+
+      buy() {
+        // Products are only available through the star-upgrade flow
+        location.href = '/pages/site/index.html?upgrade=1'
+      }
+    }))
+  </script>
+</div>
+</body>
+</html>

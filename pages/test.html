@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Debug</title></head>
+<body>
+<div id="page-content" x-data="debug">
+  <h1>Debug Page</h1>
+  <div x-text="'Store exists: ' + !!Alpine.store('app')"></div>
+  <div x-text="'Wallet: ' + (Alpine.store('app').walletAddress || 'none')"></div>
+  <div x-text="'Menu groups: ' + Alpine.store('app').menuGroups.length"></div>
+  <template x-for="g in Alpine.store('app').menuGroups" :key="g.title">
+    <div>
+      <strong x-text="g.title"></strong>
+      <template x-for="i in g.items" :key="i.name">
+        <div style="margin-left:20px" x-text="' - ' + i.title + ' (' + i.path + ')'"></div>
+      </template>
+    </div>
+  </template>
+</div>
+<script type="module" src="/main.js"></script>
+<script type="module">
+  Alpine.data('debug', () => ({
+    init() { console.log('debug init') }
+  }))
+  queueMicrotask(() => {
+    const el = document.getElementById('page-content')
+    if (el) Alpine.initTree(el)
+  })
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>高级表单</title>
+  
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto" aria-label="Breadcrumb">
+ <a href="/pages/admin/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+</nav>
+
+
+ <div class="flex justify-between items-center mb-6">
+ <h1 class="text-2xl font-bold">高级表单</h1>
+ </div>
+
+ <div class="space-y-6">
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+ <h3 class="font-semibold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">仓库信息</h3>
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+ <div>
+ <label class="block text-sm font-medium mb-1.5">仓库名称 <span class="text-red-500">*</span></label>
+ <input type="text" placeholder="仓库名称" class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">仓库域名</label>
+ <div class="flex">
+ <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-500 text-sm">https://</span>
+ <input type="text" placeholder="your-domain.com" class="flex-1 px-4 py-2.5 border rounded-r-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">管理员</label>
+ <input type="text" placeholder="管理员名称" class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">审批人</label>
+ <input type="text" placeholder="审批人名称" class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">生效日期</label>
+ <input type="date" class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">仓库类型</label>
+ <select class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600">
+ <option>私有</option>
+ <option>公开</option>
+ </select>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+ <h3 class="font-semibold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">定时任务配置</h3>
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+ <div>
+ <label class="block text-sm font-medium mb-1.5">任务类型</label>
+ <select class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600">
+ <option>一次性任务</option>
+ <option>周期任务</option>
+ <option>Cron任务</option>
+ </select>
+ </div>
+ <div>
+ <label class="block text-sm font-medium mb-1.5">执行表达式</label>
+ <input type="text" placeholder="0/5 * * * *" class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ </div>
+ <div class="md:col-span-2">
+ <label class="block text-sm font-medium mb-1.5">调用参数</label>
+ <textarea rows="3" placeholder="JSON格式参数" class="w-full px-4 py-2.5 border rounded-lg dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none font-mono text-sm"></textarea>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+ <h3 class="font-semibold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">通知人配置</h3>
+ <div class="space-y-3">
+ <div class="flex items-center justify-between p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+ <div class="flex items-center gap-3">
+ <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">李</div>
+ <div>
+ <div class="text-sm font-medium">李明</div>
+ <div class="text-xs text-gray-500">liming@example.com</div>
+ </div>
+ </div>
+ <div class="flex gap-2">
+ <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">站内信</span>
+ <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">邮件</span>
+ <button class="text-red-500 hover:text-red-700 text-sm">移除</button>
+ </div>
+ </div>
+ <div class="flex items-center justify-between p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+ <div class="flex items-center gap-3">
+ <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-medium">王</div>
+ <div>
+ <div class="text-sm font-medium">王芳</div>
+ <div class="text-xs text-gray-500">wangfang@example.com</div>
+ </div>
+ </div>
+ <div class="flex gap-2">
+ <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">站内信</span>
+ <span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">短信</span>
+ <button class="text-red-500 hover:text-red-700 text-sm">移除</button>
+ </div>
+ </div>
+ <button class="w-full py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors">+ 添加通知人</button>
+ </div>
+ </div>
+
+ <div class="flex justify-end gap-3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+ <button onclick="history.back()" class="px-6 py-2.5 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">取消</button>
+ <button onclick="Alpine.message.success('提交成功！')" class="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">提交</button>
+ </div>
+ </div>
+ </div>
+
+</body>
+</html>

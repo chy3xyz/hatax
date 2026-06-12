@@ -2,35 +2,45 @@ import fs from 'fs'
 import path from 'path'
 
 /**
- * Vite plugin that wraps page HTML with a shared app shell layout.
- * Pages opt-in by including `<!-- layout: app-shell -->` at the top.
- *
- * The page file should be a valid HTML document containing:
- *   - <head> with <title> and optional extra tags
- *   - <body> with the page-specific content (typically <div id="page-content">...)
- *
- * The plugin extracts the title, extra head content, and body content,
- * then injects them into components/layout/app-shell.html.
+ * Vite plugin that wraps page HTML with a shared shell layout.
+ * Pages opt-in by including a layout directive at the top:
+ *   <!-- layout: app-shell -->   → admin shell (sidebar + header)
+ *   <!-- layout: site-shell -->  → site shell (bottom nav + mobile header)
  */
 export default function layoutPlugin() {
-  const shellPath = path.resolve(process.cwd(), 'components/layout/app-shell.html')
-  let shellHtml = ''
+  const baseDir = process.cwd()
+  let adminShell = ''
+  let siteShell = ''
 
   return {
     name: 'vite-plugin-layout',
     buildStart() {
-      if (fs.existsSync(shellPath)) {
-        shellHtml = fs.readFileSync(shellPath, 'utf-8')
-      }
+      const adminPath = path.resolve(baseDir, 'components/layout/app-shell.html')
+      const sitePath = path.resolve(baseDir, 'components/layout/site-shell.html')
+      if (fs.existsSync(adminPath)) adminShell = fs.readFileSync(adminPath, 'utf-8')
+      if (fs.existsSync(sitePath)) siteShell = fs.readFileSync(sitePath, 'utf-8')
     },
     transformIndexHtml(html, ctx) {
-      // Only process pages that opt-in
-      if (!html.trimStart().startsWith('<!-- layout: app-shell -->')) {
+      // Always re-read shell in dev mode so HMR works for layout changes
+      if (process.env.NODE_ENV !== 'production') {
+        const adminPath = path.resolve(baseDir, 'components/layout/app-shell.html')
+        const sitePath = path.resolve(baseDir, 'components/layout/site-shell.html')
+        if (fs.existsSync(adminPath)) adminShell = fs.readFileSync(adminPath, 'utf-8')
+        if (fs.existsSync(sitePath)) siteShell = fs.readFileSync(sitePath, 'utf-8')
+      }
+      const trimmed = html.trimStart()
+      let shellHtml
+
+      if (trimmed.startsWith('<!-- layout: app-shell -->')) {
+        shellHtml = adminShell
+      } else if (trimmed.startsWith('<!-- layout: site-shell -->')) {
+        shellHtml = siteShell
+      } else {
         return html
       }
 
       if (!shellHtml) {
-        console.warn('[layout] app-shell.html not found, skipping layout injection')
+        console.warn('[layout] shell template not found, skipping')
         return html
       }
 
