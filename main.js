@@ -1,6 +1,8 @@
 import './style.css'
 import Alpine from 'alpinejs'
 import htmx from 'htmx.org'
+import { getAddress, connectWallet, disconnectWallet, switchChain, getCurrentChain, syncChainFromWallet, getChainDisplayName } from './web3/wallet.js'
+import { addressBook } from './components/site/address-book.js'
 window.htmx = htmx
 
 htmx.config.historyEnabled = false
@@ -43,75 +45,10 @@ Alpine.storage = {
 }
 
 // ========== I18N ==========
-const I18N_MESSAGES = {
-  zh: {
-    app: { title: 'HatTax 管理后台', search: '搜索菜单...', dark: '暗黑模式', light: '浅色模式' },
-    menu: {
-      main: '主菜单', system: '系统管理', audit: '日志审计', form: '表单页', list: '列表页', personal: '个人页', other: '其他',
-      dashboard: '首页', user: '用户管理', role: '角色权限', menu: '菜单管理', dept: '部门管理', dict: '字典管理',
-      loginLog: '登录日志', opLog: '操作日志', formBasic: '基础表单', formAdvanced: '高级表单',
-      tableList: '表格列表', profile: '个人中心', aiChat: 'AI 助手', about: '关于',
-    },
-    header: { themeColor: '主题颜色', themeColors: '切换主题色', fullscreen: '全屏', notifications: '通知中心', markAllRead: '全部已读', viewAll: '查看全部通知', settings: '界面设置', account: '账号设置', logout: '退出登录', admin: '管理员' },
-    tab: { closeCurrent: '关闭当前', closeLeft: '关闭左侧', closeRight: '关闭右侧', closeAll: '关闭全部' },
-    footer: { copyright: 'HatTax Admin © 2024', style: 'Vue Vben Admin 风格', powered: 'Powered by Vite + Alpine' },
-    settings: {
-      title: '界面设置', themeColor: '主题颜色', customColor: '自定义颜色', apply: '应用',
-      displayMode: '显示模式', lightMode: '浅色模式', darkMode: '深色模式',
-      sidebar: '侧边栏', fixedSidebar: '固定侧边栏', showToggle: '侧边栏折叠按钮',
-      tabs: '标签页', showTabs: '显示标签栏',
-      transition: '过渡动画', off: '关闭', fast: '快速', normal: '正常', slow: '缓慢',
-      reset: '重置所有设置', saved: '设置已保存', resetDone: '已恢复默认设置', followSystem: '已跟随系统主题',
-    },
-    common: { save: '保存', cancel: '取消', confirm: '确认', search: '搜索', reset: '重置', edit: '编辑', delete: '删除', add: '新增', refresh: '刷新', export: '导出', loading: '加载中...', noData: '暂无数据', back: '返回', submit: '提交', submitting: '提交中...', success: '操作成功' },
-    notify: { success: 'Success', error: 'Error', warning: 'Warning', info: '提示', requestFailed: '请求失败', pageLoadFailed: '页面加载失败', refreshed: '已刷新', dataRefreshed: '数据已刷新', deleteConfirm: '确定要删除吗？', deleted: '删除成功', exported: '已导出' },
-    login: { title: '登录 - HatTax 管理后台', subtitle: '请登录以继续', username: '用户名', password: '密码', remember: '记住我', forgotPwd: '忘记密码？', loginBtn: '登录', loggingIn: '登录中...', testAccount: '测试账号', error: '用户名或密码错误', enterUsername: '请输入用户名', enterPassword: '请输入密码' },
-    dashboard: { title: '仪表盘', welcome: '欢迎回来，管理员！以下是系统概览。', totalUsers: '总用户', activeUsers: '活跃用户', totalOrders: '订单总数', totalSales: '总销售额', vsLastMonth: '较上月', dataAnalysis: '数据分析', workspace: '工作台', sales: '销售额', orders: '订单量', userDist: '用户分布' },
-    user: { title: '用户管理', addUser: '新增用户', searchUser: '搜索用户名/手机号', allRoles: '全部角色', allStatus: '全部状态', superAdmin: '超级管理员', normalUser: '普通用户', normal: '正常', disabled: 'Disabled', phone: '手机号', role: '角色', status: '状态', createdAt: '创建时间', actions: '操作', editUser: '编辑用户', deleteWarning: '删除需二次确认', totalRecords: '共 N 条记录', prevPage: '上一页', nextPage: '下一页' },
-    role: { title: '角色权限' },
-    dept: { title: '部门管理', addDept: '新增部门', expandAll: '展开全部', collapseAll: '折叠全部' },
-    dict: { title: '字典管理', selectType: '请从左侧选择字典类型', addItem: '新增条目' },
-    loginLog: { title: '登录日志' },
-    opLog: { title: '操作日志' },
-    aiChat: { title: 'AI 助手', online: '在线', placeholder: '输入消息，Enter 发送，Shift+Enter 换行...', clearChat: '清空对话', welcomeMsg: '你好！我是 HatTax AI 助手。我可以帮你分析数据、解答技术问题、生成报告。有什么可以帮到你的？', clearedMsg: '对话已清空。有什么新的问题吗？' },
-    portal: { title: 'HatTax — 新一代企业管理平台', nav: { features: '功能', pricing: '定价', docs: '文档', about: '关于' }, hero: { badge: 'v1.0 正式发布', title1: '用', title2: '轻量架构', title3: '构建企业级管理后台', desc: 'Vite + Alpine.js + HTMX + Tailwind CSS。无 React、无 Vue、无复杂构建。15KB 运行时 + 10KB 网络层 = 极速管理后台。', cta: '立即体验 →', github: 'GitHub' } },
-  },
-  en: {
-    app: { title: 'HatTax Admin', search: 'Search menus...', dark: 'Dark Mode', light: 'Light Mode' },
-    menu: {
-      main: 'Main', system: 'System', audit: 'Audit', form: 'Forms', list: 'Tables', personal: 'Personal', other: 'Other',
-      dashboard: 'Dashboard', user: 'Users', role: 'Roles', menu: 'Menus', dept: 'Departments', dict: 'Dictionary',
-      loginLog: 'Login Logs', opLog: 'Op Logs', formBasic: 'Basic Form', formAdvanced: 'Advanced Form',
-      tableList: 'Table List', profile: 'Profile', aiChat: 'AI Chat', about: 'About',
-    },
-    header: { themeColor: 'Theme Colors', themeColors: 'Switch Theme', fullscreen: 'Fullscreen', notifications: 'Notifications', markAllRead: 'Mark All Read', viewAll: 'View All', settings: 'Settings', account: 'Account', logout: 'Logout', admin: 'Admin' },
-    tab: { closeCurrent: 'Close', closeLeft: 'Close Left', closeRight: 'Close Right', closeAll: 'Close All' },
-    footer: { copyright: 'HatTax Admin © 2024', style: 'Vben Admin Style', powered: 'Powered by Vite + Alpine' },
-    settings: {
-      title: 'Settings', themeColor: 'Theme Color', customColor: 'Custom Color', apply: 'Apply',
-      displayMode: 'Display Mode', lightMode: 'Light', darkMode: 'Dark',
-      sidebar: 'Sidebar', fixedSidebar: 'Fixed Sidebar', showToggle: 'Show Toggle Button',
-      tabs: 'Tabs', showTabs: 'Show Tab Bar',
-      transition: 'Transition', off: 'Off', fast: 'Fast', normal: 'Normal', slow: 'Slow',
-      reset: 'Reset All Settings', saved: 'Settings saved', resetDone: 'Settings reset to default', followSystem: 'Following system theme',
-    },
-    common: { save: 'Save', cancel: 'Cancel', confirm: 'OK', search: 'Search', reset: 'Reset', edit: 'Edit', delete: 'Delete', add: 'Add', refresh: 'Refresh', export: 'Export', loading: 'Loading...', noData: 'No Data', back: 'Back', submit: 'Submit', submitting: 'Submitting...', success: 'Success' },
-    notify: { success: 'Success', error: 'Error', warning: 'Warning', info: 'Info', requestFailed: 'Request failed', pageLoadFailed: 'Page load failed', refreshed: 'Refreshed', dataRefreshed: 'Data refreshed', deleteConfirm: 'Are you sure?', deleted: 'Deleted', exported: 'Exported' },
-    login: { title: 'Login - HatTax Admin', subtitle: 'Please sign in to continue', username: 'Username', password: 'Password', remember: 'Remember me', forgotPwd: 'Forgot password?', loginBtn: 'Sign In', loggingIn: 'Signing in...', testAccount: 'Test Account', error: 'Invalid username or password', enterUsername: 'Please enter username', enterPassword: 'Please enter password' },
-    dashboard: { title: 'Dashboard', welcome: 'Welcome back, Admin! Here is your overview.', totalUsers: 'Total Users', activeUsers: 'Active Users', totalOrders: 'Total Orders', totalSales: 'Total Sales', vsLastMonth: 'vs last month', dataAnalysis: 'Analytics', workspace: 'Workspace', sales: 'Sales', orders: 'Orders', userDist: 'User Distribution' },
-    user: { title: 'Users', addUser: 'Add User', searchUser: 'Search username/phone', allRoles: 'All Roles', allStatus: 'All Status', superAdmin: 'Super Admin', normalUser: 'User', normal: 'Active', disabled: 'Disabled', phone: 'Phone', role: 'Role', status: 'Status', createdAt: 'Created', actions: 'Actions', editUser: 'Edit', deleteWarning: 'Delete?', totalRecords: 'Total N records', prevPage: 'Prev', nextPage: 'Next' },
-    role: { title: 'Roles & Permissions' },
-    dept: { title: 'Departments', addDept: 'Add Dept', expandAll: 'Expand All', collapseAll: 'Collapse All' },
-    dict: { title: 'Dictionary', selectType: 'Select a dictionary type from the left', addItem: 'Add Item' },
-    loginLog: { title: 'Login Logs' },
-    opLog: { title: 'Operation Logs' },
-    aiChat: { title: 'AI Assistant', online: 'Online', placeholder: 'Type a message, Enter to send, Shift+Enter for new line...', clearChat: 'Clear Chat', welcomeMsg: 'Hello! I\'m HatTax AI Assistant. I can help you analyze data, answer technical questions, and generate reports. How can I help?', clearedMsg: 'Chat cleared. Any other questions?' },
-    portal: { title: 'HatTax — Next-Gen Business Platform', nav: { features: 'Features', pricing: 'Pricing', docs: 'Docs', about: 'About' }, hero: { badge: 'v1.0 Released', title1: 'Build Enterprise', title2: 'Admin Dashboards', title3: 'with Lightweight Stack', desc: 'Vite + Alpine.js + HTMX + Tailwind CSS. No React, no Vue, no complex build. 15KB runtime + 10KB network layer = blazing fast admin.', cta: 'Get Started →', github: 'GitHub' } },
-  },
-}
+import { I18N_MESSAGES, LOCALES, LOCALE_LABELS } from './i18n.js'
 
 Alpine.store('i18n', {
-  locale: Alpine.storage ? Alpine.storage.get('locale', 'en') : 'en',
+  locale: Alpine.storage ? Alpine.storage.get('locale', 'zh') : 'zh',
   init() { document.documentElement.lang = this.locale },
   t(key) {
     const keys = key.split('.')
@@ -125,69 +62,96 @@ Alpine.store('i18n', {
     if (Alpine.storage) Alpine.storage.set('locale', locale)
   },
   toggleLocale() {
-    this.setLocale(this.locale === 'zh' ? 'en' : 'zh')
+    const idx = LOCALES.indexOf(this.locale)
+    this.setLocale(LOCALES[(idx + 1) % LOCALES.length])
   },
+  get localeLabel() { return LOCALE_LABELS[this.locale] || this.locale },
+  get locales() { return LOCALES },
+  get localeLabels() { return LOCALE_LABELS },
 })
 
 // ========== MENU MAP & GROUPS ==========
 export const MENU_MAP = {
-  'dashboard': { group: '主菜单', title: '首页', path: '/pages/dashboard.html', breadcrumbs: [{ title: '首页', path: '/pages/dashboard.html' }] },
-  'user': { group: '系统管理', title: '用户管理', path: '/pages/user.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '用户管理', path: '/pages/user.html' }] },
-  'role': { group: '系统管理', title: '角色权限', path: '/pages/role.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '角色权限', path: '/pages/role.html' }] },
-  'menu': { group: '系统管理', title: '菜单管理', path: '/pages/menu.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '菜单管理', path: '/pages/menu.html' }] },
-  'dept': { group: '系统管理', title: '部门管理', path: '/pages/dept.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '部门管理', path: '/pages/dept.html' }] },
-  'dict': { group: '系统管理', title: '字典管理', path: '/pages/dict.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '字典管理', path: '/pages/dict.html' }] },
-  'login-log': { group: '系统管理', title: '登录日志', path: '/pages/login-log.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '登录日志', path: '/pages/login-log.html' }] },
-  'op-log': { group: '系统管理', title: '操作日志', path: '/pages/op-log.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '操作日志', path: '/pages/op-log.html' }] },
-  'form-basic': { group: '表单页', title: '基础表单', path: '/pages/form-basic.html', breadcrumbs: [{ title: '表单页', path: '#' }, { title: '基础表单', path: '/pages/form-basic.html' }] },
-  'form-advanced': { group: '表单页', title: '高级表单', path: '/pages/form-advanced.html', breadcrumbs: [{ title: '表单页', path: '#' }, { title: '高级表单', path: '/pages/form-advanced.html' }] },
-  'table': { group: '列表页', title: '表格列表', path: '/pages/table.html', breadcrumbs: [{ title: '列表页', path: '#' }, { title: '表格列表', path: '/pages/table.html' }] },
-  'profile': { group: '个人页', title: '个人中心', path: '/pages/profile.html', breadcrumbs: [{ title: '个人中心', path: '/pages/profile.html' }] },
-  'about': { group: '其他', title: '关于', path: '/pages/about.html', breadcrumbs: [{ title: '其他', path: '#' }, { title: '关于', path: '/pages/about.html' }] },
-  'ai-chat': { group: '其他', title: 'AI 助手', path: '/pages/ai-chat.html', breadcrumbs: [{ title: '其他', path: '#' }, { title: 'AI 助手', path: '/pages/ai-chat.html' }] },
+  'dashboard': { group: '主菜单', title: '首页', path: '/pages/admin/dashboard.html', breadcrumbs: [{ title: '首页', path: '/pages/admin/dashboard.html' }] },
+  'user': { group: '系统管理', title: '用户管理', path: '/pages/admin/user.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '用户管理', path: '/pages/admin/user.html' }] },
+  'role': { group: '系统管理', title: '角色权限', path: '/pages/admin/role.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '角色权限', path: '/pages/admin/role.html' }] },
+  'menu': { group: '系统管理', title: '菜单管理', path: '/pages/admin/menu.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '菜单管理', path: '/pages/admin/menu.html' }] },
+  'dept': { group: '系统管理', title: '部门管理', path: '/pages/admin/dept.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '部门管理', path: '/pages/admin/dept.html' }] },
+  'dict': { group: '系统管理', title: '字典管理', path: '/pages/admin/dict.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '字典管理', path: '/pages/admin/dict.html' }] },
+  'login-log': { group: '系统管理', title: '登录日志', path: '/pages/admin/login-log.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '登录日志', path: '/pages/admin/login-log.html' }] },
+  'op-log': { group: '系统管理', title: '操作日志', path: '/pages/admin/op-log.html', breadcrumbs: [{ title: '系统管理', path: '#' }, { title: '操作日志', path: '/pages/admin/op-log.html' }] },
+  'form-basic': { group: '表单页', title: '基础表单', path: '/pages/admin/form-basic.html', breadcrumbs: [{ title: '表单页', path: '#' }, { title: '基础表单', path: '/pages/admin/form-basic.html' }] },
+  'form-advanced': { group: '表单页', title: '高级表单', path: '/pages/admin/form-advanced.html', breadcrumbs: [{ title: '表单页', path: '#' }, { title: '高级表单', path: '/pages/admin/form-advanced.html' }] },
+  'table': { group: '列表页', title: '表格列表', path: '/pages/admin/table.html', breadcrumbs: [{ title: '列表页', path: '#' }, { title: '表格列表', path: '/pages/admin/table.html' }] },
+  'profile': { group: '个人页', title: '个人中心', path: '/pages/admin/profile.html', breadcrumbs: [{ title: '个人中心', path: '/pages/admin/profile.html' }] },
+  'about': { group: '其他', title: '关于', path: '/pages/admin/about.html', breadcrumbs: [{ title: '其他', path: '#' }, { title: '关于', path: '/pages/admin/about.html' }] },
+  'ai-chat': { group: '其他', title: 'AI 助手', path: '/pages/admin/ai-chat.html', breadcrumbs: [{ title: '其他', path: '#' }, { title: 'AI 助手', path: '/pages/admin/ai-chat.html' }] },
+  'order-management': { group: '电商管理', title: '订单管理', path: '/pages/admin/order-management.html', breadcrumbs: [{ title: '电商管理', path: '#' }, { title: '订单管理', path: '/pages/admin/order-management.html' }] },
+  'product-registry': { group: '电商管理', title: '产品入驻', path: '/pages/admin/product-registry.html', breadcrumbs: [{ title: '电商管理', path: '#' }, { title: '产品入驻', path: '/pages/admin/product-registry.html' }] },
+  'dapp-home': { group: '33buy', title: '首页', path: '/pages/site/index.html', breadcrumbs: [{ title: '33buy', path: '#' }, { title: '首页', path: '/pages/site/index.html' }] },
+  'dapp-products': { group: '33buy', title: '产品', path: '/pages/site/products.html', breadcrumbs: [{ title: '33buy', path: '#' }, { title: '产品', path: '/pages/site/products.html' }] },
+  'dapp-me': { group: '33buy', title: '我的', path: '/pages/site/me.html', breadcrumbs: [{ title: '33buy', path: '#' }, { title: '我的', path: '/pages/site/me.html' }] },
+  'dapp-ming': { group: '33buy', title: '合成挖矿', path: '/pages/site/dapp-ming.html', breadcrumbs: [{ title: '33buy', path: '#' }, { title: '合成挖矿', path: '/pages/site/dapp-ming.html' }] },
+  'dapp-mings': { group: '33buy', title: '单币挖矿', path: '/pages/site/dapp-mings.html', breadcrumbs: [{ title: '33buy', path: '#' }, { title: '单币挖矿', path: '/pages/site/dapp-mings.html' }] },
+  'dapp-nft': { group: '33buy', title: 'NFT', path: '/pages/site/dapp-nft.html', breadcrumbs: [{ title: '33buy', path: '#' }, { title: 'NFT', path: '/pages/site/dapp-nft.html' }] },
+  'dapp-redpacket': { group: '33buy', title: '红包', path: '/pages/site/dapp-redpacket.html', breadcrumbs: [{ title: '33buy', path: '#' }, { title: '红包', path: '/pages/site/dapp-redpacket.html' }] },
 }
 
 export const MENU_GROUPS = [
   {
     title: '主菜单', items: [
-      { name: 'dashboard', title: '首页', path: '/pages/dashboard.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>' },
+      { name: 'dashboard', title: '首页', path: '/pages/admin/dashboard.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>' },
     ]
   },
   {
     title: '系统管理', items: [
-      { name: 'user', title: '用户管理', path: '/pages/user.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H9v-1a3 3 0 016 0v1zm0 0h6v-1a9 9 0 00-18 0v1h6"></path></svg>' },
-      { name: 'role', title: '角色权限', path: '/pages/role.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>' },
-      { name: 'menu', title: '菜单管理', path: '/pages/menu.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>' },
-      { name: 'dept', title: '部门管理', path: '/pages/dept.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>' },
-      { name: 'dict', title: '字典管理', path: '/pages/dict.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>' },
+      { name: 'user', title: '用户管理', path: '/pages/admin/user.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H9v-1a3 3 0 016 0v1zm0 0h6v-1a9 9 0 00-18 0v1h6"></path></svg>' },
+      { name: 'role', title: '角色权限', path: '/pages/admin/role.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>' },
+      { name: 'menu', title: '菜单管理', path: '/pages/admin/menu.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>' },
+      { name: 'dept', title: '部门管理', path: '/pages/admin/dept.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>' },
+      { name: 'dict', title: '字典管理', path: '/pages/admin/dict.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>' },
     ]
   },
   {
     title: '日志审计', items: [
-      { name: 'login-log', title: '登录日志', path: '/pages/login-log.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>' },
-      { name: 'op-log', title: '操作日志', path: '/pages/op-log.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
+      { name: 'login-log', title: '登录日志', path: '/pages/admin/login-log.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>' },
+      { name: 'op-log', title: '操作日志', path: '/pages/admin/op-log.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
     ]
   },
   {
     title: '表单页', items: [
-      { name: 'form-basic', title: '基础表单', path: '/pages/form-basic.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
-      { name: 'form-advanced', title: '高级表单', path: '/pages/form-advanced.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>' },
+      { name: 'form-basic', title: '基础表单', path: '/pages/admin/form-basic.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>' },
+      { name: 'form-advanced', title: '高级表单', path: '/pages/admin/form-advanced.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>' },
     ]
   },
   {
     title: '列表页', items: [
-      { name: 'table', title: '表格列表', path: '/pages/table.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' },
+      { name: 'table', title: '表格列表', path: '/pages/admin/table.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' },
     ]
   },
   {
     title: '个人页', items: [
-      { name: 'profile', title: '个人中心', path: '/pages/profile.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>' },
+      { name: 'profile', title: '个人中心', path: '/pages/admin/profile.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>' },
     ]
   },
   {
     title: '其他', items: [
-      { name: 'ai-chat', title: 'AI 助手', path: '/pages/ai-chat.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
-      { name: 'about', title: '关于', path: '/pages/about.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' },
+      { name: 'ai-chat', title: 'AI 助手', path: '/pages/admin/ai-chat.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
+      { name: 'about', title: '关于', path: '/pages/admin/about.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' },
+    ]
+  },
+  {
+    title: '电商管理', items: [
+      { name: 'order-management', title: '订单管理', path: '/pages/admin/order-management.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>' },
+      { name: 'product-registry', title: '产品入驻', path: '/pages/admin/product-registry.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>' },
+    ]
+  },
+  {
+    title: '33buy', items: [
+      { name: 'dapp-home', title: '首页', path: '/pages/site/index.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>' },
+      { name: 'dapp-products', title: '产品', path: '/pages/site/products.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>' },
+      { name: 'dapp-me', title: '我的', path: '/pages/site/me.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>' },
+      { name: 'dapp-nft', title: 'NFT', path: '/pages/site/dapp-nft.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>' },
     ]
   },
 ]
@@ -217,7 +181,7 @@ Alpine.store('app', {
     ? _savedTabs
     : [{ title: '首页', name: 'dashboard', active: true }],
   loading: false,
-  breadcrumbs: [{ title: '首页', path: '/pages/dashboard.html' }],
+  breadcrumbs: [{ title: '首页', path: '/pages/admin/dashboard.html' }],
   menuGroups: MENU_GROUPS,
   themeColor: Alpine.storage ? Alpine.storage.get('themeColor', '#1890ff') : '#1890ff',
   showTabs: Alpine.storage ? Alpine.storage.get('showTabs', true) : true,
@@ -225,10 +189,31 @@ Alpine.store('app', {
   commandQuery: '',
   drawerOpen: false,
   settingOpen: false,
+  walletAddress: getAddress() ? getAddress().toLowerCase() : null,
+  walletConnecting: false,
+  currentChainName: getChainDisplayName(getCurrentChain()),
 
   init() {
     this.commandPaletteOpen = false
-    // $watch not available on Alpine stores — use manual persistence via _persist() in methods
+    // Listen for wallet chain changes and update UI
+    window.addEventListener('wallet-chain-changed', (e) => {
+      this.currentChainName = e.detail.displayName || e.detail.name
+    })
+    // Listen for wallet account changes (MetaMask switch account)
+    window.addEventListener('wallet-account-changed', (e) => {
+      const newAddr = e.detail ? e.detail.toLowerCase() : null
+      const current = this.walletAddress
+      // Ignore case-only changes to prevent duplicate reloads / modal reopening
+      if (newAddr === current) return
+      this.walletAddress = newAddr
+      if (!newAddr) {
+        this.currentChainName = getChainDisplayName(getCurrentChain())
+      }
+    })
+    // Sync chain on startup if wallet was previously connected
+    if (this.walletAddress) {
+      syncChainFromWallet().catch(() => {})
+    }
   },
 
   _persist() {
@@ -254,7 +239,7 @@ Alpine.store('app', {
     if (closedTab.active && this.tabs.length) {
       this.tabs[0].active = true
       this.activeMenu = this.tabs[0].name
-      const url = `/pages/${this.tabs[0].name}.html`
+      const url = this._buildPath(this.tabs[0].name)
       this._navigateTo(url, this.tabs[0].title)
     }
     this._persist()
@@ -267,7 +252,7 @@ Alpine.store('app', {
     if (!this.tabs.find(t => t.active)) {
       this.tabs[0].active = true
       this.activeMenu = this.tabs[0].name
-      const url = `/pages/${this.tabs[0].name}.html`
+      const url = this._buildPath(this.tabs[0].name)
       this._navigateTo(url, this.tabs[0].title)
     }
     this._persist()
@@ -280,7 +265,7 @@ Alpine.store('app', {
     if (!this.tabs.find(t => t.active)) {
       this.tabs[this.tabs.length - 1].active = true
       this.activeMenu = this.tabs[this.tabs.length - 1].name
-      const url = `/pages/${this.tabs[this.tabs.length - 1].name}.html`
+      const url = this._buildPath(this.tabs[this.tabs.length - 1].name)
       this._navigateTo(url, this.tabs[this.tabs.length - 1].title)
     }
     this._persist()
@@ -289,7 +274,7 @@ Alpine.store('app', {
   closeAllTabs() {
     this.tabs = [{ title: '首页', name: 'dashboard', active: true }]
     this.activeMenu = 'dashboard'
-    this._navigateTo('/pages/dashboard.html', '首页')
+    this._navigateTo('/pages/admin/dashboard.html', '首页')
     this._persist()
   },
 
@@ -298,6 +283,17 @@ Alpine.store('app', {
     this.addTab(item.name, item.title)
     this.breadcrumbs = meta.breadcrumbs || [{ title: item.title, path: item.path }]
     this._navigateTo(item.path, item.title)
+  },
+
+  _buildPath(name) {
+    // Site pages: dapp-* prefix → /pages/site/
+    if (name.startsWith('dapp-')) {
+      // dapp-home → index.html, others → dapp-xxx.html
+      const file = name === 'dapp-home' ? 'index' : name
+      return `/pages/site/${file}.html`
+    }
+    // Admin pages: everything else → /pages/admin/
+    return `/pages/admin/${name}.html`
   },
 
   _navigateTo(url, title) {
@@ -338,6 +334,33 @@ Alpine.store('app', {
 
   closeCommandPalette() {
     this.commandPaletteOpen = false
+  },
+
+  async connectWallet() {
+    this.walletConnecting = true
+    try {
+      const addr = await connectWallet()
+      this.walletAddress = addr ? addr.toLowerCase() : null
+      Alpine.notify.success(Alpine.store('i18n').t('site.walletConnected'))
+    } catch (e) {
+      Alpine.notify.error(e.message || 'Failed to connect wallet')
+    } finally {
+      this.walletConnecting = false
+    }
+  },
+
+  disconnectWallet() {
+    disconnectWallet()
+    this.walletAddress = null
+  },
+
+  async switchToChain(chainKey) {
+    try {
+      await switchChain(chainKey)
+      this.currentChainName = getChainDisplayName(getCurrentChain())
+    } catch (e) {
+      Alpine.notify.error(e.message || 'Failed to switch chain')
+    }
   }
 })
 
@@ -361,6 +384,8 @@ window.refreshPage = () => {
 }
 
 // ========== ALPINE COMPONENTS ==========
+Alpine.data('addressBook', addressBook)
+
 Alpine.data('modal', () => ({
   open: false, title: '', size: 'md',
   openModal(title = '弹窗', size = 'md') {
@@ -421,44 +446,46 @@ Alpine.notify = {
   container: null,
   init() {
     this.container = document.createElement('div')
-    this.container.className = 'fixed top-4 right-4 z-[99999] space-y-2 w-80'
+    this.container.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[99999] space-y-2.5 max-w-sm w-[calc(100%-2rem)]'
     document.body.appendChild(this.container)
   },
   create(type, content, opts = {}) {
     if (!this.container) this.init()
     const { duration = 3500, title = '' } = opts
     const cfg = {
-      success:    { bg: 'bg-emerald-500', icon: 'M5 13l4 4L19 7', title: 'Success' },
-      error:      { bg: 'bg-red-500',    icon: 'M6 18L18 6M6 6l12 12',   title: 'Error' },
-      warning:    { bg: 'bg-amber-500',  icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', title: 'Warning' },
-      info:       { bg: 'bg-blue-500',   icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', title: '提示' },
+      success: { bg: 'bg-white dark:bg-gray-800', border: 'border-l-emerald-500', iconBg: 'bg-emerald-50 dark:bg-emerald-900/30', iconColor: 'text-emerald-500', bar: 'bg-emerald-500', icon: 'M5 13l4 4L19 7', title: Alpine.store('i18n').t('notify.success') },
+      error:   { bg: 'bg-white dark:bg-gray-800', border: 'border-l-red-500',       iconBg: 'bg-red-50 dark:bg-red-900/30',    iconColor: 'text-red-500',    bar: 'bg-red-500',    icon: 'M6 18L18 6M6 6l12 12', title: Alpine.store('i18n').t('notify.error') },
+      warning: { bg: 'bg-white dark:bg-gray-800', border: 'border-l-amber-500',    iconBg: 'bg-amber-50 dark:bg-amber-900/30',  iconColor: 'text-amber-500',  bar: 'bg-amber-500',  icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', title: Alpine.store('i18n').t('notify.warning') },
+      info:    { bg: 'bg-white dark:bg-gray-800', border: 'border-l-blue-500',     iconBg: 'bg-blue-50 dark:bg-blue-900/30',   iconColor: 'text-blue-500',   bar: 'bg-blue-500',   icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', title: Alpine.store('i18n').t('notify.info') },
     }
     const c = cfg[type] || cfg.info
     const el = document.createElement('div')
-    el.className = `notify-item ${c.bg} text-white rounded-lg shadow-2xl overflow-hidden transform translate-x-full transition-transform duration-300`
+    el.className = `notify-item ${c.bg} ${c.border} border-l-[3px] rounded-2xl shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden transform opacity-0 -translate-y-2 scale-[0.97] transition-all duration-300 ease-out`
     el.innerHTML = `
-      <div class="flex items-start gap-3 p-4">
-        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${c.icon}"></path></svg>
-        <div class="flex-1 min-w-0">
-          ${title ? `<div class="font-semibold text-sm mb-0.5">${title}</div>` : ''}
-          <div class="text-sm opacity-90">${content}</div>
+      <div class="flex items-start gap-3 p-3.5">
+        <div class="w-7 h-7 rounded-full ${c.iconBg} flex items-center justify-center flex-shrink-0 mt-0.5">
+          <svg class="w-3.5 h-3.5 ${c.iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="${c.icon}"></path></svg>
         </div>
-        <button class="opacity-60 hover:opacity-100 flex-shrink-0" @click="this.closest('.notify-item').remove()">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <div class="flex-1 min-w-0 pt-0.5">
+          <div class="font-semibold text-[13px] text-gray-900 dark:text-gray-100 leading-tight">${title || c.title}</div>
+          <div class="text-[13px] text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">${content}</div>
+        </div>
+        <button class="w-6 h-6 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mt-0.5" @click="this.closest('.notify-item').remove()">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
-      <div class="h-1 bg-white/20">
-        <div class="h-full bg-white/40 progress-bar" style="animation: notify-progress ${duration}ms linear forwards"></div>
+      <div class="h-[2px] bg-gray-100 dark:bg-gray-700">
+        <div class="h-full ${c.bar} progress-bar" style="animation: notify-progress ${duration}ms linear forwards"></div>
       </div>`
     this.container.appendChild(el)
-    requestAnimationFrame(() => { el.classList.remove('translate-x-full') })
+    requestAnimationFrame(() => { el.classList.remove('opacity-0', '-translate-y-2', 'scale-[0.97]') })
     const timer = setTimeout(() => this.remove(el), duration)
     el._timer = timer
   },
   remove(el) {
     if (!el || !el.parentNode) return
     clearTimeout(el._timer)
-    el.classList.add('translate-x-full')
+    el.classList.add('opacity-0', '-translate-y-1', 'scale-[0.97]')
     setTimeout(() => el.remove(), 300)
   },
   success(content, opts) { this.create('success', content, opts) },
@@ -469,6 +496,39 @@ Alpine.notify = {
 
 // ========== ALPINE MESSAGE (alias) ==========
 Alpine.message = Alpine.notify
+
+// ========== CLIPBOARD HELPER (mobile-friendly fallback) ==========
+Alpine.copyText = async function(text) {
+  try {
+    // Modern Clipboard API (requires secure context)
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch (e) { /* fall through */ }
+
+  // Fallback for older / non-secure mobile browsers
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.setAttribute('readonly', '')
+    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;'
+    document.body.appendChild(ta)
+    const range = document.createRange()
+    range.selectNode(ta)
+    const selection = window.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(range)
+    ta.setSelectionRange(0, text.length)
+    const ok = document.execCommand('copy')
+    selection.removeAllRanges()
+    document.body.removeChild(ta)
+    return ok
+  } catch (e) {
+    console.error('copy failed:', e)
+    return false
+  }
+}
 
 // ========== SETTING DRAWER COMPONENT ==========
 Alpine.data('settingDrawer', () => ({
@@ -720,7 +780,8 @@ document.addEventListener('keydown', (e) => {
 })
 
 window.Alpine = Alpine
-Alpine.start()
+// Defer Alpine.start() by one microtask so page module Alpine.data() runs first
+setTimeout(() => Alpine.start(), 0)
 
 Alpine.store('app').commandPaletteOpen = false
 Alpine.store('app').settingOpen = false
@@ -830,25 +891,25 @@ Alpine.data('dictPage', () => ({
 // ========== MENU PAGE ==========
 Alpine.data('menuPage', () => ({
   menus: [
-    { id: 1, name: '首页', path: '/pages/dashboard.html', icon: 'home', sort: 1, visible: true, component: 'layout', children: [] },
+    { id: 1, name: '首页', path: '/pages/admin/dashboard.html', icon: 'home', sort: 1, visible: true, component: 'layout', children: [] },
     { id: 2, name: '系统管理', path: '#', icon: 'cog', sort: 2, visible: true, component: 'layout', children: [
-      { id: 3, name: '用户管理', path: '/pages/user.html', icon: 'users', sort: 1, visible: true, component: 'view', children: [] },
-      { id: 4, name: '角色权限', path: '/pages/role.html', icon: 'shield', sort: 2, visible: true, component: 'view', children: [] },
-      { id: 5, name: '菜单管理', path: '/pages/menu.html', icon: 'menu', sort: 3, visible: true, component: 'view', children: [] },
-      { id: 6, name: '部门管理', path: '/pages/dept.html', icon: 'computer', sort: 4, visible: true, component: 'view', children: [] },
-      { id: 7, name: '字典管理', path: '/pages/dict.html', icon: 'book', sort: 5, visible: true, component: 'view', children: [] },
-      { id: 8, name: '登录日志', path: '/pages/login-log.html', icon: 'document', sort: 6, visible: true, component: 'view', children: [] },
-      { id: 9, name: '操作日志', path: '/pages/op-log.html', icon: 'document', sort: 7, visible: true, component: 'view', children: [] },
+      { id: 3, name: '用户管理', path: '/pages/admin/user.html', icon: 'users', sort: 1, visible: true, component: 'view', children: [] },
+      { id: 4, name: '角色权限', path: '/pages/admin/role.html', icon: 'shield', sort: 2, visible: true, component: 'view', children: [] },
+      { id: 5, name: '菜单管理', path: '/pages/admin/menu.html', icon: 'menu', sort: 3, visible: true, component: 'view', children: [] },
+      { id: 6, name: '部门管理', path: '/pages/admin/dept.html', icon: 'computer', sort: 4, visible: true, component: 'view', children: [] },
+      { id: 7, name: '字典管理', path: '/pages/admin/dict.html', icon: 'book', sort: 5, visible: true, component: 'view', children: [] },
+      { id: 8, name: '登录日志', path: '/pages/admin/login-log.html', icon: 'document', sort: 6, visible: true, component: 'view', children: [] },
+      { id: 9, name: '操作日志', path: '/pages/admin/op-log.html', icon: 'document', sort: 7, visible: true, component: 'view', children: [] },
     ]},
     { id: 10, name: '表单页', path: '#', icon: 'form', sort: 3, visible: true, component: 'layout', children: [
-      { id: 11, name: '基础表单', path: '/pages/form-basic.html', icon: 'form', sort: 1, visible: true, component: 'view', children: [] },
-      { id: 12, name: '高级表单', path: '/pages/form-advanced.html', icon: 'form', sort: 2, visible: true, component: 'view', children: [] },
+      { id: 11, name: '基础表单', path: '/pages/admin/form-basic.html', icon: 'form', sort: 1, visible: true, component: 'view', children: [] },
+      { id: 12, name: '高级表单', path: '/pages/admin/form-advanced.html', icon: 'form', sort: 2, visible: true, component: 'view', children: [] },
     ]},
     { id: 13, name: '列表页', path: '#', icon: 'table', sort: 4, visible: true, component: 'layout', children: [
-      { id: 14, name: '表格列表', path: '/pages/table.html', icon: 'table', sort: 1, visible: true, component: 'view', children: [] },
+      { id: 14, name: '表格列表', path: '/pages/admin/table.html', icon: 'table', sort: 1, visible: true, component: 'view', children: [] },
     ]},
-    { id: 15, name: 'AI 助手', path: '/pages/ai-chat.html', icon: 'lightning', sort: 5, visible: true, component: 'view', children: [] },
-    { id: 16, name: '关于', path: '/pages/about.html', icon: 'info', sort: 6, visible: true, component: 'view', children: [] },
+    { id: 15, name: 'AI 助手', path: '/pages/admin/ai-chat.html', icon: 'lightning', sort: 5, visible: true, component: 'view', children: [] },
+    { id: 16, name: '关于', path: '/pages/admin/about.html', icon: 'info', sort: 6, visible: true, component: 'view', children: [] },
   ],
   expandedRows: new Set([2, 3]),
   toggleExpand(id) { if (this.expandedRows.has(id)) this.expandedRows.delete(id); else this.expandedRows.add(id) },

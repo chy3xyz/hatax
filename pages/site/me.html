@@ -1,0 +1,270 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>33buy - 我的</title></head>
+<body>
+<div id="page-content" x-data="mePage" x-init="init()"
+  class="pt-14 pb-16 animate-fade-in">
+
+  <!-- ============================================ -->
+  <!-- Guest -->
+  <!-- ============================================ -->
+  <div x-cloak x-show="!$store.app.walletAddress" class="flex flex-col items-center justify-center min-h-[60vh] px-6">
+    <div class="text-6xl mb-4">👤</div>
+    <p class="text-gray-500 text-sm mb-4" x-text="$store.i18n.t('site.connectToView')">连接钱包查看个人信息</p>
+    <button @click="$store.app.connectWallet()" class="px-8 py-3 bg-primary text-white rounded-2xl font-bold" x-text="$store.i18n.t('site.connect')">连接钱包</button>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Connected: My Profile -->
+  <!-- ============================================ -->
+  <div x-cloak x-show="$store.app.walletAddress" class="px-4 space-y-4">
+
+    <!-- Profile Card -->
+    <div class="glass-card p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold" x-text="grade + '★'">0★</div>
+        <div>
+          <div class="font-semibold" x-text="shortAddr($store.app.walletAddress)"></div>
+          <div class="text-xs text-gray-400 mt-0.5" x-text="$store.i18n.t('site.currentStar') + ' ' + grade + ' · ' + orderCount + ' ' + $store.i18n.t('site.order')"></div>
+        </div>
+        <div class="ml-auto text-right">
+          <div class="text-xs text-gray-400" x-text="$store.i18n.t('site.assets')">资产</div>
+          <div class="font-bold text-primary" x-text="formatPrice(triBalance) + ' TRI'"></div>
+        </div>
+      </div>
+      <div x-show="referrer && referrer !== '0x0000000000000000000000000000000000000000'" class="mt-3 pt-3 border-t border-void-edge/30">
+        <div class="text-xs text-gray-400 mb-1" x-text="$store.i18n.t('site.referrerAddr')">推荐人地址</div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono text-gray-200 flex-1 truncate" x-text="shortAddr(referrer)"></span>
+          <button @click="copy(referrer)" class="text-xs text-primary font-medium" x-text="$store.i18n.t('site.copy')">复制</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Address Management -->
+    <div class="glass-card p-4" x-data="addressBook" x-init="loadAddresses($store.app.walletAddress)">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold">地址管理</h3>
+        <button @click="openAdd()" class="text-xs text-primary font-medium">新增地址</button>
+      </div>
+      <div x-show="loading" class="text-center text-gray-400 text-xs py-4">加载中...</div>
+      <div x-show="!loading && addresses.length === 0" class="text-center text-gray-400 text-xs py-4">暂无收货地址</div>
+      <div class="space-y-2">
+        <template x-for="a in addresses" :key="a.id">
+          <div class="p-3 rounded-xl bg-void-card/60 border border-void-edge/30 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="font-medium" x-text="a.recipientName + ' ' + a.phone"></span>
+              <span x-show="a.isDefault" class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">默认</span>
+            </div>
+            <div class="text-xs text-gray-500 mt-1" x-text="a.province + a.city + a.district + a.addressLine1"></div>
+            <div class="flex gap-3 mt-2 text-xs">
+              <button @click="openEdit(a)" class="text-primary">编辑</button>
+              <button @click="removeAddress(a.id, $store.app.walletAddress)" class="text-red-400">删除</button>
+              <button x-show="!a.isDefault" @click="setDefault(a.id, $store.app.walletAddress)" class="text-gray-400">设为默认</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Inline Address Form -->
+      <div x-show="formOpen" class="mt-3 p-3 rounded-xl bg-void-card/60 border border-void-edge/30 space-y-2">
+        <div class="text-xs font-medium text-gray-300" x-text="editingId ? '编辑地址' : '新增地址'"></div>
+        <div class="grid grid-cols-2 gap-2">
+          <input x-model="form.recipientName" placeholder="姓名 *" class="px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+          <input x-model="form.phone" placeholder="电话 *" class="px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input x-model="form.country" placeholder="国家" class="px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+          <input x-model="form.province" placeholder="省 *" class="px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input x-model="form.city" placeholder="市 *" class="px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+          <input x-model="form.district" placeholder="区 *" class="px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input x-model="form.postalCode" placeholder="邮编" class="px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+        </div>
+        <input x-model="form.addressLine1" placeholder="详细地址 *" class="w-full px-3 py-2 bg-void-card border border-void-edge/50 rounded-lg text-xs">
+        <label class="flex items-center gap-2 text-xs text-gray-300">
+          <input type="checkbox" x-model="form.isDefault" class="w-3.5 h-3.5 rounded">
+          设为默认地址
+        </label>
+        <div class="flex gap-2">
+          <button @click="closeForm()" class="flex-1 py-2 border border-void-edge/40 rounded-lg text-xs">取消</button>
+          <button @click="saveAddress($store.app.walletAddress)" :disabled="saving" class="flex-1 py-2 bg-primary text-white rounded-lg text-xs font-bold disabled:opacity-50">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invite -->
+    <div class="glass-card p-4">
+      <div class="text-sm font-semibold mb-2" x-text="$store.i18n.t('site.shareFriend')">邀请好友</div>
+      <div class="flex gap-2">
+        <input :value="inviteUrl" readonly class="flex-1 px-3 py-2 bg-void-card/60 border rounded-lg text-xs font-mono truncate">
+        <button @click="copy(inviteUrl)" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium flex-shrink-0" x-text="$store.i18n.t('site.copy')">复制</button>
+      </div>
+    </div>
+
+    <!-- My Orders -->
+    <div class="glass-card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold" x-text="$store.i18n.t('site.myOrders')">我的订单</h3>
+        <span class="text-xs text-gray-400" x-text="orders.length + ' 单'"></span>
+      </div>
+      <div x-show="orders.length === 0" class="text-center text-gray-400 text-xs py-6" x-text="$store.i18n.t('site.noOrders')">暂无订单</div>
+      <template x-for="o in orders.slice(0, 5)" :key="o.orderRef">
+        <div class="flex items-center justify-between py-2 border-b border-void-edge/30 last:border-0 text-sm">
+          <div class="flex-1 min-w-0">
+            <div class="font-mono text-xs text-gray-400 truncate" x-text="'#' + o.orderRef?.slice(2,10)"></div>
+            <div class="text-xs text-gray-500 mt-0.5">
+              <span x-text="o.productId || '--'"></span>
+              <span class="mx-1">·</span>
+              <span x-text="o.amount ? formatPrice(Number(o.amount)) + 'U' : '--'"></span>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <span class="px-2 py-0.5 rounded-full text-xs" :class="statusBadge(o.status)" x-text="statusLabel(o.status)"></span>
+            <div class="text-xs text-gray-400 mt-0.5" x-text="daysAgo(o.createdAt)"></div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- My Team -->
+    <div class="glass-card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold" x-text="$store.i18n.t('site.myTeam')">我的团队</h3>
+        <span class="text-xs text-gray-400" x-text="$store.i18n.t('site.directRef') + '(' + subs.length + ') / ' + $store.i18n.t('site.performance') + '(' + formatPrice(stats.amount) + ')'"></span>
+      </div>
+      <div x-show="subs.length === 0" class="text-center text-gray-400 text-xs py-6" x-text="$store.i18n.t('site.noDirects') + ' · ' + $store.i18n.t('site.inviteJoin')">暂无直推 · 邀请好友加入</div>
+      <template x-for="s in subs" :key="s.addr">
+        <div class="flex items-center justify-between py-2 border-b border-void-edge/30 last:border-0 text-sm">
+          <span class="font-mono text-xs text-gray-500" x-text="shortAddr(s.addr)"></span>
+          <div class="flex gap-4 text-xs text-gray-400">
+            <span x-text="$store.i18n.t('site.directRef') + ': ' + s.subNum"></span>
+            <span x-text="formatPrice(s.amount) + ' USDT'"></span>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- FAQ Link -->
+    <a href="/pages/site/faq.html" class="glass-card p-4 flex items-center gap-3 hover:bg-void-card/60 transition-colors">
+      <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </div>
+      <div class="flex-1">
+        <div class="font-medium text-sm" x-text="$store.i18n.t('faq.title')">常见问题</div>
+        <div class="text-xs text-gray-400" x-text="$store.i18n.t('faq.subtitle')">FAQ</div>
+      </div>
+      <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    </a>
+
+    <!-- Spacer -->
+    <div class="h-4"></div>
+  </div>
+
+  <script type="module">
+    import '/main.js'
+    import { readContract, ADDRESSES, TRIDAO_ABI, ERC20_ABI, formatEther } from '/web3/wallet.js'
+    import { getUserOrders } from '/api.js'
+
+    Alpine.data('mePage', () => ({
+      grade: 0,
+      orderCount: 0,
+      triBalance: 0,
+      referrer: '',
+      orders: [],
+      subs: [],
+      stats: { teamNum: 0, subNum: 0, amount: 0 },
+
+      get inviteUrl() { return location.origin + '/?ref=' + Alpine.store('app').walletAddress },
+
+      async init() {
+        const addr = Alpine.store('app').walletAddress
+        if (!addr) return
+        try {
+          await Promise.all([this.loadUser(), this.loadOrders(), this.loadSubs()])
+        } catch(e) { console.error(e) }
+      },
+
+      async loadUser() {
+        const addr = Alpine.store('app').walletAddress
+        if (!addr) return
+        try {
+          const u = await readContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'userMap', args: [addr] })
+          this.grade = Number(u[6])
+          this.referrer = u[1]
+          this.stats = { teamNum: Number(u[2]), subNum: Number(u[3]), amount: Number(formatEther(u[4])) }
+          // TriToken balance
+          if (ADDRESSES.triToken !== '0x0000000000000000000000000000000000000000') {
+            const bal = await readContract({ address: ADDRESSES.triToken, abi: ERC20_ABI, functionName: 'balanceOf', args: [addr] })
+            this.triBalance = Number(formatEther(bal))
+          }
+        } catch(e) { console.error('loadUser:', e) }
+      },
+
+      async loadOrders() {
+        const addr = Alpine.store('app').walletAddress
+        if (!addr) return
+        try {
+          const data = await getUserOrders(addr, 20)
+          this.orders = data.orders || []
+          this.orderCount = this.orders.length
+        } catch(e) { console.error('loadOrders:', e) }
+      },
+
+      async loadSubs() {
+        const addr = Alpine.store('app').walletAddress
+        if (!addr) return
+        try {
+          const list = await readContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'getSubordinates', args: [addr] })
+          const results = await Promise.all(list.slice(0, 20).map(async a => {
+            try {
+              const su = await readContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'userMap', args: [a] })
+              return { addr: a, subNum: Number(su[3]), amount: Number(formatEther(su[4])) }
+            } catch(e) { return { addr: a, subNum: 0, amount: 0 } }
+          }))
+          this.subs = results
+        } catch(e) { console.error('loadSubs:', e) }
+      },
+
+      formatPrice(v) {
+        if (!v) return '0'
+        return Number(v).toLocaleString('en-US', {maximumFractionDigits: v > 1000 ? 0 : 2})
+      },
+
+      shortAddr(a) {
+        if (!a) return ''
+        return a.slice(0, 6) + '...' + a.slice(-4)
+      },
+
+      daysAgo(ts) {
+        if (!ts) return '--'
+        const diff = Math.floor(Date.now() / 1000) - Number(ts)
+        if (diff < 60) return Alpine.store('i18n').t('site.justNow')
+        if (diff < 3600) return Math.floor(diff / 60) + Alpine.store('i18n').t('site.minutesAgo')
+        if (diff < 86400) return Math.floor(diff / 3600) + Alpine.store('i18n').t('site.hoursAgo')
+        return Math.floor(diff / 86400) + Alpine.store('i18n').t('site.daysAgo')
+      },
+
+      statusLabel(s) {
+        const m = { pending:Alpine.store('i18n').t('site.statusPending'), paid:Alpine.store('i18n').t('site.statusPaid'), shipped:Alpine.store('i18n').t('site.statusShipped'), completed:Alpine.store('i18n').t('site.statusCompleted'), cancelled:Alpine.store('i18n').t('site.statusCancelled') }
+        return m[s] || '--'
+      },
+
+      statusBadge(s) {
+        const m = { pending:'bg-yellow-100 text-yellow-700', paid:'bg-yellow-100 text-yellow-700', shipped:'bg-blue-100 text-blue-700', completed:'bg-green-100 text-green-700', cancelled:'bg-red-100 text-red-700' }
+        return m[s] || 'bg-gray-100 text-gray-500'
+      },
+
+      async copy(text) {
+        const ok = await Alpine.copyText(text)
+        if (ok) Alpine.notify.success(Alpine.store('i18n').t('site.copied'))
+        else Alpine.notify.error(Alpine.store('i18n').t('site.copyFailed') || '复制失败')
+      }
+    }))
+  </script>
+</div>
+</body>
+</html>

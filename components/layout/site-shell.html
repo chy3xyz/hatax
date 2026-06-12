@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html class="dark">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <link rel="stylesheet" href="/style.css">
+ <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔥</text></svg>">
+ <!-- __EXTRA_HEAD__ -->
+ <title>__PAGE_TITLE__</title>
+</head>
+<body class="bg-void min-h-screen pb-16 text-gray-100">
+
+ <!-- Top Bar -->
+ <header class="fixed top-0 left-0 right-0 z-30 bg-void-card/80 backdrop-blur-xl border-b border-void-edge/40">
+  <div class="flex items-center justify-between px-4 h-14 max-w-lg mx-auto">
+   <a href="/pages/site/index.html" class="flex items-center gap-2">
+    <span class="text-lg font-extrabold gradient-text">33buy</span>
+   </a>
+
+   <div class="flex items-center gap-2">
+    <!-- About -->
+    <a href="/pages/site/marketing.html" class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-void-edge/40 text-gray-400 hover:text-gray-200 hover:bg-void-edge/60 transition-colors" title="关于">
+      <svg class="w-[18px] h-[18px] sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    </a>
+
+    <!-- Language -->
+    <div class="relative" x-data="{ open: false }">
+     <button @click.stop="open = !open" class="h-9 sm:h-10 px-2 sm:px-2.5 flex items-center gap-1.5 rounded-xl bg-void-edge/40 hover:bg-void-edge/60 text-gray-300 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span class="text-xs font-bold" x-text="$store.i18n.locale === 'zh' ? '中' : $store.i18n.locale === 'zh-TW' ? '繁' : $store.i18n.locale === 'en' ? 'EN' : $store.i18n.locale.toUpperCase().slice(0,2)"></span>
+     </button>
+     <div x-cloak style="display:none" x-show="open" @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-36 bg-void-card rounded-xl shadow-2xl border border-void-edge/40 z-50 py-1.5 max-h-56 overflow-y-auto">
+      <template x-for="l in $store.i18n.locales" :key="l">
+       <button @click="$store.i18n.setLocale(l); open = false" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-void-edge/50 transition-colors" :class="$store.i18n.locale === l ? 'text-primary font-semibold' : 'text-gray-400'">
+        <span class="w-5 h-5 rounded-full bg-void-edge/60 flex items-center justify-center text-[10px] font-medium" x-text="l === 'zh' ? '简' : l === 'zh-TW' ? '繁' : l === 'en' ? 'EN' : l === 'ja' ? '日' : l === 'ko' ? '韩' : l === 'vi' ? '越' : l === 'th' ? '泰' : '俄'"></span>
+        <span x-text="$store.i18n.localeLabels[l]"></span>
+       </button>
+      </template>
+     </div>
+    </div>
+
+    <!-- Chain selector -->
+    <div class="relative" x-data="{ open: false }">
+     <button @click.stop="open = !open" class="h-9 sm:h-10 px-2 sm:px-2.5 flex items-center gap-1.5 rounded-xl bg-void-edge/40 hover:bg-void-edge/60 text-gray-300 transition-colors">
+      <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+      <span x-text="$store.app.currentChainName?.slice(0,6)" class="text-xs font-medium hidden sm:inline"></span>
+     </button>
+     <div x-cloak style="display:none" x-show="open" @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-40 bg-void-card rounded-xl shadow-2xl border border-void-edge/40 z-50 py-1.5">
+      <button @click="$store.app.switchToChain('bsc'); open = false" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-void-edge/50 transition-colors" :class="$store.app.currentChainName === 'BSC Mainnet' ? 'text-primary font-semibold bg-void-edge/40' : 'text-gray-300'">
+       <span class="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_6px_rgba(234,179,8,0.5)]"></span>
+       <span>BSC Mainnet</span>
+      </button>
+      <button @click="$store.app.switchToChain('hardhat'); open = false" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-void-edge/50 transition-colors" :class="$store.app.currentChainName === 'Hardhat Local' ? 'text-primary font-semibold bg-void-edge/40' : 'text-gray-300'">
+       <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+       <span>Hardhat</span>
+      </button>
+      <button @click="$store.app.switchToChain('hardhat'); open = false" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-void-edge/50 transition-colors" :class="$store.app.currentChainName === 'Hardhat Local' || $store.app.currentChainName === 'Local EVM' ? 'text-primary font-semibold bg-void-edge/40' : 'text-gray-300'">
+       <span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.5)]"></span>
+       <span>Local EVM</span>
+      </button>
+     </div>
+    </div>
+
+    <!-- Wallet: not connected -->
+    <button x-cloak x-show="!$store.app.walletAddress" @click="$store.app.connectWallet()" :disabled="$store.app.walletConnecting" class="h-9 sm:h-10 px-3 sm:px-4 glow-btn text-xs font-medium disabled:opacity-50 flex items-center gap-1.5">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+      <span x-text="$store.i18n.t('site.connect')">连接钱包</span>
+    </button>
+    <!-- Wallet: connected -->
+    <div x-cloak x-show="!!$store.app.walletAddress" class="relative" x-data="{ open: false }">
+     <button @click.stop="open = !open" class="h-9 sm:h-10 pl-1.5 sm:pl-2 pr-2 sm:pr-3 flex items-center gap-2 rounded-xl bg-void-edge/40 hover:bg-void-edge/60 border border-primary/20 transition-colors">
+      <div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center text-white shadow-lg shadow-primary/20">
+       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+      </div>
+      <div class="flex flex-col items-start">
+       <span class="text-[9px] leading-none text-gray-500" x-text="$store.i18n.t('site.wallet')">Wallet</span>
+       <span class="font-mono text-[11px] leading-none text-gray-200" x-text="($store.app.walletAddress||'').slice(0,6)+'..'"></span>
+      </div>
+     </button>
+     <div x-cloak style="display:none" x-show="open" @click.outside="open = false" x-transition class="absolute right-0 mt-2 w-48 bg-void-card rounded-xl shadow-2xl border border-void-edge/40 z-50 py-1 overflow-hidden">
+      <div class="px-3 py-2 text-xs font-mono text-gray-500 border-b border-void-edge/30 break-all" x-text="$store.app.walletAddress"></div>
+      <button @click="$store.app.disconnectWallet(); open = false" class="w-full px-3 py-2.5 text-xs text-red-400 hover:bg-void-edge/50 flex items-center gap-2 transition-colors">
+       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+       <span x-text="$store.i18n.t('site.disconnect')">断开</span>
+      </button>
+     </div>
+    </div>
+   </div>
+  </div>
+ </header>
+
+ <!-- Page Content -->
+ __PAGE_CONTENT__
+
+ <!-- Bottom Nav: Floating Capsule -->
+ <nav class="capsule-nav safe-area-bottom" x-data="{ path: location.pathname }">
+   <a href="/pages/site/index.html" :class="path.includes('index') ? 'active' : ''">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+    <span x-text="$store.i18n.t('nav.home')">首页</span>
+   </a>
+   <a href="/pages/site/products.html" :class="path.includes('products') ? 'active' : ''">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+    <span x-text="$store.i18n.t('nav.products')">产品</span>
+   </a>
+   <a href="/pages/site/me.html" :class="path.includes('me') ? 'active' : ''">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+    <span x-text="$store.i18n.t('nav.me')">我的</span>
+   </a>
+ </nav>
+
+ <!-- Global Loading -->
+ <div x-show="$store.app.loading" style="display:none" class="fixed inset-0 z-[9998] flex items-center justify-center bg-black/40">
+  <div class="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+ </div>
+
+ <script type="module" src="/main.js"></script>
+<script>
+  // Highlight active nav tab
+  const path = location.pathname
+  document.querySelectorAll('.capsule-nav a').forEach(a => {
+    const href = a.getAttribute('href')
+    if (href && (path === href || (href.includes('index.html') && path === '/'))) {
+      a.classList.add('active')
+    } else {
+      a.classList.remove('active')
+    }
+  })
+</script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+<!-- layout: site-shell -->
+<html>
+<head><title>33buy</title></head>
+<body>
+<div id="page-content" x-data="homePage" x-init="init()"
+  class="pt-14 pb-16 animate-fade-in">
+
+  <!-- ============================================ -->
+  <!-- Guest: Banner + Connect -->
+  <!-- ============================================ -->
+  <div x-cloak x-show="!$store.app.walletAddress" class="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
+    <div class="w-full h-52 bg-gradient-to-br from-primary/30 via-accent/10 to-primary/5 rounded-3xl flex items-center justify-center mb-6 overflow-hidden relative">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(245,158,11,0.2),transparent_60%)]"></div>
+      <div class="text-center relative z-10">
+        <h1 class="text-5xl font-extrabold gradient-text mb-3 animate-float">33buy</h1>
+        <div class="text-gray-500 text-sm"><span x-text="$store.i18n.t('site.subtitle')">去中心化电商</span></div>
+      </div>
+    </div>
+    <p class="text-gray-400 text-sm mb-6" x-text="$store.i18n.t('site.connect') + ' MetaMask'">连接 MetaMask 开始购物</p>
+    <button @click="$store.app.connectWallet()" :disabled="$store.app.walletConnecting"
+      class="px-10 py-3.5 glow-btn text-lg">
+      <span x-text="$store.app.walletConnecting ? $store.i18n.t('site.connecting') : $store.i18n.t('site.connect')"></span>
+    </button>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Connected: Home -->
+  <!-- ============================================ -->
+  <div x-cloak x-show="$store.app.walletAddress" class="px-4 space-y-4">
+
+    <!-- Banner -->
+    <div class="relative w-full h-44 bg-gradient-to-br from-primary/20 via-accent/10 to-primary/5 rounded-3xl flex items-center justify-center overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(99,102,241,0.15),transparent_70%)]"></div>
+      <div class="text-center relative z-10">
+        <h2 class="text-4xl font-extrabold gradient-text animate-float">33buy</h2>
+        <div class="text-gray-500 text-xs mt-2 tracking-wide"><span x-text="$store.i18n.t('site.subtitle')">去中心化电商</span> · USDT 支付 · RWA 奖励</div>
+      </div>
+    </div>
+
+    <!-- Notice Bar -->
+    <button @click="showNotice = true" class="w-full glass-card px-4 py-3 flex items-center gap-3 text-left hover:bg-void-card/60 transition-colors">
+      <div class="relative flex-shrink-0">
+        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full"></span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-gray-200 truncate" x-text="$store.i18n.t('site.notice1Title')">33buy 平台正式上线</p>
+      </div>
+      <svg class="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    </button>
+
+    <!-- Share -->
+    <div class="glass-card p-4">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-sm"><span x-text="$store.i18n.t('site.shareFriend')">分享好友</span></div>
+          <div class="text-xs text-gray-400 mt-0.5"><span x-text="$store.i18n.t('site.inviteReward')">邀请好友获得直推奖励</span></div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <input :value="inviteUrl" readonly class="flex-1 px-3 py-2 bg-void-card/60 border border-void-edge/40 rounded-lg text-xs font-mono truncate">
+        <button @click="copy(inviteUrl)" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 flex-shrink-0">复制</button>
+      </div>
+    </div>
+
+    <!-- Star Info + Upgrade -->
+    <div class="glass-card p-4">
+      <!-- Skeleton -->
+      <div x-cloak x-show="!loaded && !loadError" class="space-y-4 animate-pulse">
+        <div class="flex justify-between">
+          <div><div class="skeleton h-3 w-12 mb-2"></div><div class="skeleton h-8 w-16"></div></div>
+          <div><div class="skeleton h-3 w-16 mb-2"></div><div class="skeleton h-6 w-20"></div></div>
+        </div>
+        <div class="skeleton h-12 w-full rounded-2xl"></div>
+      </div>
+      <!-- Load Error -->
+      <div x-cloak x-show="loadError" class="text-center py-6">
+        <div class="text-sm text-red-500 mb-3" x-text="loadError"></div>
+        <button @click="retryLoad()" class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium" x-text="$store.i18n.t('site.retry')">重试</button>
+      </div>
+      <!-- Content -->
+      <div x-show="loaded">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <div class="text-xs text-gray-400"><span x-text="$store.i18n.t('site.myStar')">我的星级</span></div>
+            <div class="text-4xl font-extrabold">
+              <span class="gradient-text" x-text="grade">0</span><span class="text-amber-500">★</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-gray-400" x-text="'升级至 ' + nextLevel + '★'"></div>
+            <div class="text-lg font-bold" x-text="(upgradeAmount || 0).toLocaleString('en-US') + ' USDT'">0 USDT</div>
+          </div>
+        </div>
+        <details class="mb-3">
+          <summary class="text-xs text-gray-400 cursor-pointer hover:text-primary" x-text="$store.i18n.t('site.upgradeTable')">查看升级价格表</summary>
+          <div class="mt-2 grid grid-cols-5 gap-1 text-[10px]">
+            <template x-for="(price, lv) in priceTable" :key="lv">
+              <div class="p-1 text-center rounded" :class="lv === nextLevel ? 'bg-primary/10 text-primary font-bold' : 'bg-void-card/60'">
+                <div x-text="lv + '★'"></div><div x-text="price + 'U'"></div>
+              </div>
+            </template>
+          </div>
+        </details>
+        <button @click="openUpgrade()" :disabled="grade >= 10"
+          class="w-full py-3 glow-btn"
+          x-text="grade >= 10 ? '已达最高等级' : '✦ 立即升级'"></button>
+        <div x-show="!isBound" class="mt-3 text-xs text-amber-500 text-center" x-text="$store.i18n.t('site.needReferrer')">需要先绑定推荐人才能升级</div>
+        <div x-show="error" class="mt-2 text-xs text-red-500 text-center" x-text="error"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Notice Modal -->
+  <!-- ============================================ -->
+  <div x-cloak style="display:none" x-show="showNotice" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="showNotice = false">
+    <div class="bg-void-card w-[calc(100%-2rem)] max-w-md rounded-2xl max-h-[80vh] overflow-y-auto animate-slide-up" @click.stop="">
+      <div class="sticky top-0 bg-void-card border-b border-void-edge/40 px-4 py-3 flex items-center justify-between z-10">
+        <h3 class="font-bold" x-text="$store.i18n.t('site.noticeTitle')">通知</h3>
+        <button @click="showNotice = false" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-void-card/60 text-gray-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-4 space-y-3">
+        <div class="glass-card p-4 rounded-2xl">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-semibold text-gray-100" x-text="$store.i18n.t('site.notice1Title')">33buy 平台正式上线</span>
+            <span class="text-xs text-gray-400" x-text="$store.i18n.t('site.notice1Time')">2026-06-11</span>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed" x-text="$store.i18n.t('site.notice1Content')">33buy 去中心化电商平台正式上线，支持 USDT 支付、RWA 代币奖励、多级推荐和十层感恩机制。欢迎体验！</p>
+        </div>
+        <div class="glass-card p-4 rounded-2xl">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-semibold text-gray-100" x-text="$store.i18n.t('site.notice2Title')">星级升级功能开放</span>
+            <span class="text-xs text-gray-400" x-text="$store.i18n.t('site.notice2Time')">2026-06-10</span>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed" x-text="$store.i18n.t('site.notice2Content')">星级升级功能已全面开放，升级可获得更高收益比例和团队管理权限。请在个人中心查看升级详情。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Upgrade Modal -->
+  <!-- ============================================ -->
+  <div x-cloak style="display:none" x-show="modalOpen" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="modalOpen = false">
+    <div class="bg-void-card w-[calc(100%-2rem)] max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto animate-slide-up" @click.stop="">
+      <!-- Modal Header -->
+      <div class="sticky top-0 bg-void-card border-b border-void-edge/40 px-4 py-3 flex items-center justify-between z-10">
+        <button @click="closeUpgrade()" class="p-1 -ml-1">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <span class="font-semibold text-sm" x-text="$store.i18n.t('site.upgradeNow')">升级</span>
+        <div class="w-6"></div>
+      </div>
+
+      <!-- Steps Indicator -->
+      <div class="flex items-center justify-center gap-2 py-3 px-4 border-b border-void-edge/40">
+        <template x-for="(label, idx) in ['选产品','填地址','确认']" :key="idx">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-colors"
+              :class="step > idx ? 'bg-primary text-white' : step === idx + 1 ? 'bg-primary text-white' : 'bg-void-card/60 text-gray-500'" x-text="idx + 1"></div>
+            <span class="text-xs" :class="step === idx + 1 ? 'text-primary font-medium' : 'text-gray-400'" x-text="label"></span>
+            <template x-if="idx < 2">
+              <div class="w-6 h-px" :class="step > idx + 1 ? 'bg-primary' : 'bg-void-card/60'"></div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- Step 1: Select Product -->
+      <div x-show="step === 1" class="p-4">
+        <div class="grid grid-cols-2 gap-3">
+          <template x-for="p in products" :key="p.id">
+            <div @click="selectProduct(p)" class="p-3 rounded-xl border-2 cursor-pointer transition-all"
+              :class="selectedProduct && selectedProduct.id === p.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-void-edge/40 hover:border-primary/50'">
+              <div x-show="p.imageUrl" class="w-full h-24 bg-void-card/60 rounded-lg mb-2 flex items-center justify-center text-2xl">📦</div>
+              <div class="text-sm font-medium truncate" x-text="p.name"></div>
+              <div class="text-xs text-gray-500 mt-0.5" x-text="formatPrice(p.price) + ' USDT'"></div>
+            </div>
+          </template>
+        </div>
+        <div x-show="isBound && products.length === 0" class="text-center text-gray-400 text-sm py-8" x-text="$store.i18n.t('site.noProducts')">暂无产品</div>
+
+        <button @click="step = 2" :disabled="!selectedProduct || !isBound"
+          class="mt-4 w-full py-3 bg-primary text-white rounded-xl font-bold disabled:opacity-30 transition-opacity" x-text="$store.i18n.t('site.nextStep')">下一步</button>
+      </div>
+
+      <!-- Step 2: Select Shipping Address -->
+      <div x-show="step === 2" class="p-4 space-y-3">
+        <div x-show="addresses.length === 0" class="text-center text-gray-400 text-sm py-8">
+          暂无收货地址
+        </div>
+        <div class="space-y-2 max-h-[40vh] overflow-y-auto">
+          <template x-for="a in addresses" :key="a.id">
+            <div @click="selectedAddressId = a.id"
+              class="p-3 rounded-xl border-2 cursor-pointer transition-all"
+              :class="selectedAddressId === a.id ? 'border-primary bg-primary/5' : 'border-void-edge/40 hover:border-primary/50'">
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-sm" x-text="a.recipientName + ' ' + a.phone"></span>
+                <span x-show="a.isDefault" class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">默认</span>
+              </div>
+              <div class="text-xs text-gray-500 mt-1" x-text="a.province + a.city + a.district + a.addressLine1"></div>
+            </div>
+          </template>
+        </div>
+        <button @click="openAddressForm()" class="w-full py-2.5 border border-dashed border-void-edge/60 rounded-xl text-sm text-gray-400 hover:text-primary hover:border-primary/50 transition-colors flex items-center justify-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          新增收货地址
+        </button>
+
+        <div class="flex gap-3 mt-4">
+          <button @click="step = 1" class="flex-1 py-3 border border-void-edge/40 rounded-xl text-sm font-medium" x-text="$store.i18n.t('site.prevStep')">上一步</button>
+          <button @click="step = 3" :disabled="!selectedAddressId" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold disabled:opacity-30">下一步</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirm & Pay -->
+      <div x-show="step === 3" class="p-4">
+        <div class="bg-void-card/60 rounded-xl p-4 space-y-2 text-sm mb-4">
+          <div class="flex justify-between">
+            <span class="text-gray-500" x-text="$store.i18n.t('site.product')">产品</span>
+            <span class="font-medium" x-text="selectedProduct?.name"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500" x-text="$store.i18n.t('site.currentStar')">当前星级</span>
+            <span x-text="grade + '★ → ' + nextLevel + '★'"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500" x-text="$store.i18n.t('site.payment')">支付金额</span>
+            <span class="font-bold text-primary" x-text="formatPrice(upgradeAmount) + ' USDT'"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500" x-text="$store.i18n.t('site.rwaBonus')">RWA 赠送</span>
+            <span class="text-green-500" x-text="formatPrice(upgradeAmount / 10) + ' TriToken'"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500" x-text="$store.i18n.t('site.shippingAddr')">收货地址</span>
+            <span class="text-xs text-right" x-text="(selectedAddress?.recipientName || '') + ' ' + (selectedAddress?.phone || '') + ' ' + (selectedAddress?.city || '') + (selectedAddress?.addressLine1 || '')"></span>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button @click="step = 2" class="flex-1 py-3 border border-void-edge/40 rounded-xl text-sm font-medium" x-text="$store.i18n.t('site.prevStep')">上一步</button>
+          <button @click="doPlaceOrder()" :disabled="loading"
+            class="flex-1 py-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50">
+            <span x-show="!loading" x-text="$store.i18n.t('site.confirmPay')">确认支付</span>
+            <span x-show="loading" x-text="$store.i18n.t('site.processing')">处理中...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Address Form Modal -->
+  <!-- ============================================ -->
+  <div x-cloak style="display:none" x-show="showAddressForm" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-void-card w-[calc(100%-2rem)] max-w-md rounded-2xl max-h-[90vh] overflow-y-auto animate-slide-up" @click.stop="">
+      <div class="px-4 py-4 border-b border-void-edge/40 text-center">
+        <span class="font-semibold text-base">新增收货地址</span>
+      </div>
+      <div class="p-5 space-y-3" x-data="addressBook" x-init="openAdd()">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">姓名 *</label>
+            <input x-model="form.recipientName" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.recipientName" class="text-[10px] text-red-500 mt-0.5" x-text="errors.recipientName"></p>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500">电话 *</label>
+            <input x-model="form.phone" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.phone" class="text-[10px] text-red-500 mt-0.5" x-text="errors.phone"></p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">国家</label>
+            <input x-model="form.country" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500">省 *</label>
+            <input x-model="form.province" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.province" class="text-[10px] text-red-500 mt-0.5" x-text="errors.province"></p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">市 *</label>
+            <input x-model="form.city" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.city" class="text-[10px] text-red-500 mt-0.5" x-text="errors.city"></p>
+          </div>
+          <div>
+            <label class="text-xs text-gray-500">区 *</label>
+            <input x-model="form.district" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+            <p x-show="errors.district" class="text-[10px] text-red-500 mt-0.5" x-text="errors.district"></p>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500">详细地址 *</label>
+          <input x-model="form.addressLine1" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+          <p x-show="errors.addressLine1" class="text-[10px] text-red-500 mt-0.5" x-text="errors.addressLine1"></p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500">邮编</label>
+            <input x-model="form.postalCode" class="w-full px-3 py-2 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1">
+          </div>
+          <div class="flex items-end pb-2">
+            <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+              <input type="checkbox" x-model="form.isDefault" class="w-4 h-4 rounded border-void-edge/50 bg-void-card/60 text-primary focus:ring-primary">
+              设为默认地址
+            </label>
+          </div>
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button @click="$parent.showAddressForm = false" class="flex-1 py-3 border border-void-edge/40 rounded-xl text-sm font-medium">取消</button>
+          <button @click="saveAddress($store.app.walletAddress)" :disabled="saving" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50">
+            <span x-show="!saving">保存</span>
+            <span x-show="saving">保存中...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Register Modal (forced before using platform) -->
+  <!-- ============================================ -->
+  <div x-cloak style="display:none" x-show="registerModalOpen" x-transition.opacity class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-void-card w-[calc(100%-2rem)] max-w-md rounded-2xl max-h-[90vh] overflow-y-auto animate-slide-up" @click.stop="">
+      <!-- Modal Header -->
+      <div class="px-4 py-4 border-b border-void-edge/40 text-center">
+        <span class="font-semibold text-base" x-text="$store.i18n.t('site.registerTitle')">注册账号</span>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <p class="text-xs text-gray-400 text-center leading-relaxed" x-text="$store.i18n.t('site.registerSubtitle')">绑定推荐人，开启 33buy 之旅</p>
+
+        <div>
+          <label class="text-xs text-gray-500"><span x-text="$store.i18n.t('site.referrerAddr')">推荐人地址</span> *</label>
+          <input x-model="registerReferrer" @input="registerError = ''" @keydown.enter="doRegister()" :disabled="registerLoading"
+            :placeholder="$store.i18n.t('site.referrerAddr') + ' 0x...'"
+            class="w-full px-3 py-2.5 border border-void-edge/50 rounded-lg text-sm bg-void-card/60 mt-1 font-mono focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50"
+            autocapitalize="none" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div x-show="registerError" x-transition class="text-xs text-red-500 text-center" x-text="registerError"></div>
+
+        <button @click="doRegister()" :disabled="registerLoading" class="w-full py-3 bg-primary text-white rounded-xl font-bold disabled:opacity-50">
+          <span x-show="!registerLoading" x-text="$store.i18n.t('site.registerNow')">立即注册</span>
+          <span x-show="registerLoading" x-text="$store.i18n.t('site.processing')">处理中...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Capture URL params before any deferred module scripts or history rewrites run,
+    // and persist in sessionStorage so refreshes don't lose the invite/upgrade intent.
+    try {
+      const params = new URLSearchParams(location.search)
+      const pending = {
+        upgrade: params.get('upgrade') === '1',
+        ref: params.get('ref') || ''
+      }
+      window.__33buy_pending__ = pending
+      if (pending.ref || pending.upgrade) {
+        sessionStorage.setItem('__33buy_pending__', JSON.stringify(pending))
+      }
+    } catch(e) {}
+  </script>
+  <script type="module">
+    import '/main.js'
+    import { readContract, writeContract, approveToken, ADDRESSES, ERC20_ABI, TRIDAO_ABI, PRODUCT_REGISTRY_ABI, formatEther } from '/web3/wallet.js'
+    import { DEFAULT_REFERRER } from '/web3/contracts.js'
+    import { createOrder } from '/api.js'
+
+    Alpine.data('homePage', () => ({
+      loading: false,
+      loaded: false,
+      loadError: '',
+      error: '',
+      modalOpen: false,
+      showNotice: false,
+      step: 1,
+      grade: 0,
+      isBound: false,
+      registerModalOpen: false,
+      registerReferrer: '',
+      registerLoading: false,
+      registerError: '',
+      _pendingUpgrade: false,
+      _pendingRef: '',
+      _openUpgradeAfterSave: false,
+      priceTable: {1:60,2:300,3:450,4:600,5:1000,6:1000,7:1000,8:1000,9:1000,10:1000},
+      products: [],
+      selectedProduct: null,
+      stats: { teamNum: 0, subNum: 0, amount: 0 },
+      addresses: [],
+      selectedAddressId: null,
+      showAddressForm: false,
+
+      get nextLevel() { return Math.min(this.grade + 1, 10) },
+      get upgradeAmount() { return this.getPrice(this.nextLevel) },
+      get inviteUrl() { return location.origin + '/?ref=' + Alpine.store('app').walletAddress },
+
+      async init() {
+        window.addEventListener('address-book-saved', (e) => {
+          this.onAddressBookSaved(e.detail.addresses)
+        })
+
+        // Try to recover pending ref/upgrade intent from URL capture or sessionStorage
+        let pending = window.__33buy_pending__ || { upgrade: false, ref: '' }
+        if (!pending.ref && !pending.upgrade) {
+          try {
+            const raw = sessionStorage.getItem('__33buy_pending__')
+            if (raw) pending = JSON.parse(raw)
+          } catch(e) {}
+        }
+        this._pendingUpgrade = pending.upgrade
+        // Fall back to default referrer for local testing / onboarding when no ref is provided
+        this._pendingRef = pending.ref || DEFAULT_REFERRER
+        if (this._pendingUpgrade || pending.ref) {
+          history.replaceState(null, '', location.pathname)
+        }
+
+        // Watch wallet connection changes and auto-reload user data
+        this.$watch('$store.app.walletAddress', async (addr) => {
+          if (addr) {
+            this.loadError = ''
+            await this.loadUser()
+            await this.loadProducts()
+            if (!this.isBound) {
+              this.openRegisterModal(this._pendingRef)
+            } else if (this._pendingUpgrade) {
+              this._pendingUpgrade = false
+              this._pendingRef = ''
+              this.openUpgrade()
+            }
+          } else {
+            this.loaded = false
+            this.loadError = ''
+            this.grade = 0
+            this.isBound = false
+            this.stats = { teamNum: 0, subNum: 0, amount: 0 }
+          }
+        })
+        if (Alpine.store('app').walletAddress) {
+          this.loadError = ''
+          await this.loadUser()
+          await this.loadProducts()
+          if (!this.isBound) {
+            this.openRegisterModal(this._pendingRef)
+          } else if (this._pendingUpgrade) {
+            this._pendingUpgrade = false
+            this._pendingRef = ''
+            this.openUpgrade()
+          }
+        }
+      },
+
+      async loadUser() {
+        const addr = Alpine.store('app').walletAddress
+        if (!addr) return
+        this.error = ''
+        try {
+          const u = await readContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'userMap', args: [addr] })
+          this.isBound = u[0]
+          this.grade = Number(u[6])
+          this.stats = { teamNum: Number(u[2]), subNum: Number(u[3]), amount: Number(formatEther(u[4])) }
+          this.loaded = true
+          this.loadError = ''
+        } catch(e) {
+          this.loadError = e.shortMessage || e.message || Alpine.store('i18n').t('site.loadFailed')
+          this.loaded = true
+          console.error('loadUser:', e)
+        }
+      },
+
+      async loadProducts() {
+        try {
+          const count = await readContract({
+            address: ADDRESSES.productRegistry,
+            abi: PRODUCT_REGISTRY_ABI,
+            functionName: 'productCount',
+          })
+          const n = Number(count)
+          if (n > 0) {
+            const batch = await readContract({
+              address: ADDRESSES.productRegistry,
+              abi: PRODUCT_REGISTRY_ABI,
+              functionName: 'getProducts',
+              args: [0n, BigInt(Math.min(n, 50))],
+            })
+            this.products = Array.isArray(batch)
+              ? batch.filter(p => p.active).map(p => ({
+                  id: Number(p.id),
+                  name: p.name,
+                  imageUrl: p.imageUrl,
+                  price: p.price,
+                }))
+              : []
+          } else {
+            this.products = []
+          }
+        } catch (e) {
+          console.error('loadProducts:', e)
+          // Fallback demo products if contract unavailable
+          this.products = [
+            { id: 0, name: '养生茶礼盒', imageUrl: '', price: 60n * 10n**18n },
+            { id: 1, name: '智能健康手环', imageUrl: '', price: 300n * 10n**18n },
+            { id: 2, name: '有机蜂蜜套装', imageUrl: '', price: 450n * 10n**18n },
+            { id: 3, name: '筋膜枪按摩器', imageUrl: '', price: 600n * 10n**18n },
+            { id: 4, name: '高端空气净化器', imageUrl: '', price: 1000n * 10n**18n },
+          ]
+        }
+      },
+
+      async retryLoad() {
+        this.loadError = ''
+        this.loaded = false
+        await this.loadUser()
+        await this.loadProducts()
+      },
+
+      getPrice(lv) {
+        const prices = {1:60,2:300,3:450,4:600,5:1000,6:1000,7:1000,8:1000,9:1000,10:1000}
+        return prices[lv] || 0
+      },
+
+      async openUpgrade() {
+        if (!this.isBound) {
+          this._pendingUpgrade = true
+          this.openRegisterModal()
+          return
+        }
+        if (this.grade >= 10) { Alpine.notify.warning(Alpine.store('i18n').t('site.maxGrade')); return }
+
+        await this.loadAddresses()
+        if (this.addresses.length === 0) {
+          this._openUpgradeAfterSave = true
+          this.openAddressForm()
+          return
+        }
+
+        if (!this._savedStep) { this.step = 1; this.selectedProduct = null }
+        this.modalOpen = true
+      },
+      closeUpgrade() {
+        this._savedStep = this.step // preserve progress
+        this.modalOpen = false
+      },
+
+      openRegisterModal(prefill = '') {
+        this.registerReferrer = prefill || ''
+        this.registerError = ''
+        this.registerLoading = false
+        this.registerModalOpen = true
+      },
+
+      async validateReferrer(addr) {
+        if (!addr) return false
+        if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) return false
+        const self = Alpine.store('app').walletAddress
+        if (self && addr.toLowerCase() === self.toLowerCase()) return false
+        try {
+          const u = await readContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'userMap', args: [addr] })
+          return u[0]
+        } catch(e) { return false }
+      },
+
+      async doRegister() {
+        const addr = this.registerReferrer.trim()
+        if (!addr) {
+          this.registerError = Alpine.store('i18n').t('site.referrerRequired')
+          return
+        }
+        if (!/^0x[a-fA-F0-9]{40}$/.test(addr)) {
+          this.registerError = Alpine.store('i18n').t('site.invalidReferrer')
+          return
+        }
+        const self = Alpine.store('app').walletAddress
+        if (self && addr.toLowerCase() === self.toLowerCase()) {
+          this.registerError = Alpine.store('i18n').t('site.invalidReferrer')
+          return
+        }
+        this.registerLoading = true
+        this.registerError = ''
+        const isRegistered = await this.validateReferrer(addr)
+        if (!isRegistered) {
+          this.registerError = Alpine.store('i18n').t('site.referrerNotRegistered')
+          this.registerLoading = false
+          return
+        }
+        try {
+          const hash = await writeContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'bind', args: [addr] })
+          Alpine.notify.success(Alpine.store('i18n').t('site.registerSuccess') + ': ' + hash.slice(0,10))
+          this.registerModalOpen = false
+          this.registerReferrer = ''
+          this._pendingRef = ''
+          try { sessionStorage.removeItem('__33buy_pending__') } catch(e) {}
+          await this.loadUser()
+          if (this._pendingUpgrade) {
+            this._pendingUpgrade = false
+            this.openUpgrade()
+          }
+        } catch(e) {
+          const msg = e.message || ''
+          if (msg.includes('insufficient funds') || msg.includes('exceeds the balance') || msg.includes('gas required exceeds') || msg.includes('Out of gas')) {
+            this.registerError = Alpine.store('i18n').t('site.insufficientGas') || '钱包 Gas 费不足，请先领取测试 ETH'
+          } else if (msg.includes('rejected') || msg.includes('cancelled') || msg.includes('denied') || msg.includes('User denied')) {
+            this.registerError = Alpine.store('i18n').t('site.userRejected') || '用户取消了交易'
+          } else if (msg.includes('NotActive')) {
+            this.registerError = Alpine.store('i18n').t('site.referrerNotRegistered')
+          } else if (msg.includes('AlreadyBound')) {
+            this.registerError = Alpine.store('i18n').t('site.alreadyBound') || '该地址已注册'
+          } else {
+            this.registerError = msg || Alpine.store('i18n').t('site.registerFailed')
+          }
+        }
+        this.registerLoading = false
+      },
+
+      selectProduct(p) { this.selectedProduct = p },
+
+      async doPlaceOrder() {
+        if (this.loading) return // double-click guard
+        this.loading = true
+        try {
+          const addr = Alpine.store('app').walletAddress
+          if (!addr) throw new Error(Alpine.store('i18n').t('site.walletNotConnected'))
+          // Approve USDT
+          const allowed = await readContract({ address: ADDRESSES.usdt, abi: ERC20_ABI, functionName: 'allowance', args: [addr, ADDRESSES.triDao] })
+          if (Number(formatEther(allowed)) < 100000) {
+            Alpine.notify.info(Alpine.store('i18n').t('site.approveUsdt') + '...')
+            await approveToken(ADDRESSES.usdt, ADDRESSES.triDao)
+          }
+          // Create offchain order
+          Alpine.notify.info(Alpine.store('i18n').t('site.createOrder'))
+          if (!this.selectedAddress) throw new Error('请选择收货地址')
+          const orderData = await createOrder({
+            buyer: addr,
+            productId: this.selectedProduct.id,
+            addressId: this.selectedAddress.id,
+          })
+          // Call placeOrder
+          Alpine.notify.info(Alpine.store('i18n').t('site.chainConfirming'))
+          const hash = await writeContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'placeOrder', args: [this.selectedProduct.id, orderData.orderRef] })
+          Alpine.notify.success('🎉 ' + Alpine.store('i18n').t('site.orderSuccess') + ' ' + hash.slice(0,10))
+          // Reset modal + auto-refresh
+          this._savedStep = null
+          this.selectedProduct = null
+          this.step = 1
+          this.modalOpen = false
+          await this.loadUser()
+        } catch(e) {
+          Alpine.notify.error(e.message || Alpine.store('i18n').t('site.orderFailed'))
+          this.loading = false
+          return
+        }
+        this.loading = false
+      },
+
+      formatPrice(v) {
+        if (!v) return '0'
+        const n = typeof v === 'bigint' ? Number(v) / 1e18 : Number(v) / 1e18
+        return n < 1000 ? n.toFixed(0) : n.toLocaleString('en-US', {maximumFractionDigits: 0})
+      },
+
+      get selectedAddress() {
+        return this.addresses.find(a => a.id === this.selectedAddressId) || null
+      },
+
+      async loadAddresses() {
+        const addr = Alpine.store('app').walletAddress
+        if (!addr) return
+        const { getAddresses } = await import('/api.js')
+        this.addresses = await getAddresses(addr)
+        if (this.addresses.length && !this.selectedAddressId) {
+          const def = this.addresses.find(a => a.isDefault)
+          this.selectedAddressId = def ? def.id : this.addresses[0].id
+        }
+      },
+
+      openAddressForm() {
+        this.showAddressForm = true
+      },
+
+      closeAddressForm() {
+        this.showAddressForm = false
+      },
+
+      onAddressBookSaved(addresses) {
+        this.addresses = addresses
+        const newest = addresses[0]
+        if (newest && !this.selectedAddressId) this.selectedAddressId = newest.id
+        this.closeAddressForm()
+        if (this._openUpgradeAfterSave) {
+          this._openUpgradeAfterSave = false
+          this.openUpgrade()
+        }
+      },
+
+      async copy(text) {
+        const ok = await Alpine.copyText(text)
+        if (ok) Alpine.notify.success(Alpine.store('i18n').t('site.copied'))
+        else Alpine.notify.error(Alpine.store('i18n').t('site.copyFailed') || '复制失败')
+      }
+    }))
+  </script>
+</div>
+</body>
+</html>
