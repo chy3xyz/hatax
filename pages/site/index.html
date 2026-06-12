@@ -242,11 +242,11 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500" x-text="$store.i18n.t('site.payment')">支付金额</span>
-            <span class="font-bold text-primary" x-text="formatPrice(upgradeAmount) + ' USDT'"></span>
+            <span class="font-bold text-primary" x-text="(upgradeAmount || 0).toLocaleString('en-US') + ' USDT'"></span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500" x-text="$store.i18n.t('site.rwaBonus')">RWA 赠送</span>
-            <span class="text-green-500" x-text="formatPrice(upgradeAmount / 10) + ' TriToken'"></span>
+            <span class="text-green-500" x-text="(rwaBonusAmount || 0).toLocaleString('en-US') + ' TriToken'"></span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500" x-text="$store.i18n.t('site.shippingAddr')">收货地址</span>
@@ -414,9 +414,14 @@
       addresses: [],
       selectedAddressId: null,
       showAddressForm: false,
+      triTokenPrice: 0.00001, // default USDT per TriToken; overwritten by pair reserves if available
 
       get nextLevel() { return Math.min(this.grade + 1, 10) },
       get upgradeAmount() { return this.getPrice(this.nextLevel) },
+      get rwaBonusAmount() {
+        if (!this.upgradeAmount || this.triTokenPrice <= 0) return 0
+        return (this.upgradeAmount * 0.1) / this.triTokenPrice
+      },
       get inviteUrl() { return location.origin + '/?ref=' + Alpine.store('app').walletAddress },
 
       async init() {
@@ -443,7 +448,7 @@
         this.$watch('$store.app.walletAddress', async (addr) => {
           if (addr) {
             this.loadError = ''
-            await Promise.all([this.loadUser(), this.loadProducts(), this.loadUpgradePrices()])
+            await Promise.all([this.loadUser(), this.loadProducts(), this.loadUpgradePrices(), this.loadTriTokenPrice()])
             if (!this.isBound) {
               this.openRegisterModal(this._pendingRef)
             } else if (this._pendingUpgrade) {
@@ -461,7 +466,7 @@
         })
         if (Alpine.store('app').walletAddress) {
           this.loadError = ''
-          await Promise.all([this.loadUser(), this.loadProducts(), this.loadUpgradePrices()])
+          await Promise.all([this.loadUser(), this.loadProducts(), this.loadUpgradePrices(), this.loadTriTokenPrice()])
           if (!this.isBound) {
             this.openRegisterModal(this._pendingRef)
           } else if (this._pendingUpgrade) {
@@ -561,6 +566,35 @@
           console.error('loadUpgradePrices:', e)
           // Fallback if contract unavailable
           this.upgradePrices = {1:60,2:130,3:180,4:300,5:500,6:700,7:1000,8:1500,9:1800,10:2000}
+        }
+      },
+
+      async loadTriTokenPrice() {
+        try {
+          const pairAbi = [
+            { inputs: [], name: 'getReserves', outputs: [{ internalType: 'uint112', name: 'reserve0', type: 'uint112' }, { internalType: 'uint112', name: 'reserve1', type: 'uint112' }, { internalType: 'uint32', name: 'blockTimestampLast', type: 'uint32' }], stateMutability: 'view', type: 'function' },
+            { inputs: [], name: 'token0', outputs: [{ internalType: 'address', name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
+            { inputs: [], name: 'token1', outputs: [{ internalType: 'address', name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
+          ]
+          const pair = await readContract({ address: ADDRESSES.triDao, abi: TRIDAO_ABI, functionName: 'TriTokenPAIR' })
+          if (!pair || pair === '0x0000000000000000000000000000000000000000') return
+          const [token0, token1, reserves] = await Promise.all([
+            readContract({ address: pair, abi: pairAbi, functionName: 'token0' }),
+            readContract({ address: pair, abi: pairAbi, functionName: 'token1' }),
+            readContract({ address: pair, abi: pairAbi, functionName: 'getReserves' }),
+          ])
+          const r0 = Number(reserves[0]) / 1e18
+          const r1 = Number(reserves[1]) / 1e18
+          const usdtLower = ADDRESSES.usdt.toLowerCase()
+          // price = USDT reserve / TriToken reserve
+          if (token0.toLowerCase() === usdtLower) {
+            this.triTokenPrice = r0 / r1
+          } else if (token1.toLowerCase() === usdtLower) {
+            this.triTokenPrice = r1 / r0
+          }
+        } catch (e) {
+          console.error('loadTriTokenPrice:', e)
+          // Keep default price
         }
       },
 
