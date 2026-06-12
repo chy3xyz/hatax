@@ -198,10 +198,15 @@ Alpine.store('app', {
     // Listen for wallet chain changes and update UI
     window.addEventListener('wallet-chain-changed', (e) => {
       this.currentChainName = e.detail.displayName || e.detail.name
-      // Always follow the wallet: refresh chain-dependent data by reloading.
-      // This avoids stale registration/contract reads after the user switches networks in MetaMask.
-      if (document.visibilityState !== 'hidden') {
+      // Follow the wallet: refresh chain-dependent data by reloading when the chain actually changes.
+      // Use sessionStorage to avoid a reload loop on page init.
+      const lastChainId = sessionStorage.getItem('__33buy_last_chain_id__')
+      const newChainId = String(e.detail.id)
+      if (document.visibilityState !== 'hidden' && lastChainId && lastChainId !== newChainId) {
+        sessionStorage.setItem('__33buy_last_chain_id__', newChainId)
         window.location.reload()
+      } else {
+        sessionStorage.setItem('__33buy_last_chain_id__', newChainId)
       }
     })
     // Listen for wallet account changes (MetaMask switch account)
