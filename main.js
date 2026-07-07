@@ -54,7 +54,7 @@ const I18N_MESSAGES = {
     },
     header: { themeColor: '主题颜色', themeColors: '切换主题色', fullscreen: '全屏', notifications: '通知中心', markAllRead: '全部已读', viewAll: '查看全部通知', settings: '界面设置', account: '账号设置', logout: '退出登录', admin: '管理员' },
     tab: { closeCurrent: '关闭当前', closeLeft: '关闭左侧', closeRight: '关闭右侧', closeAll: '关闭全部' },
-    footer: { copyright: 'HatTax Admin © 2024', style: 'Vue Vben Admin 风格', powered: 'Powered by Vite + Alpine' },
+    footer: { copyright: 'HatTax Admin © 2026', style: 'Vue Vben Admin 风格', powered: 'Powered by Vite + Alpine' },
     settings: {
       title: '界面设置', themeColor: '主题颜色', customColor: '自定义颜色', apply: '应用',
       displayMode: '显示模式', lightMode: '浅色模式', darkMode: '深色模式',
@@ -86,7 +86,7 @@ const I18N_MESSAGES = {
     },
     header: { themeColor: 'Theme Colors', themeColors: 'Switch Theme', fullscreen: 'Fullscreen', notifications: 'Notifications', markAllRead: 'Mark All Read', viewAll: 'View All', settings: 'Settings', account: 'Account', logout: 'Logout', admin: 'Admin' },
     tab: { closeCurrent: 'Close', closeLeft: 'Close Left', closeRight: 'Close Right', closeAll: 'Close All' },
-    footer: { copyright: 'HatTax Admin © 2024', style: 'Vben Admin Style', powered: 'Powered by Vite + Alpine' },
+    footer: { copyright: 'HatTax Admin © 2026', style: 'Vben Admin Style', powered: 'Powered by Vite + Alpine' },
     settings: {
       title: 'Settings', themeColor: 'Theme Color', customColor: 'Custom Color', apply: 'Apply',
       displayMode: 'Display Mode', lightMode: 'Light', darkMode: 'Dark',
