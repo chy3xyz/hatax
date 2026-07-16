@@ -2,9 +2,12 @@ export default {
   darkMode: 'class',
   content: [
     './*.html',
+    './admin/**/*.html',
     './pages/**/*.html',
     './components/**/*.html',
-    './main.js'
+    './main.js',
+    './src/**/*.js',
+    './public/mock-api/**/*.html',
   ],
   safelist: [
     'lg:ml-64', 'lg:ml-0', 'lg:left-64', 'lg:left-0',

@@ -1,0 +1,114 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>用户管理</title>
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 p-6 pb-12 space-y-6 animate-fade-in"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto" aria-label="Breadcrumb">
+ <a href="/admin/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline" x-text="$store.i18n.t('menu.dashboard')">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+</nav>
+
+ <div class="flex justify-between items-center">
+ <h1 class="text-2xl font-bold" x-text="$store.i18n.t('user.title')">用户管理</h1>
+ <a href="/admin/user-form.html"
+    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2"
+    @click.prevent="$store.app.addTab('user-form','新增用户'); $store.app._navigateTo('/admin/user-form.html','新增用户')">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+ <span x-text="$store.i18n.t('user.addUser')">新增用户</span>
+ </a>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
+ <input name="keyword" :placeholder="$store.i18n.t('user.searchUser')" class="px-3 py-2 border rounded-lg flex-1 max-w-xs dark:bg-gray-800 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+ <select name="role" class="px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600">
+ <option value="" x-text="$store.i18n.t('user.allRoles')">全部角色</option>
+ <option value="admin" x-text="$store.i18n.t('user.superAdmin')">超级管理员</option>
+ <option value="user" x-text="$store.i18n.t('user.normalUser')">普通用户</option>
+ </select>
+ <select name="status" class="px-3 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600">
+ <option value="" x-text="$store.i18n.t('user.allStatus')">全部状态</option>
+ <option value="active" x-text="$store.i18n.t('user.normal')">正常</option>
+ <option value="disabled" x-text="$store.i18n.t('user.disabled')">禁用</option>
+ </select>
+ <button type="button"
+   hx-get="/api/users"
+   hx-include="[name='keyword'],[name='role'],[name='status']"
+   hx-target="#user-tbody"
+   class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+ <span x-text="$store.i18n.t('common.search')">搜索</span>
+ </button>
+ <button type="button"
+   hx-get="/api/users"
+   hx-target="#user-tbody"
+   class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+   x-text="$store.i18n.t('common.reset')">重置</button>
+ </div>
+
+ <div class="overflow-x-auto">
+ <table class="w-full text-left table-fixed">
+ <thead class="bg-gray-50 dark:bg-gray-800 text-sm">
+ <tr class="border-b border-gray-200 dark:border-gray-700">
+ <th class="px-4 py-3 font-medium w-12"><input type="checkbox" class="w-4 h-4 rounded" aria-label="Select all"></th>
+ <th class="px-4 py-3 font-medium w-14">ID</th>
+ <th class="px-4 py-3 font-medium" x-text="$store.i18n.t('login.username')">用户名</th>
+ <th class="px-4 py-3 font-medium w-32" x-text="$store.i18n.t('user.phone')">手机号</th>
+ <th class="px-4 py-3 font-medium w-24" x-text="$store.i18n.t('user.role')">角色</th>
+ <th class="px-4 py-3 font-medium w-20" x-text="$store.i18n.t('user.status')">状态</th>
+ <th class="px-4 py-3 font-medium w-28" x-text="$store.i18n.t('user.createdAt')">创建时间</th>
+ <th class="px-4 py-3 font-medium text-right w-32" x-text="$store.i18n.t('user.actions')">操作</th>
+ </tr>
+ </thead>
+ <tbody id="user-tbody" hx-get="/api/users" hx-trigger="load" hx-swap="innerHTML" class="divide-y divide-gray-100 dark:divide-gray-800">
+  <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400" x-text="$store.i18n.t('common.loading')">加载中...</td></tr>
+ </tbody>
+ </table>
+ </div>
+
+ <div class="p-4 flex justify-between items-center border-t border-gray-200 dark:border-gray-700 text-sm text-gray-500">
+ <span>共多页记录（每页 3 条演示）</span>
+ <div class="flex gap-1">
+ <button type="button"
+   class="px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+   hx-get="/api/users?page=1&pageSize=3"
+   hx-target="#user-tbody"
+   x-text="$store.i18n.t('user.prevPage')">上一页</button>
+ <button type="button"
+   class="px-3 py-1 bg-primary text-white rounded"
+   hx-get="/api/users?page=1&pageSize=3"
+   hx-target="#user-tbody">1</button>
+ <button type="button"
+   class="px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+   hx-get="/api/users?page=2&pageSize=3"
+   hx-target="#user-tbody">2</button>
+ <button type="button"
+   class="px-3 py-1 border rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+   hx-get="/api/users?page=2&pageSize=3"
+   hx-target="#user-tbody"
+   x-text="$store.i18n.t('user.nextPage')">下一页</button>
+ </div>
+ </div>
+ </div>
+ </div>
+
+</body>
+</html>

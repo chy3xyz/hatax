@@ -1,0 +1,237 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>活动管理</title>
+</head>
+<body>
+<div id="page-content" class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease`"
+ x-data="eventsAdminPage">
+
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-6">
+   <a href="/admin/dashboard.html" class="hover:text-primary">首页</a>
+   <span class="mx-1">/</span>
+   <span class="text-gray-700 dark:text-gray-200 font-medium">活动管理</span>
+ </nav>
+
+ <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+   <div>
+     <h1 class="text-2xl font-bold">活动管理</h1>
+     <p class="text-sm text-gray-500 mt-1">产业大会 / 疗愈体验 / 线上大会等，支持用户报名</p>
+   </div>
+   <div class="flex flex-wrap gap-2">
+     <input x-model="q" @keydown.enter="load()" type="search" placeholder="搜索标题…"
+       class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+     <select x-model="category" @change="load()" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       <option value="">全部分类</option>
+       <template x-for="c in categories" :key="c.key">
+         <option :value="c.key" x-text="c.label"></option>
+       </template>
+     </select>
+     <select x-model="status" @change="load()" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       <option value="">全部状态</option>
+       <option value="published">已发布</option>
+       <option value="draft">草稿</option>
+       <option value="closed">已关闭</option>
+       <option value="archived">归档</option>
+     </select>
+     <button type="button" @click="load()" class="px-3 py-2 border rounded-lg text-sm">搜索</button>
+     <button type="button" @click="openCreate()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm">+ 新建活动</button>
+     <a href="/pages/events.html" target="_blank" class="px-4 py-2 border rounded-lg text-sm">前台预览</a>
+   </div>
+ </div>
+
+ <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+   <div class="bg-white dark:bg-gray-900 rounded-lg border p-4">
+     <div class="text-xs text-gray-500">活动总数</div>
+     <div class="text-xl font-bold mt-1" x-text="stats.total ?? 0"></div>
+   </div>
+   <div class="bg-white dark:bg-gray-900 rounded-lg border p-4">
+     <div class="text-xs text-gray-500">已发布</div>
+     <div class="text-xl font-bold mt-1" x-text="stats.published ?? 0"></div>
+   </div>
+   <div class="bg-white dark:bg-gray-900 rounded-lg border p-4">
+     <div class="text-xs text-gray-500">有效报名</div>
+     <div class="text-xl font-bold mt-1 text-primary" x-text="stats.signups ?? 0"></div>
+   </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border overflow-x-auto">
+   <table class="w-full text-left">
+     <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 uppercase">
+       <tr>
+         <th class="px-4 py-3">活动</th>
+         <th class="px-4 py-3">分类</th>
+         <th class="px-4 py-3">时间</th>
+         <th class="px-4 py-3">报名</th>
+         <th class="px-4 py-3">状态</th>
+         <th class="px-4 py-3">操作</th>
+       </tr>
+     </thead>
+     <tbody>
+       <template x-if="!rows.length">
+         <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">暂无活动</td></tr>
+       </template>
+       <template x-for="e in rows" :key="e.id">
+         <tr class="border-b border-gray-100 dark:border-gray-800">
+           <td class="px-4 py-3">
+             <div class="text-sm font-medium" x-text="e.title"></div>
+             <div class="text-xs text-gray-400" x-text="e.modeLabel + ' · ' + (e.location || '—')"></div>
+           </td>
+           <td class="px-4 py-3 text-sm" x-text="e.categoryLabel"></td>
+           <td class="px-4 py-3 text-xs text-gray-500" x-text="(e.startsAt || '').slice(0,16)"></td>
+           <td class="px-4 py-3 text-sm">
+             <span x-text="e.signupCount"></span>
+             <span x-show="e.capacity > 0" x-text="' / ' + e.capacity"></span>
+             <span class="text-xs text-gray-400 ml-1" x-text="e.feePoints ? (e.feePoints + '积分') : '免费'"></span>
+           </td>
+           <td class="px-4 py-3">
+             <span class="text-xs px-2 py-0.5 rounded-full"
+               :class="e.status==='published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'"
+               x-text="e.status"></span>
+           </td>
+           <td class="px-4 py-3 text-sm whitespace-nowrap">
+             <a :href="'/pages/event.html?id=' + e.id" target="_blank" class="text-primary hover:underline mr-2">预览</a>
+             <button type="button" @click="viewSignups(e)" class="text-blue-500 hover:underline mr-2">名单</button>
+             <button type="button" @click="edit(e)" class="text-blue-500 hover:underline mr-2">编辑</button>
+             <button type="button" @click="remove(e)" class="text-red-500 hover:underline">删除</button>
+           </td>
+         </tr>
+       </template>
+     </tbody>
+   </table>
+ </div>
+
+ <!-- edit modal -->
+ <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+   <div class="absolute inset-0 bg-black/40" @click="modalOpen=false"></div>
+   <div class="relative bg-white dark:bg-gray-900 rounded-xl border w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-xl">
+     <h2 class="text-lg font-bold mb-4" x-text="form.id ? '编辑活动' : '新建活动'"></h2>
+     <div class="space-y-3">
+       <div>
+         <label class="block text-sm mb-1">标题</label>
+         <input x-model="form.title" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div>
+         <label class="block text-sm mb-1">副标题</label>
+         <input x-model="form.subtitle" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+         <div>
+           <label class="block text-sm mb-1">分类</label>
+           <select x-model="form.category" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+             <template x-for="c in categories" :key="'f-'+c.key">
+               <option :value="c.key" x-text="c.label"></option>
+             </template>
+           </select>
+         </div>
+         <div>
+           <label class="block text-sm mb-1">形式</label>
+           <select x-model="form.mode" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+             <option value="offline">线下</option>
+             <option value="online">线上</option>
+             <option value="hybrid">线上+线下</option>
+           </select>
+         </div>
+         <div>
+           <label class="block text-sm mb-1">名额(0不限)</label>
+           <input type="number" min="0" x-model="form.capacity" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+         <div>
+           <label class="block text-sm mb-1">积分费用</label>
+           <input type="number" min="0" x-model="form.feePoints" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+       </div>
+       <div class="grid grid-cols-2 gap-3">
+         <div>
+           <label class="block text-sm mb-1">开始时间</label>
+           <input x-model="form.startsAt" placeholder="2026-09-18 09:30:00" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+         <div>
+           <label class="block text-sm mb-1">结束时间</label>
+           <input x-model="form.endsAt" placeholder="2026-09-18 17:30:00" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+       </div>
+       <div class="grid grid-cols-2 gap-3">
+         <div>
+           <label class="block text-sm mb-1">报名截止</label>
+           <input x-model="form.signupDeadline" placeholder="可空" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+         <div>
+           <label class="block text-sm mb-1">状态</label>
+           <select x-model="form.status" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+             <option value="published">published</option>
+             <option value="draft">draft</option>
+             <option value="closed">closed</option>
+             <option value="archived">archived</option>
+           </select>
+         </div>
+       </div>
+       <div>
+         <label class="block text-sm mb-1">地点</label>
+         <input x-model="form.location" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div>
+         <label class="block text-sm mb-1">线上链接（报名后可见）</label>
+         <input x-model="form.onlineUrl" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div class="grid grid-cols-2 gap-3">
+         <div>
+           <label class="block text-sm mb-1">Slug</label>
+           <input x-model="form.slug" placeholder="可空" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+         <div>
+           <label class="block text-sm mb-1">排序</label>
+           <input type="number" x-model="form.sort" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+       </div>
+       <div>
+         <label class="block text-sm mb-1">摘要</label>
+         <textarea x-model="form.summary" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent"></textarea>
+       </div>
+       <div>
+         <label class="block text-sm mb-1">详情（Markdown）</label>
+         <textarea x-model="form.bodyMd" rows="8" class="w-full px-3 py-2 font-mono text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent"></textarea>
+       </div>
+       <div class="flex justify-end gap-2 pt-2">
+         <button type="button" @click="modalOpen=false" class="px-4 py-2 border rounded-lg text-sm">取消</button>
+         <button type="button" @click="save()" :disabled="saving" class="px-4 py-2 bg-primary text-white rounded-lg text-sm">保存</button>
+       </div>
+     </div>
+   </div>
+ </div>
+
+ <!-- signups drawer -->
+ <div x-show="signupsOpen" x-cloak class="fixed inset-0 z-50 flex justify-end" style="display:none">
+   <div class="absolute inset-0 bg-black/40" @click="signupsOpen=false"></div>
+   <div class="relative w-full max-w-md bg-white dark:bg-gray-900 h-full overflow-y-auto p-6 shadow-xl border-l">
+     <div class="flex items-center justify-between mb-4 gap-2">
+       <h2 class="text-lg font-bold">报名名单</h2>
+       <div class="flex items-center gap-2">
+         <button type="button" @click="exportSignupsCsv()" class="text-sm text-primary">导出 CSV</button>
+         <button type="button" @click="signupsOpen=false" class="text-sm text-gray-500">关闭</button>
+       </div>
+     </div>
+     <p class="text-sm text-gray-500 mb-4" x-text="signupsEventTitle + '（' + signups.length + ' 人）'"></p>
+     <template x-if="!signups.length">
+       <p class="text-sm text-gray-400 py-8 text-center">暂无报名</p>
+     </template>
+     <template x-for="s in signups" :key="s.id">
+       <div class="border-b border-gray-100 dark:border-gray-800 py-3 text-sm">
+         <div class="flex items-start justify-between gap-2">
+           <div>
+             <div class="font-medium" x-text="s.contactName + '（' + s.displayName + '）'"></div>
+             <div class="text-xs text-gray-400 mt-1" x-text="s.contactPhone + ' · @' + s.username + ' · ' + (s.createdAt || '').slice(0,16)"></div>
+             <div class="text-xs text-gray-500 mt-1" x-show="s.note" x-text="s.note"></div>
+             <div class="text-xs text-primary mt-1" x-show="s.pointsSpent" x-text="s.pointsSpent + ' 积分'"></div>
+           </div>
+           <button type="button" @click="cancelSignup(s)" class="text-xs text-red-500 hover:underline shrink-0">取消</button>
+         </div>
+       </div>
+     </template>
+   </div>
+ </div>
+</div>
+</body>
+</html>

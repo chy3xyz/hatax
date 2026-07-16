@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="forumTopicPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>主题 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-3xl px-4 py-10">
+  <div x-show="loading" class="py-24 text-center text-stone-400">加载中…</div>
+  <div x-show="error" class="py-24 text-center text-red-500" x-text="error"></div>
+
+  <template x-if="topic">
+    <div class="animate-fade-in">
+      <div class="flex flex-wrap items-center gap-2">
+        <span x-show="topic.pinned" class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">置顶</span>
+        <span x-show="topic.locked" class="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] text-stone-500">已锁</span>
+        <a :href="'/pages/forum.html?category=' + topic.categorySlug" class="rounded-full px-2 py-0.5 text-xs"
+          :style="'background:' + topic.categoryColor + '18;color:' + topic.categoryColor" x-text="topic.categoryName"></a>
+        <template x-for="tg in (topic.tags || [])" :key="tg.slug">
+          <a :href="'/pages/forum.html?tag=' + tg.slug" class="rounded-md px-2 py-0.5 text-xs font-medium"
+            :style="'background:' + tg.color + '18;color:' + tg.color" x-text="'#' + tg.name"></a>
+        </template>
+      </div>
+      <h1 class="mt-3 text-2xl font-bold tracking-tight sm:text-3xl" x-text="topic.title"></h1>
+      <p class="mt-3 text-sm text-stone-400">
+        <span x-text="formatDate(topic.createdAt, true)"></span> ·
+        <span x-text="topic.viewCount + ' 浏览'"></span> ·
+        <span x-text="topic.replyCount + ' 回复'"></span>
+      </p>
+
+      <!-- OP -->
+      <article class="site-card mt-8 p-6">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <a :href="topic.authorId ? ('/pages/user.html?id=' + topic.authorId) : '#'" class="flex items-center gap-3 hover:opacity-90">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
+              :style="'background:' + topic.categoryColor" x-text="avatarChar(topic.authorName)"></div>
+            <div>
+              <div class="text-sm font-semibold" x-text="topic.authorName"></div>
+              <div class="text-xs text-stone-400" x-text="formatDate(topic.createdAt, true)"></div>
+            </div>
+          </a>
+          <span class="forum-floor">#1 · 楼主</span>
+        </div>
+        <div class="site-prose text-base" x-html="topic.bodyHtml"></div>
+        <div class="mt-6 flex items-center gap-3 border-t border-stone-100 pt-4 dark:border-stone-800">
+          <button type="button" @click="toggleLike()"
+            class="rounded-lg border px-3 py-1.5 text-sm transition"
+            :class="liked ? 'border-primary bg-primary/10 text-primary' : 'border-stone-200 dark:border-stone-700'"
+            x-text="(liked ? '已赞 ' : '点赞 ') + (topic.likeCount || 0)"></button>
+        </div>
+      </article>
+
+      <h2 class="mb-4 mt-10 text-lg font-semibold" x-text="'回复 · ' + replies.length"></h2>
+      <div class="space-y-4">
+        <template x-for="r in replies" :key="r.id">
+          <article class="site-card p-5" :id="'floor-' + (r.floor + 1)">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <a :href="r.authorId ? ('/pages/user.html?id=' + r.authorId) : '#'" class="flex items-center gap-3 hover:opacity-90">
+                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-stone-800 text-xs font-bold text-white dark:bg-stone-200 dark:text-stone-900"
+                  x-text="avatarChar(r.authorName)"></div>
+                <div>
+                  <div class="text-sm font-semibold" x-text="r.authorName"></div>
+                  <div class="text-xs text-stone-400" x-text="formatDate(r.createdAt, true)"></div>
+                </div>
+              </a>
+              <a :href="'#floor-' + (r.floor + 1)" class="forum-floor hover:text-primary" x-text="'#' + (r.floor + 1)"></a>
+            </div>
+            <div class="site-prose text-[0.98rem]" x-html="r.bodyHtml"></div>
+          </article>
+        </template>
+        <template x-if="!replies.length">
+          <div class="rounded-2xl border border-dashed border-stone-200 px-6 py-10 text-center text-sm text-stone-400 dark:border-stone-700">还没有回复，来抢沙发吧。</div>
+        </template>
+      </div>
+
+      <div class="site-card mt-8 p-5" x-show="!topic.locked">
+        <h3 class="font-semibold">发表回复</h3>
+        <p class="mt-1 text-xs text-stone-400">支持 Markdown（标题、列表、代码块、链接）</p>
+        <template x-if="!loggedIn">
+          <p class="mt-4 text-sm text-stone-500">请先 <a :href="loginUrl(location.pathname + location.search)" class="text-primary hover:underline">登录</a> 后回复。</p>
+        </template>
+        <template x-if="loggedIn">
+          <form class="mt-4" @submit.prevent="submitReply()">
+            <textarea x-model="replyBody" rows="5" placeholder="写下你的看法…"
+              class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700"></textarea>
+            <div class="mt-3 flex justify-end">
+              <button type="submit" :disabled="submitting"
+                class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">发送回复</button>
+            </div>
+          </form>
+        </template>
+      </div>
+      <div class="mt-8 text-sm text-stone-400" x-show="topic.locked">此主题已锁定，无法回复。</div>
+    </div>
+  </template>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome, formatDate, avatarChar } from '/src/public/site.js'
+import { qs, apiFetch } from '/src/public/api.js'
+
+window.forumTopicPage = function forumTopicPage() {
+  return {
+    ...siteChrome('forum'),
+    formatDate,
+    avatarChar,
+    loading: true,
+    error: '',
+    topic: null,
+    replies: [],
+    liked: false,
+    replyBody: '',
+    submitting: false,
+    async init() {
+      const id = qs('id')
+      if (!id) { this.error = '缺少主题 id'; this.loading = false; return }
+      await this.load(id)
+    },
+    async load(id) {
+      this.loading = true
+      const { json } = await apiFetch('/api/forum/topics/' + id)
+      this.loading = false
+      if (json.code !== 0) { this.error = json.msg || '加载失败'; return }
+      this.topic = json.data.topic
+      this.replies = json.data.replies || []
+      this.liked = !!json.data.liked
+      document.title = (this.topic.title || '主题') + ' — HatTax'
+    },
+    async toggleLike() {
+      if (!this.loggedIn) { location.href = this.loginUrl(location.pathname + location.search); return }
+      const { json } = await apiFetch('/api/forum/likes', {
+        method: 'POST',
+        body: JSON.stringify({ targetType: 'topic', targetId: this.topic.id }),
+      })
+      if (json.code === 0) {
+        this.liked = json.data.liked
+        this.topic.likeCount += json.data.liked ? 1 : -1
+      }
+    },
+    async submitReply() {
+      if (!this.loggedIn) { location.href = this.loginUrl(location.pathname + location.search); return }
+      if (!this.replyBody.trim() || this.submitting) return
+      this.submitting = true
+      const { json } = await apiFetch('/api/forum/topics/' + this.topic.id + '/replies', {
+        method: 'POST',
+        body: JSON.stringify({ bodyMd: this.replyBody }),
+      })
+      this.submitting = false
+      if (json.code !== 0) { alert(json.msg || '回复失败'); return }
+      this.replyBody = ''
+      await this.load(this.topic.id)
+    },
+  }
+}
+
+window.Alpine = Alpine
+Alpine.start()
+</script>
+</body>
+</html>

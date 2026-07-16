@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="blogPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>博客 — HatTax</title>
+  <style>
+    .font-display { font-family: "Noto Serif SC", "Songti SC", Georgia, serif; }
+    .font-ui { font-family: "DM Sans", system-ui, sans-serif; }
+  </style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+  <div class="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">Blog</p>
+      <h1 class="font-display mt-2 text-4xl font-bold tracking-tight sm:text-5xl">博客</h1>
+      <p class="mt-3 max-w-xl text-stone-500 dark:text-stone-400">社区成员发表的长文与实践。和论坛打通：博客沉淀知识，论坛促进讨论。</p>
+    </div>
+    <div class="flex w-full max-w-sm flex-col gap-2">
+      <a :href="loggedIn ? workNewUrl : loginUrl('/pages/work-new.html')"
+        class="rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white hover:opacity-90">写博客</a>
+      <form @submit.prevent="search()" class="flex gap-2">
+      <input x-model="q" type="search" placeholder="搜索博客…"
+        class="flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700 dark:bg-stone-900">
+      <button type="submit" class="rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-stone-800 dark:bg-white dark:text-stone-900">搜索</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="mb-10 flex flex-wrap gap-2">
+    <button type="button" @click="setTag('')" class="site-chip" :class="!tag && 'border-stone-900 text-stone-900 dark:border-white dark:text-white'">全部</button>
+    <template x-for="t in tags" :key="t.slug">
+      <button type="button" @click="setTag(t.slug)" class="site-chip"
+        :class="tag === t.slug && 'border-stone-900 text-stone-900 dark:border-white dark:text-white'"
+        x-text="t.name + ' · ' + t.postCount"></button>
+    </template>
+  </div>
+
+  <div x-show="loading" class="py-24 text-center text-stone-400">加载中…</div>
+  <div x-show="error" class="py-16 text-center text-red-500" x-text="error"></div>
+
+  <template x-if="!loading && !error && featured">
+    <a :href="'/pages/blog-post.html?slug=' + encodeURIComponent(featured.slug)"
+      class="site-card mb-10 block overflow-hidden transition hover:border-stone-400 dark:hover:border-stone-600">
+      <div class="grid gap-0 lg:grid-cols-5">
+        <div class="flex min-h-[220px] items-end bg-gradient-to-br from-stone-800 via-stone-700 to-primary/70 p-8 text-white lg:col-span-2">
+          <div>
+            <span class="site-chip border-white/20 bg-white/10 text-white">精选</span>
+            <p class="mt-6 text-sm text-white/70" x-text="formatDate(featured.publishedAt || featured.createdAt) + ' · ' + featured.readingMinutes + ' 分钟阅读'"></p>
+          </div>
+        </div>
+        <div class="p-8 lg:col-span-3">
+          <h2 class="font-display text-2xl font-bold tracking-tight sm:text-3xl" x-text="featured.title"></h2>
+          <p class="mt-4 line-clamp-3 text-stone-500 dark:text-stone-400" x-text="featured.excerpt"></p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <template x-for="tg in (featured.tags || [])" :key="tg.slug">
+              <span class="site-chip" x-text="tg.name"></span>
+            </template>
+          </div>
+        </div>
+      </div>
+    </a>
+  </template>
+
+  <div x-show="!loading && !error" class="grid gap-5 md:grid-cols-2">
+    <template x-if="!rows.length">
+      <div class="site-card col-span-full px-6 py-16 text-center text-stone-400">暂无文章。登录后台发布第一篇吧。</div>
+    </template>
+    <template x-for="p in listRows" :key="p.id">
+      <article class="site-card flex flex-col p-6 transition hover:border-stone-400 dark:hover:border-stone-600">
+        <div class="flex items-center gap-2 text-xs text-stone-400">
+          <time x-text="formatDate(p.publishedAt || p.createdAt)"></time>
+          <span>·</span>
+          <span x-text="(p.readingMinutes || 1) + ' min'"></span>
+          <span>·</span>
+          <span x-text="(p.viewCount || 0) + ' 阅读'"></span>
+        </div>
+        <h2 class="font-display mt-3 text-xl font-bold tracking-tight">
+          <a :href="'/pages/blog-post.html?slug=' + encodeURIComponent(p.slug)" class="hover:text-primary" x-text="p.title"></a>
+        </h2>
+        <p class="mt-3 flex-1 text-sm leading-6 text-stone-500 dark:text-stone-400 line-clamp-3" x-text="p.excerpt"></p>
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap gap-2">
+            <template x-for="tg in (p.tags || [])" :key="tg.slug">
+              <button type="button" @click="setTag(tg.slug)" class="site-chip" x-text="tg.name"></button>
+            </template>
+          </div>
+          <span class="text-xs text-stone-400" x-text="p.authorName"></span>
+        </div>
+      </article>
+    </template>
+  </div>
+
+  <div class="mt-10 flex items-center justify-between text-sm text-stone-500" x-show="total > pageSize">
+    <button type="button" class="rounded-lg border border-stone-200 px-3 py-1.5 disabled:opacity-40 dark:border-stone-700"
+      :disabled="page <= 1" @click="page--; load()">上一页</button>
+    <span x-text="'第 ' + page + ' 页 · 共 ' + total + ' 篇'"></span>
+    <button type="button" class="rounded-lg border border-stone-200 px-3 py-1.5 disabled:opacity-40 dark:border-stone-700"
+      :disabled="page * pageSize >= total" @click="page++; load()">下一页</button>
+  </div>
+</main>
+
+<footer class="border-t border-stone-200 py-10 text-center text-sm text-stone-400 dark:border-stone-800">
+  <a href="/pages/index.html" class="hover:text-primary">← 返回官网</a>
+</footer>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome, formatDate } from '/src/public/site.js'
+import { qs, apiFetch } from '/src/public/api.js'
+
+window.blogPage = function blogPage() {
+  return {
+    ...siteChrome('blog'),
+    formatDate,
+    loading: true,
+    error: '',
+    rows: [],
+    tags: [],
+    total: 0,
+    page: 1,
+    pageSize: 10,
+    q: '',
+    tag: '',
+    get featured() {
+      return this.rows.find((p) => p.featured) || this.rows[0] || null
+    },
+    get listRows() {
+      if (!this.featured) return this.rows
+      return this.rows.filter((p) => p.id !== this.featured.id)
+    },
+    async init() {
+      this.tag = qs('tag')
+      this.q = qs('q')
+      await this.loadTags()
+      await this.load()
+    },
+    async loadTags() {
+      const { json } = await apiFetch('/api/blog/tags')
+      if (json.code === 0) this.tags = json.data || []
+    },
+    async load() {
+      this.loading = true
+      this.error = ''
+      const params = new URLSearchParams({ page: String(this.page), pageSize: String(this.pageSize) })
+      if (this.tag) params.set('tag', this.tag)
+      if (this.q) params.set('q', this.q)
+      const { json } = await apiFetch('/api/blog/posts?' + params)
+      this.loading = false
+      if (json.code !== 0) { this.error = json.msg || '加载失败'; return }
+      this.rows = json.data.rows || []
+      this.total = json.data.total || 0
+    },
+    async search() {
+      this.page = 1
+      const url = new URL(location.href)
+      if (this.q) url.searchParams.set('q', this.q); else url.searchParams.delete('q')
+      if (this.tag) url.searchParams.set('tag', this.tag); else url.searchParams.delete('tag')
+      history.replaceState(null, '', url)
+      await this.load()
+    },
+    setTag(slug) {
+      this.tag = this.tag === slug ? '' : slug
+      this.search()
+    },
+  }
+}
+
+window.Alpine = Alpine
+Alpine.start()
+</script>
+</body>
+</html>

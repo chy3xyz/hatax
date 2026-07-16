@@ -2,3 +2,10 @@ node_modules
 dist
 .DS_Store
 .gstack/
+data
+*.db
+*.db-*
+.env
+*.local
+
+.cursor/

@@ -10,13 +10,13 @@
       class="px-4 py-2 bg-primary text-white rounded"
       hx-get="/mock-api/user-list.html"
       hx-include="[name='keyword']"
-      hx-target="#user-table-body">
+      hx-target="#user-tbody">
       搜索
     </button>
     <button 
       class="px-4 py-2 btn-default rounded"
       hx-get="/mock-api/user-list.html"
-      hx-target="#user-table-body">
+      hx-target="#user-tbody">
       重置
     </button>
   </div>
@@ -42,20 +42,20 @@
     <button 
       class="px-3 py-1 btn-default rounded"
       hx-get="/mock-api/user-list?page=1.html"
-      hx-target="#user-table-body">
+      hx-target="#user-tbody">
       上一页
     </button>
     <button class="px-3 py-1 bg-primary text-white rounded">1</button>
     <button 
       class="px-3 py-1 btn-default rounded"
       hx-get="/mock-api/user-list?page=2.html"
-      hx-target="#user-table-body">
+      hx-target="#user-tbody">
       2
     </button>
     <button 
       class="px-3 py-1 btn-default rounded"
       hx-get="/mock-api/user-list?page=2.html"
-      hx-target="#user-table-body">
+      hx-target="#user-tbody">
       下一页
     </button>
   </div>

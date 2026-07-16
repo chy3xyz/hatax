@@ -1,0 +1,83 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>论坛分区</title>
+</head>
+<body>
+<div id="page-content" class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease`"
+ x-data="forumCategoriesPage">
+
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-6">
+   <a href="/admin/dashboard.html" class="hover:text-primary">首页</a>
+   <span class="mx-1">/</span>
+   <a href="/admin/forum.html" class="hover:text-primary">论坛管理</a>
+   <span class="mx-1">/</span>
+   <span class="text-gray-700 dark:text-gray-200 font-medium">分区管理</span>
+ </nav>
+
+ <div class="flex items-center justify-between mb-6">
+   <h1 class="text-2xl font-bold">论坛分区</h1>
+   <button type="button" @click="openCreate()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm">+ 新建分区</button>
+ </div>
+
+ <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+   <template x-for="c in rows" :key="c.id">
+     <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+       <div class="flex items-start justify-between gap-3">
+         <div>
+           <div class="flex items-center gap-2">
+             <span class="inline-block w-3 h-3 rounded-full" :style="'background:' + c.color"></span>
+             <h2 class="font-semibold" x-text="c.name"></h2>
+           </div>
+           <p class="text-xs text-gray-400 mt-1" x-text="c.slug"></p>
+           <p class="text-sm text-gray-500 mt-2 line-clamp-2" x-text="c.description || '暂无描述'"></p>
+         </div>
+         <span class="text-xs text-gray-400 whitespace-nowrap" x-text="(c.topicCount || 0) + ' 帖子'"></span>
+       </div>
+       <div class="mt-4 flex gap-3 text-sm">
+         <button type="button" @click="edit(c)" class="text-blue-500 hover:underline">编辑</button>
+         <button type="button" @click="remove(c)" class="text-red-500 hover:underline">删除</button>
+       </div>
+     </div>
+   </template>
+ </div>
+
+ <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+   <div class="absolute inset-0 bg-black/40" @click="modalOpen=false"></div>
+   <div class="relative bg-white dark:bg-gray-900 rounded-xl border w-full max-w-lg p-6 shadow-xl">
+     <h2 class="text-lg font-bold mb-4" x-text="form.id ? '编辑分区' : '新建分区'"></h2>
+     <div class="space-y-3">
+       <div>
+         <label class="block text-sm mb-1">名称</label>
+         <input x-model="form.name" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div class="grid grid-cols-2 gap-3">
+         <div>
+           <label class="block text-sm mb-1">Slug</label>
+           <input x-model="form.slug" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+         <div>
+           <label class="block text-sm mb-1">排序</label>
+           <input type="number" x-model="form.sort" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+       </div>
+       <div>
+         <label class="block text-sm mb-1">颜色</label>
+         <input type="color" x-model="form.color" class="h-10 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div>
+         <label class="block text-sm mb-1">描述</label>
+         <textarea x-model="form.description" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent"></textarea>
+       </div>
+       <div class="flex justify-end gap-2 pt-2">
+         <button type="button" @click="modalOpen=false" class="px-4 py-2 border rounded-lg text-sm">取消</button>
+         <button type="button" @click="save()" :disabled="saving" class="px-4 py-2 bg-primary text-white rounded-lg text-sm disabled:opacity-50">保存</button>
+       </div>
+     </div>
+   </div>
+ </div>
+</div>
+</body>
+</html>

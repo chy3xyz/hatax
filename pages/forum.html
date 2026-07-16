@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="forumPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>论坛 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+  <!-- Hero -->
+  <section class="forum-hero mb-8">
+    <div class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-900/30"></div>
+    <div class="pointer-events-none absolute -bottom-24 left-10 h-48 w-48 rounded-full bg-amber-100/50 blur-3xl dark:bg-amber-900/20"></div>
+    <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <div class="max-w-2xl">
+        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-stone-400">Topics</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">论坛</h1>
+        <p class="mt-3 text-stone-500 dark:text-stone-400">发帖开启讨论；想沉淀长文请去「博客」。社区账号独立于管理后台。</p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <button type="button" @click="newTopic()" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/25 hover:opacity-90">发帖</button>
+          <a :href="loggedIn ? workNewUrl : loginUrl('/pages/work-new.html')" class="rounded-xl border border-stone-200 bg-white/70 px-5 py-2.5 text-sm font-medium dark:border-stone-700 dark:bg-stone-900/50">写博客</a>
+          <a href="/pages/tasks.html" class="rounded-xl border border-stone-300 bg-white/70 px-4 py-2.5 text-sm font-medium backdrop-blur dark:border-stone-700 dark:bg-stone-900/60">做任务赚积分</a>
+          <button type="button" @click="setSort('unanswered')" class="rounded-xl border border-stone-300 bg-white/70 px-4 py-2.5 text-sm font-medium backdrop-blur dark:border-stone-700 dark:bg-stone-900/60"
+            x-text="'待解答 · ' + (stats?.unanswered ?? '—')"></button>
+          <a href="/pages/messages.html" x-show="loggedIn" class="rounded-xl border border-stone-300 bg-white/70 px-4 py-2.5 text-sm font-medium backdrop-blur dark:border-stone-700 dark:bg-stone-900/60">打开私信</a>
+          <a :href="loginUrl('/pages/forum.html')" x-show="!loggedIn" class="rounded-xl border border-stone-300 bg-white/70 px-4 py-2.5 text-sm font-medium backdrop-blur dark:border-stone-700 dark:bg-stone-900/60">登录参与讨论</a>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:w-[26rem]">
+        <div class="forum-stat">
+          <p class="text-[11px] uppercase tracking-wider text-stone-400">帖子</p>
+          <p class="mt-1 text-2xl font-bold tabular-nums" x-text="stats?.topics ?? '—'"></p>
+        </div>
+        <div class="forum-stat">
+          <p class="text-[11px] uppercase tracking-wider text-stone-400">回复</p>
+          <p class="mt-1 text-2xl font-bold tabular-nums" x-text="stats?.replies ?? '—'"></p>
+        </div>
+        <div class="forum-stat">
+          <p class="text-[11px] uppercase tracking-wider text-stone-400">成员</p>
+          <p class="mt-1 text-2xl font-bold tabular-nums" x-text="stats?.members ?? '—'"></p>
+        </div>
+        <div class="forum-stat">
+          <p class="text-[11px] uppercase tracking-wider text-stone-400">分区</p>
+          <p class="mt-1 text-2xl font-bold tabular-nums" x-text="stats?.categories ?? '—'"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <div class="mb-6 space-y-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-wrap gap-2">
+        <button type="button" @click="setCategory('')"
+          class="rounded-full px-3.5 py-1.5 text-sm transition"
+          :class="!category ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900' : 'bg-white text-stone-600 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700'">全部</button>
+        <template x-for="c in categories" :key="'chip-'+c.slug">
+          <button type="button" @click="setCategory(c.slug)"
+            class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition"
+            :class="category === c.slug ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900' : 'bg-white text-stone-600 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700'">
+            <span class="h-2 w-2 rounded-full" :style="'background:' + c.color"></span>
+            <span x-text="c.name"></span>
+            <span class="opacity-60" x-text="c.topicCount"></span>
+          </button>
+        </template>
+      </div>
+      <form @submit.prevent="search()" class="flex gap-2">
+        <input x-model="q" type="search" placeholder="搜索标题或内容…"
+          class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700 dark:bg-stone-900 sm:w-56">
+        <button type="submit" class="rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm font-medium dark:border-stone-700 dark:bg-stone-900">搜索</button>
+      </form>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap gap-1.5 rounded-full bg-stone-200/60 p-1 dark:bg-stone-800/80">
+        <template x-for="s in sorts" :key="s.key">
+          <button type="button" @click="setSort(s.key)" class="forum-sort-btn"
+            :class="sort === s.key ? 'forum-sort-btn-active' : 'text-stone-600 hover:bg-white/70 dark:text-stone-300 dark:hover:bg-stone-700/60'"
+            x-text="s.label"></button>
+        </template>
+      </div>
+      <p class="text-xs text-stone-400">
+        共 <span class="font-semibold text-stone-700 dark:text-stone-200" x-text="total"></span> 个主题
+        <span x-show="categoryName"> · <span x-text="categoryName"></span></span>
+        <span x-show="tagName"> · #<span x-text="tagName"></span></span>
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2" x-show="tags.length">
+      <span class="self-center text-xs font-semibold uppercase tracking-wider text-stone-400">Tags</span>
+      <button type="button" @click="setTag('')"
+        class="rounded-full px-3 py-1 text-xs transition"
+        :class="!tag ? 'bg-primary text-white' : 'bg-white text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700'">全部标签</button>
+      <template x-for="tg in tags" :key="'tag-'+tg.slug">
+        <button type="button" @click="setTag(tg.slug)"
+          class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition"
+          :class="tag === tg.slug ? 'text-white' : 'bg-white ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700'"
+          :style="tag === tg.slug ? ('background:' + tg.color) : ''">
+          <span x-text="'#' + tg.name"></span>
+          <span class="opacity-70" x-text="tg.topicCount"></span>
+        </button>
+      </template>
+    </div>
+  </div>
+
+  <div class="grid gap-8 lg:grid-cols-12">
+    <!-- Main list -->
+    <section class="lg:col-span-8 xl:col-span-9">
+      <div x-show="loading" class="site-card px-6 py-20 text-center text-stone-400">加载讨论中…</div>
+      <div x-show="error" class="site-card px-6 py-12 text-center text-red-500" x-text="error"></div>
+
+      <div x-show="!loading && !error" class="site-card overflow-hidden divide-y divide-stone-100 dark:divide-stone-800">
+        <template x-if="!topics.length">
+          <div class="px-6 py-16 text-center">
+            <p class="text-lg font-semibold">这里还很安静</p>
+            <p class="mt-2 text-sm text-stone-400">换个分区，或成为第一个开帖的人。</p>
+            <button type="button" @click="newTopic()" class="mt-5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white">立即发帖</button>
+          </div>
+        </template>
+
+        <template x-for="t in topics" :key="t.id">
+          <article class="forum-topic-row group">
+            <a :href="t.authorId ? ('/pages/user.html?id=' + t.authorId) : '#'"
+              class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-sm transition group-hover:scale-105"
+              :style="'background:' + (t.categoryColor || '#1890ff')"
+              :title="t.authorName"
+              x-text="avatarChar(t.authorName)"></a>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span x-show="t.pinned" class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">置顶</span>
+                <span x-show="t.locked" class="rounded bg-stone-100 px-1.5 py-0.5 text-[10px] text-stone-500 dark:bg-stone-800">已锁</span>
+                <button type="button" @click.stop="setCategory(t.categorySlug)"
+                  class="rounded-full px-2 py-0.5 text-[11px] font-medium transition hover:opacity-80"
+                  :style="'background:' + t.categoryColor + '18;color:' + t.categoryColor"
+                  x-text="t.categoryName"></button>
+                <span x-show="!t.replyCount" class="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-600 dark:bg-rose-950/40 dark:text-rose-300">求回复</span>
+              </div>
+              <a :href="'/pages/forum-topic.html?id=' + t.id" class="mt-1 block">
+                <h2 class="text-base font-semibold leading-snug tracking-tight transition group-hover:text-primary" x-text="t.title"></h2>
+                <p class="mt-1 line-clamp-2 text-sm text-stone-500 dark:text-stone-400" x-text="excerptText(t.bodyMd)"></p>
+              </a>
+              <div class="mt-2 flex flex-wrap items-center gap-1.5" x-show="(t.tags || []).length">
+                <template x-for="tg in (t.tags || [])" :key="t.id + '-' + tg.slug">
+                  <button type="button" @click.stop="setTag(tg.slug)"
+                    class="rounded-md px-1.5 py-0.5 text-[11px] font-medium transition hover:opacity-80"
+                    :style="'background:' + tg.color + '18;color:' + tg.color"
+                    x-text="'#' + tg.name"></button>
+                </template>
+              </div>
+              <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-400">
+                <a :href="t.authorId ? ('/pages/user.html?id=' + t.authorId) : '#'" class="font-medium text-stone-600 hover:text-primary dark:text-stone-300" x-text="t.authorName"></a>
+                <span x-text="relativeTime(t.lastReplyAt || t.createdAt)"></span>
+                <span class="sm:hidden"><span x-text="t.replyCount"></span> 回复 · <span x-text="t.likeCount"></span> 赞</span>
+              </div>
+            </div>
+            <a :href="'/pages/forum-topic.html?id=' + t.id"
+              class="hidden w-28 flex-shrink-0 flex-col items-end justify-center gap-1.5 text-right text-xs text-stone-400 sm:flex">
+              <span class="inline-flex items-center gap-1 rounded-lg bg-stone-50 px-2 py-1 dark:bg-stone-800/80">
+                <span class="font-semibold text-stone-800 dark:text-stone-100" x-text="t.replyCount"></span> 回复
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <span class="font-semibold text-stone-700 dark:text-stone-200" x-text="t.likeCount"></span> 赞
+                <span class="mx-1 text-stone-300">·</span>
+                <span x-text="t.viewCount"></span> 浏览
+              </span>
+            </a>
+          </article>
+        </template>
+      </div>
+
+      <!-- Pagination -->
+      <div class="mt-5 flex items-center justify-between" x-show="pageCount > 1">
+        <button type="button" @click="prevPage()" :disabled="page <= 1"
+          class="rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm disabled:opacity-40 dark:border-stone-700 dark:bg-stone-900">上一页</button>
+        <span class="text-sm text-stone-500">
+          <span x-text="page"></span> / <span x-text="pageCount"></span>
+        </span>
+        <button type="button" @click="nextPage()" :disabled="page >= pageCount"
+          class="rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm disabled:opacity-40 dark:border-stone-700 dark:bg-stone-900">下一页</button>
+      </div>
+    </section>
+
+    <!-- Side panels -->
+    <aside class="space-y-5 lg:col-span-4 xl:col-span-3">
+      <div class="site-card overflow-hidden">
+        <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-800">
+          <h3 class="text-sm font-semibold">热门讨论</h3>
+          <button type="button" @click="setSort('hot')" class="text-xs text-primary hover:underline">查看全部</button>
+        </div>
+        <template x-if="!(stats?.hot || []).length">
+          <p class="px-4 py-8 text-center text-sm text-stone-400">暂无热帖</p>
+        </template>
+        <ol class="divide-y divide-stone-100 dark:divide-stone-800">
+          <template x-for="(h, i) in (stats?.hot || [])" :key="'hot-'+h.id">
+            <li>
+              <a :href="'/pages/forum-topic.html?id=' + h.id" class="flex gap-3 px-4 py-3 transition hover:bg-stone-50 dark:hover:bg-stone-800/40">
+                <span class="mt-0.5 w-5 text-sm font-bold tabular-nums text-stone-300" x-text="i + 1"></span>
+                <span class="min-w-0 flex-1">
+                  <span class="line-clamp-2 text-sm font-medium" x-text="h.title"></span>
+                  <span class="mt-1 block text-[11px] text-stone-400">
+                    <span x-text="h.reply_count"></span> 回复 · <span x-text="h.like_count"></span> 赞
+                  </span>
+                </span>
+              </a>
+            </li>
+          </template>
+        </ol>
+      </div>
+
+      <div class="site-card overflow-hidden">
+        <div class="border-b border-stone-200 px-4 py-3 text-sm font-semibold dark:border-stone-800">最新动态</div>
+        <ul class="divide-y divide-stone-100 dark:divide-stone-800">
+          <template x-for="item in (stats?.latest || [])" :key="'lat-'+item.id">
+            <li>
+              <a :href="'/pages/forum-topic.html?id=' + item.id" class="block px-4 py-3 transition hover:bg-stone-50 dark:hover:bg-stone-800/40">
+                <p class="line-clamp-1 text-sm font-medium" x-text="item.title"></p>
+                <p class="mt-1 text-[11px] text-stone-400">
+                  <span x-text="item.author_name"></span>
+                  · <span x-text="relativeTime(item.last_reply_at || item.created_at)"></span>
+                </p>
+              </a>
+            </li>
+          </template>
+        </ul>
+      </div>
+
+      <div class="site-card overflow-hidden">
+        <div class="border-b border-stone-200 px-4 py-3 text-sm font-semibold dark:border-stone-800">热门标签</div>
+        <div class="flex flex-wrap gap-2 p-4">
+          <template x-for="tg in tags.slice(0, 12)" :key="'side-tag-'+tg.slug">
+            <button type="button" @click="setTag(tg.slug)"
+              class="rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-stone-200 transition hover:shadow-sm dark:ring-stone-700"
+              :class="tag === tg.slug && 'ring-2'"
+              :style="'color:' + tg.color"
+              x-text="'#' + tg.name + ' ' + tg.topicCount"></button>
+          </template>
+        </div>
+      </div>
+
+      <div class="site-card p-4">
+        <h3 class="text-sm font-semibold">分区速览</h3>
+        <div class="mt-3 space-y-2">
+          <template x-for="c in categories" :key="'side-'+c.slug">
+            <button type="button" @click="setCategory(c.slug)"
+              class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-stone-50 dark:hover:bg-stone-800/50"
+              :class="category === c.slug && 'bg-stone-100 dark:bg-stone-800'">
+              <span class="h-2.5 w-2.5 rounded-full" :style="'background:' + c.color"></span>
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-medium" x-text="c.name"></span>
+                <span class="block truncate text-[11px] text-stone-400" x-text="c.description"></span>
+              </span>
+              <span class="text-xs tabular-nums text-stone-400" x-text="c.topicCount"></span>
+            </button>
+          </template>
+        </div>
+      </div>
+
+      <div class="site-card bg-gradient-to-br from-stone-900 to-stone-800 p-5 text-stone-100 dark:from-stone-100 dark:to-white dark:text-stone-900">
+        <p class="text-xs font-semibold uppercase tracking-wider opacity-70">Quick tip</p>
+        <p class="mt-2 text-sm leading-relaxed">写清标题、附上复现步骤，回复率会高很多。互动还能拿积分。</p>
+        <button type="button" @click="newTopic()" class="mt-4 rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur hover:bg-white/25 dark:bg-stone-900/10 dark:hover:bg-stone-900/20">去发帖</button>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<footer class="border-t border-stone-200 py-10 text-center text-sm text-stone-400 dark:border-stone-800">
+  <a href="/pages/index.html" class="hover:text-primary">← 返回官网</a>
+  <span class="mx-2">·</span>
+  <a href="/pages/me.html" class="hover:text-primary">个人中心</a>
+</footer>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome, formatDate, relativeTime, excerptText, avatarChar } from '/src/public/site.js'
+import { qs, apiFetch } from '/src/public/api.js'
+
+window.forumPage = function forumPage() {
+  return {
+    ...siteChrome('forum'),
+    formatDate,
+    relativeTime,
+    excerptText,
+    avatarChar,
+    loading: true,
+    error: '',
+    categories: [],
+    tags: [],
+    topics: [],
+    stats: null,
+    total: 0,
+    page: 1,
+    pageSize: 12,
+    category: '',
+    tag: '',
+    q: '',
+    sort: 'latest',
+    sorts: [
+      { key: 'latest', label: '最新' },
+      { key: 'hot', label: '热门' },
+      { key: 'unanswered', label: '待解答' },
+    ],
+    get pageCount() {
+      return Math.max(1, Math.ceil(this.total / this.pageSize))
+    },
+    get categoryName() {
+      return this.categories.find((c) => c.slug === this.category)?.name || ''
+    },
+    get tagName() {
+      return this.tags.find((t) => t.slug === this.tag)?.name || this.tag || ''
+    },
+    async init() {
+      this.category = qs('category')
+      this.tag = qs('tag')
+      this.q = qs('q')
+      this.sort = qs('sort') || 'latest'
+      this.page = Number(qs('page') || 1) || 1
+      const [cats, stats, tags] = await Promise.all([
+        apiFetch('/api/forum/categories'),
+        apiFetch('/api/forum/stats'),
+        apiFetch('/api/forum/tags'),
+      ])
+      if (cats.json.code === 0) this.categories = cats.json.data || []
+      if (stats.json.code === 0) this.stats = stats.json.data
+      if (tags.json.code === 0) this.tags = tags.json.data || []
+      await this.load()
+    },
+    syncUrl() {
+      const url = new URL(location.href)
+      const setOrDel = (k, v) => {
+        if (v) url.searchParams.set(k, v)
+        else url.searchParams.delete(k)
+      }
+      setOrDel('category', this.category)
+      setOrDel('tag', this.tag)
+      setOrDel('q', this.q)
+      setOrDel('sort', this.sort !== 'latest' ? this.sort : '')
+      setOrDel('page', this.page > 1 ? String(this.page) : '')
+      history.replaceState(null, '', url)
+    },
+    async load() {
+      this.loading = true
+      this.error = ''
+      const params = new URLSearchParams({
+        page: String(this.page),
+        pageSize: String(this.pageSize),
+        sort: this.sort,
+      })
+      if (this.category) params.set('category', this.category)
+      if (this.tag) params.set('tag', this.tag)
+      if (this.q) params.set('q', this.q)
+      const { json } = await apiFetch('/api/forum/topics?' + params)
+      this.loading = false
+      if (json.code !== 0) { this.error = json.msg || '加载失败'; return }
+      this.topics = json.data.rows || []
+      this.total = json.data.total || 0
+    },
+    setCategory(slug) {
+      this.category = this.category === slug ? '' : slug
+      this.page = 1
+      this.syncUrl()
+      this.load()
+    },
+    setTag(slug) {
+      this.tag = this.tag === slug ? '' : slug
+      this.page = 1
+      this.syncUrl()
+      this.load()
+    },
+    setSort(key) {
+      this.sort = key
+      this.page = 1
+      this.syncUrl()
+      this.load()
+    },
+    search() {
+      this.page = 1
+      this.syncUrl()
+      this.load()
+    },
+    prevPage() {
+      if (this.page <= 1) return
+      this.page -= 1
+      this.syncUrl()
+      this.load()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    nextPage() {
+      if (this.page >= this.pageCount) return
+      this.page += 1
+      this.syncUrl()
+      this.load()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    newTopic() {
+      if (this.loggedIn) location.href = '/pages/forum-new.html'
+      else location.href = this.loginUrl('/pages/forum-new.html')
+    },
+  }
+}
+
+window.Alpine = Alpine
+Alpine.start()
+</script>
+</body>
+</html>

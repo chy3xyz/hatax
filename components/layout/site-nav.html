@@ -1,0 +1,79 @@
+<!-- Public site top bar: desktop links + mobile hamburger drawer -->
+<header class="site-nav">
+  <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+    <a href="/pages/index.html" class="font-display text-lg font-bold tracking-tight">HatTax</a>
+
+    <nav class="hidden items-center gap-5 md:flex">
+      <template x-for="item in navItems" :key="item.key">
+        <a :href="item.href" :class="active === item.key ? 'site-link-active' : 'site-link'" x-text="item.label"></a>
+      </template>
+      <a :href="createUrl" :class="active === 'create' ? 'site-link-active' : 'site-link'">创作</a>
+      <template x-if="!loggedIn">
+        <span class="flex items-center gap-3">
+          <a :href="loginUrl(authReturn())" class="site-link">登录</a>
+          <a :href="registerUrl(authReturn())"
+            class="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:opacity-90">注册</a>
+        </span>
+      </template>
+      <template x-if="loggedIn">
+        <span class="flex items-center gap-3 text-sm">
+          <a href="/pages/messages.html" class="site-link">私信</a>
+          <a href="/pages/me.html" class="site-link font-medium" x-text="displayName"></a>
+          <button type="button" @click="logout()" class="site-link">退出</button>
+        </span>
+      </template>
+      <button @click="toggleDark()" type="button" class="rounded-lg p-1.5 hover:bg-stone-200/70 dark:hover:bg-stone-800" aria-label="主题">◐</button>
+    </nav>
+
+    <div class="flex items-center gap-1 md:hidden">
+      <button @click="toggleDark()" type="button" class="rounded-lg p-2 hover:bg-stone-200/70 dark:hover:bg-stone-800" aria-label="主题">◐</button>
+      <button type="button" @click="mobileMenuOpen = true"
+        class="rounded-lg p-2 hover:bg-stone-200/70 dark:hover:bg-stone-800" aria-label="打开菜单">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile slide-down menu -->
+<div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
+  <div class="absolute inset-0 bg-stone-900/40" @click="mobileMenuOpen = false"></div>
+  <div class="absolute inset-x-0 top-0 animate-slide-up rounded-b-2xl border-b border-stone-200 bg-[#f7f6f3] p-4 shadow-xl dark:border-stone-800 dark:bg-stone-950"
+    @click.stop>
+    <div class="mb-4 flex items-center justify-between">
+      <span class="font-bold">菜单</span>
+      <button type="button" @click="mobileMenuOpen = false" class="rounded-lg p-2 hover:bg-stone-200/70 dark:hover:bg-stone-800" aria-label="关闭">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <nav class="flex flex-col gap-1">
+      <template x-for="item in navItems" :key="'m-' + item.key">
+        <a :href="item.href" @click="mobileMenuOpen = false"
+          class="rounded-xl px-4 py-3 text-sm font-medium"
+          :class="active === item.key ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900' : 'hover:bg-stone-200/60 dark:hover:bg-stone-800'"
+          x-text="item.label"></a>
+      </template>
+      <a :href="createUrl" @click="mobileMenuOpen = false"
+        class="rounded-xl px-4 py-3 text-sm font-medium"
+        :class="active === 'create' ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900' : 'hover:bg-stone-200/60 dark:hover:bg-stone-800'">创作中心</a>
+      <a href="/pages/messages.html" @click="mobileMenuOpen = false"
+        class="rounded-xl px-4 py-3 text-sm font-medium hover:bg-stone-200/60 dark:hover:bg-stone-800">私信</a>
+      <hr class="my-2 border-stone-200 dark:border-stone-800">
+      <template x-if="!loggedIn">
+        <div class="flex gap-2 px-1">
+          <a :href="loginUrl(authReturn())" class="flex-1 rounded-xl border border-stone-200 py-2.5 text-center text-sm dark:border-stone-700">登录</a>
+          <a :href="registerUrl(authReturn())" class="flex-1 rounded-xl bg-primary py-2.5 text-center text-sm font-medium text-white">注册</a>
+        </div>
+      </template>
+      <template x-if="loggedIn">
+        <div class="space-y-1">
+          <a href="/pages/me.html" class="block rounded-xl px-4 py-3 text-sm font-medium hover:bg-stone-200/60 dark:hover:bg-stone-800"
+            x-text="'我的 · ' + displayName"></a>
+          <button type="button" @click="logout()" class="w-full rounded-xl px-4 py-3 text-left text-sm text-stone-500 hover:bg-stone-200/60 dark:hover:bg-stone-800">退出登录</button>
+        </div>
+      </template>
+    </nav>
+  </div>
+</div>
+
+<!-- include: site-bottom-nav -->

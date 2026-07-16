@@ -1,0 +1,151 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>论坛管理</title>
+</head>
+<body>
+<div id="page-content" class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease`"
+ x-data="forumAdminPage">
+
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="Breadcrumb">
+   <a href="/admin/dashboard.html" class="hover:text-primary">首页</a>
+   <span class="mx-1">/</span>
+   <span class="text-gray-700 dark:text-gray-200 font-medium">论坛管理</span>
+ </nav>
+
+ <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+   <h1 class="text-2xl font-bold">论坛管理</h1>
+   <div class="flex flex-wrap gap-2">
+     <input x-model="q" @keydown.enter="load()" type="search" placeholder="搜索帖子…" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+     <select x-model="category" @change="load()" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       <option value="">全部分区</option>
+       <template x-for="c in categories" :key="c.slug">
+         <option :value="c.slug" x-text="c.name"></option>
+       </template>
+     </select>
+     <select x-model="tag" @change="load()" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       <option value="">全部标签</option>
+       <template x-for="tg in tags" :key="tg.slug">
+         <option :value="tg.slug" x-text="'#' + tg.name"></option>
+       </template>
+     </select>
+     <a href="/admin/forum-categories.html" class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm">分区</a>
+     <a href="/pages/forum.html" target="_blank" class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm hover:border-primary">前台预览</a>
+   </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+   <table class="w-full text-left">
+     <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 uppercase">
+       <tr>
+         <th class="px-4 py-3">标题</th>
+         <th class="px-4 py-3">分区 / 标签</th>
+         <th class="px-4 py-3">作者</th>
+         <th class="px-4 py-3">回复/赞</th>
+         <th class="px-4 py-3">标记</th>
+         <th class="px-4 py-3">操作</th>
+       </tr>
+     </thead>
+     <tbody>
+       <template x-if="!rows.length">
+         <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">暂无帖子</td></tr>
+       </template>
+       <template x-for="t in rows" :key="t.id">
+         <tr class="border-b border-gray-100 dark:border-gray-800">
+           <td class="px-4 py-3 text-sm font-medium" x-text="t.title"></td>
+           <td class="px-4 py-3 text-sm">
+             <div x-text="t.categoryName"></div>
+             <div class="mt-1 flex flex-wrap gap-1">
+               <template x-for="tg in (t.tags || [])" :key="tg.slug">
+                 <span class="text-[10px] px-1.5 py-0.5 rounded" :style="'background:' + tg.color + '22;color:' + tg.color" x-text="'#' + tg.name"></span>
+               </template>
+             </div>
+           </td>
+           <td class="px-4 py-3 text-sm text-gray-500" x-text="t.authorName"></td>
+           <td class="px-4 py-3 text-sm" x-text="t.replyCount + ' / ' + t.likeCount"></td>
+           <td class="px-4 py-3 text-sm">
+             <span x-show="t.pinned" class="text-amber-600 mr-1">置顶</span>
+             <span x-show="t.locked" class="text-gray-500">锁定</span>
+             <span x-show="!t.pinned && !t.locked">-</span>
+           </td>
+           <td class="px-4 py-3 text-sm whitespace-nowrap">
+             <a :href="'/pages/forum-topic.html?id=' + t.id" target="_blank" class="text-primary hover:underline mr-2">查看</a>
+             <button type="button" class="text-blue-500 hover:underline mr-2" :data-edit-topic="t.id">编辑</button>
+             <button type="button" class="text-sky-600 hover:underline mr-2" :data-replies-topic="t.id">回复</button>
+             <button type="button" class="text-blue-500 hover:underline mr-2" :data-pin-topic="t.id" :data-pinned="t.pinned ? 1 : 0" x-text="t.pinned ? '取消置顶' : '置顶'"></button>
+             <button type="button" class="text-amber-600 hover:underline mr-2" :data-lock-topic="t.id" :data-locked="t.locked ? 1 : 0" x-text="t.locked ? '解锁' : '锁定'"></button>
+             <button type="button" class="text-red-500 hover:underline" :data-del-topic="t.id">删除</button>
+           </td>
+         </tr>
+       </template>
+     </tbody>
+   </table>
+ </div>
+
+ <!-- Edit modal -->
+ <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+   <div class="absolute inset-0 bg-black/40" @click="modalOpen=false"></div>
+   <div class="relative bg-white dark:bg-gray-900 rounded-xl border w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-xl">
+     <h2 class="text-lg font-bold mb-4">编辑帖子</h2>
+     <div class="space-y-3">
+       <div>
+         <label class="block text-sm mb-1">标题</label>
+         <input x-model="form.title" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div class="grid grid-cols-2 gap-3">
+         <div>
+           <label class="block text-sm mb-1">分区</label>
+           <select x-model="form.categoryId" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+             <template x-for="c in categories" :key="c.id">
+               <option :value="String(c.id)" x-text="c.name"></option>
+             </template>
+           </select>
+         </div>
+         <div>
+           <label class="block text-sm mb-1">标签（逗号分隔）</label>
+           <input x-model="form.tags" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+       </div>
+       <div class="flex gap-4 text-sm">
+         <label class="flex items-center gap-2"><input type="checkbox" x-model="form.pinned"> 置顶</label>
+         <label class="flex items-center gap-2"><input type="checkbox" x-model="form.locked"> 锁定</label>
+       </div>
+       <div>
+         <label class="block text-sm mb-1">正文</label>
+         <textarea x-model="form.bodyMd" rows="10" class="w-full px-3 py-2 font-mono text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent"></textarea>
+       </div>
+       <div class="flex justify-end gap-2">
+         <button type="button" @click="modalOpen=false" class="px-4 py-2 border rounded-lg text-sm">取消</button>
+         <button type="button" @click="saveTopic()" :disabled="saving" class="px-4 py-2 bg-primary text-white rounded-lg text-sm">保存</button>
+       </div>
+     </div>
+   </div>
+ </div>
+
+ <!-- Replies modal -->
+ <div x-show="replyOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+   <div class="absolute inset-0 bg-black/40" @click="replyOpen=false"></div>
+   <div class="relative bg-white dark:bg-gray-900 rounded-xl border w-full max-w-xl max-h-[80vh] overflow-y-auto p-6 shadow-xl">
+     <div class="flex items-center justify-between mb-4">
+       <h2 class="text-lg font-bold">回复管理</h2>
+       <button type="button" @click="replyOpen=false" class="text-sm text-gray-400">关闭</button>
+     </div>
+     <template x-if="!replies.length">
+       <p class="py-8 text-center text-sm text-gray-400">暂无回复</p>
+     </template>
+     <template x-for="r in replies" :key="r.id">
+       <div class="border-b border-gray-100 dark:border-gray-800 py-3">
+         <div class="flex items-center justify-between text-xs text-gray-400">
+           <span x-text="'#' + r.floor + ' · ' + r.authorName"></span>
+           <button type="button" @click="deleteReply(r.id)" class="text-red-500 hover:underline">删除</button>
+         </div>
+         <p class="mt-1 text-sm line-clamp-3" x-text="r.bodyMd"></p>
+       </div>
+     </template>
+   </div>
+ </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="eventsPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>活动中心 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<section class="site-promo-banner"
+  style="--banner-image: url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1600&q=80')">
+  <span class="site-promo-badge">广告位</span>
+  <div class="site-promo-inner">
+    <p class="site-promo-eyebrow">Events · 活动中心</p>
+    <h1 class="site-promo-title">产业大会 · 颂钵疗愈 · 线上峰会</h1>
+    <p class="site-promo-desc">报名参加线下/线上活动，拓展人脉与体验。本 Banner 可用于活动赞助与品牌露出。</p>
+    <div class="site-promo-actions">
+      <a href="#event-list" class="site-promo-cta">立即报名</a>
+      <a href="/pages/courses.html" class="site-promo-ghost">知识课程</a>
+      <div class="ml-auto hidden rounded-xl bg-white/10 px-4 py-2 text-sm text-white backdrop-blur sm:block" x-show="loggedIn">
+        积分 <span class="font-bold" x-text="user?.points ?? '—'"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main id="event-list" class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+  <div class="catalog-toolbar">
+    <div>
+      <h2 class="text-base font-semibold text-stone-900 dark:text-white">近期活动</h2>
+      <p class="mt-1 text-sm text-stone-500 dark:text-stone-400">填写联系方式即可报名；部分活动可用积分预约占位。</p>
+    </div>
+    <div class="site-card px-4 py-2 text-sm sm:hidden" x-show="loggedIn">
+      <span class="text-stone-400">积分</span>
+      <span class="ml-2 font-bold text-primary" x-text="user?.points ?? '—'"></span>
+    </div>
+  </div>
+
+  <div class="catalog-filters mb-7">
+    <button type="button" @click="setCategory('')" class="catalog-filter" :class="!category && 'catalog-filter-active'">全部</button>
+    <template x-for="c in categories" :key="c.key">
+      <button type="button" @click="setCategory(c.key)" class="catalog-filter"
+        :class="category === c.key && 'catalog-filter-active'" x-text="c.label"></button>
+    </template>
+    <button type="button" @click="onlyMine = !onlyMine" class="catalog-filter" :class="onlyMine && 'catalog-filter-active'" x-show="loggedIn">我已报名</button>
+  </div>
+
+  <div x-show="loading" class="py-20 text-center text-stone-400">加载中…</div>
+  <div x-show="error" class="py-12 text-center text-red-500" x-text="error"></div>
+
+  <div x-show="!loading && !error" class="catalog-grid">
+    <template x-for="e in filtered" :key="e.id">
+      <a :href="'/pages/event.html?id=' + e.id" class="catalog-card">
+        <div class="catalog-cover !aspect-[21/9]">
+          <template x-if="e.coverUrl">
+            <img :src="e.coverUrl" :alt="e.title" loading="lazy">
+          </template>
+          <div class="catalog-cover-fallback" :class="e.category" x-show="!e.coverUrl"></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"></div>
+          <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
+            <div class="flex flex-wrap gap-1.5">
+              <span class="rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-stone-800" x-text="e.categoryLabel"></span>
+              <span class="rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur" x-text="e.modeLabel"></span>
+              <span class="rounded-full bg-emerald-500/90 px-2.5 py-1 text-[11px] font-semibold text-white" x-show="e.registered">已报名</span>
+            </div>
+          </div>
+        </div>
+        <div class="catalog-body">
+          <div class="flex gap-4">
+            <div class="event-date">
+              <span class="event-date-month" x-text="monthLabel(e.startsAt)"></span>
+              <span class="event-date-day" x-text="dayLabel(e.startsAt)"></span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h2 class="catalog-title" x-text="e.title"></h2>
+              <p class="catalog-subtitle mt-1" x-show="e.subtitle" x-text="e.subtitle"></p>
+              <p class="catalog-desc mt-2" x-text="e.summary"></p>
+              <div class="mt-3 space-y-1 text-xs text-stone-400">
+                <p class="flex items-center gap-1.5">
+                  <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3.5 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span x-text="formatRange(e)"></span>
+                </p>
+                <p class="flex items-center gap-1.5">
+                  <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s6-5.3 6-10a6 6 0 10-12 0c0 4.7 6 10 6 10z"/><circle cx="12" cy="11" r="2"/></svg>
+                  <span class="truncate" x-text="e.location || '地点待定'"></span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="catalog-meta">
+            <div class="flex items-center gap-2">
+              <template x-if="e.feePoints > 0">
+                <span class="catalog-price"><span x-text="e.feePoints"></span><span class="text-[10px] font-semibold uppercase tracking-wider text-stone-400">积分</span></span>
+              </template>
+              <template x-if="e.feePoints === 0">
+                <span class="catalog-price-free">免费报名</span>
+              </template>
+              <span x-show="e.capacity > 0" x-text="'余 ' + e.seatsLeft + '/' + e.capacity"></span>
+              <span x-show="e.ended" class="text-stone-400">已结束</span>
+              <span x-show="e.full && !e.registered && !e.ended" class="text-amber-600">已满</span>
+            </div>
+            <span class="catalog-cta">详情 <span aria-hidden="true">→</span></span>
+          </div>
+        </div>
+      </a>
+    </template>
+  </div>
+
+  <p x-show="!loading && !filtered.length" class="py-16 text-center text-stone-400">暂无活动</p>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome, formatDate } from '/src/public/site.js'
+import { apiFetch, getUser, setUser, isLoggedIn } from '/src/public/api.js'
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+window.eventsPage = function eventsPage() {
+  return {
+    ...siteChrome('events'),
+    loading: true,
+    error: '',
+    rows: [],
+    category: '',
+    onlyMine: false,
+    categories: [
+      { key: 'conference', label: '产业大会' },
+      { key: 'healing', label: '疗愈活动' },
+      { key: 'online', label: '线上大会' },
+      { key: 'meetup', label: '线下沙龙' },
+      { key: 'other', label: '其他' },
+    ],
+    get filtered() {
+      let list = this.rows
+      if (this.category) list = list.filter((e) => e.category === this.category)
+      if (this.onlyMine) list = list.filter((e) => e.registered)
+      return list
+    },
+    async init() {
+      if (isLoggedIn()) {
+        const me = await apiFetch('/api/community/me')
+        if (me.json.code === 0) {
+          setUser({
+            id: me.json.data.id,
+            username: me.json.data.username,
+            displayName: me.json.data.displayName,
+            points: me.json.data.points,
+          })
+          this.user = getUser()
+        }
+      }
+      const { json } = await apiFetch('/api/events')
+      this.loading = false
+      if (json.code !== 0) {
+        this.error = json.msg || '加载失败'
+        return
+      }
+      this.rows = json.data || []
+    },
+    setCategory(c) { this.category = c },
+    formatRange(e) {
+      const a = formatDate(e.startsAt, true)
+      if (!e.endsAt) return a
+      return a + ' ~ ' + formatDate(e.endsAt, true)
+    },
+    monthLabel(value) {
+      if (!value) return '—'
+      const d = new Date(String(value).replace(' ', 'T'))
+      if (Number.isNaN(d.getTime())) return String(value).slice(5, 7)
+      return MONTHS[d.getMonth()]
+    },
+    dayLabel(value) {
+      if (!value) return '—'
+      const d = new Date(String(value).replace(' ', 'T'))
+      if (Number.isNaN(d.getTime())) return String(value).slice(8, 10)
+      return String(d.getDate()).padStart(2, '0')
+    },
+  }
+}
+
+Alpine.start()
+</script>
+</body>
+</html>

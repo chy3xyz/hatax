@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="landingPage()">
+<head>
+ <script src="/theme-boot.js"></script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>">
+  <title>HatTax — 新一代企业管理平台</title>
+</head>
+<body class="bg-white dark:bg-gray-950 text-gray-900 dark:text-white pb-20 md:pb-0">
+
+<!-- Nav -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="/pages/index.html" class="flex items-center gap-2.5 font-bold text-xl">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </div>
+        HatTax
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+        <a href="#features" class="hover:text-primary transition-colors">功能</a>
+        <a href="/pages/blog.html" class="hover:text-primary transition-colors">博客</a>
+        <a href="/pages/forum.html" class="hover:text-primary transition-colors">论坛</a>
+        <a href="#features" class="hover:text-primary transition-colors hidden lg:inline">能力</a>
+        <a href="#pricing" class="hover:text-primary transition-colors">定价</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="button" @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg md:hidden" aria-label="打开菜单">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <button @click="toggleDark()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" type="button" aria-label="切换主题">
+          <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+          <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707"></path></svg>
+        </button>
+        <a href="/admin/login.html" class="hidden px-4 py-2 text-sm font-medium hover:text-primary transition-colors sm:inline">登录后台</a>
+        <a href="/admin/login.html" class="hidden px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors sm:inline">免费试用</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div x-show="mobileMenuOpen" x-cloak class="fixed inset-0 z-50 md:hidden" @keydown.escape.window="mobileMenuOpen=false">
+  <div class="absolute inset-0 bg-black/40" @click="mobileMenuOpen=false"></div>
+  <div class="absolute inset-x-0 top-16 mx-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-800 dark:bg-gray-950">
+    <nav class="flex flex-col gap-1 text-sm font-medium">
+      <a href="#features" @click="mobileMenuOpen=false" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">功能</a>
+      <a href="/pages/blog.html" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">博客</a>
+      <a href="/pages/forum.html" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">论坛</a>
+      <a href="/pages/events.html" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">活动</a>
+      <a href="/pages/tasks.html" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">任务</a>
+      <a href="/pages/courses.html" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">课程</a>
+      <a href="/pages/create.html" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">创作</a>
+      <a href="#pricing" @click="mobileMenuOpen=false" class="rounded-xl px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800">定价</a>
+      <a href="/pages/login.html" class="rounded-xl px-4 py-3 text-primary">社区登录</a>
+    </nav>
+  </div>
+</div>
+
+<nav class="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-gray-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden dark:border-gray-800 dark:bg-gray-950/95" aria-label="底部导航">
+  <a href="/pages/index.html" class="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-primary">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"/></svg>
+    <span>首页</span>
+  </a>
+  <a href="/pages/blog.html" class="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-gray-400">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19.5A2.5 2.5 0 0 0 6.5 22H19a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2H8.5A2.5 2.5 0 0 0 6 5.5v14zM8 6h8M8 10h8M8 14h5"/></svg>
+    <span>博客</span>
+  </a>
+  <a href="/pages/events.html" class="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-gray-400">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 3v3M16 3v3M4 9h16M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path stroke-linecap="round" d="M8 13h3v3H8z"/></svg>
+    <span>活动</span>
+  </a>
+  <a href="/pages/forum.html" class="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-gray-400">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5M21 12a9 9 0 1 1-3.2-6.9L21 5v7z"/></svg>
+    <span>论坛</span>
+  </a>
+  <a href="/pages/me.html" class="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-gray-400">
+    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 1 0-16 0M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
+    <span>我的</span>
+  </a>
+</nav>
+
+
+<!-- Hero -->
+<section class="pt-32 pb-20 px-4">
+  <div class="max-w-4xl mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full mb-6">
+      <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+      v1.0 正式发布
+    </div>
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+      用 <span class="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">轻量架构</span> 构建<br>企业级管理后台
+    </h1>
+    <p class="mt-6 text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+      Vite + Alpine.js + HTMX + Tailwind CSS。无 React、无 Vue、无复杂构建。<br>
+      15KB 运行时 + 10KB 网络层 = 极速管理后台。
+    </p>
+    <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="/admin/login.html" class="px-8 py-3.5 bg-primary text-white font-medium rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+        进入管理后台 →
+      </a>
+      <a href="/pages/blog.html" class="px-8 py-3.5 border border-gray-300 dark:border-gray-700 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all">
+        浏览博客
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-14">
+      <h2 class="text-3xl font-bold">核心能力</h2>
+      <p class="mt-3 text-gray-500 dark:text-gray-400">极简技术栈，完整企业级功能</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 hover:shadow-lg transition-shadow">
+        <div class="w-11 h-11 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </div>
+        <h3 class="font-semibold text-lg mb-2">极致轻量</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Alpine.js 15KB + HTMX 10KB。无虚拟 DOM、无复杂状态管理。首屏加载 &lt; 100ms。</p>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 hover:shadow-lg transition-shadow">
+        <div class="w-11 h-11 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path></svg>
+        </div>
+        <h3 class="font-semibold text-lg mb-2">双轨站点</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400"><code class="text-xs">/pages/*</code> 面向用户的官网与社区；<code class="text-xs">/admin/*</code> 管理后台，互不干扰。</p>
+      </div>
+      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-6 hover:shadow-lg transition-shadow">
+        <div class="w-11 h-11 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+        </div>
+        <h3 class="font-semibold text-lg mb-2">开发者友好</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Vite HMR、构建时布局注入、零配置多页面。clone → npm install → 开始写业务。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="py-16 px-4">
+  <div class="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+    <div><div class="text-3xl font-bold text-primary">20+</div><div class="text-sm text-gray-500 mt-1">内置页面</div></div>
+    <div><div class="text-3xl font-bold text-primary">~30KB</div><div class="text-sm text-gray-500 mt-1">运行时体积</div></div>
+    <div><div class="text-3xl font-bold text-primary">&lt;1s</div><div class="text-sm text-gray-500 mt-1">生产构建</div></div>
+    <div><div class="text-3xl font-bold text-primary">Hono</div><div class="text-sm text-gray-500 mt-1">全栈 API</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="pricing" class="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
+  <div class="max-w-xl mx-auto text-center">
+    <h2 class="text-3xl font-bold mb-4">开源 & 免费</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-8">MIT 协议开源。商用免费、二次开发自由。</p>
+    <a href="/admin/login.html" class="inline-flex px-8 py-3.5 bg-primary text-white font-medium rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25">
+      开始使用 →
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer id="about" class="py-12 px-4 border-t border-gray-200 dark:border-gray-800">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+    <div class="flex items-center gap-2">
+      <span class="font-semibold text-gray-500 dark:text-gray-300">HatTax</span>
+      <span>© 2026 MIT License</span>
+    </div>
+    <div class="flex gap-6">
+      <a href="/pages/blog.html" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">博客</a>
+      <a href="/pages/forum.html" class="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">论坛</a>
+      <a href="/admin/login.html" class="hover:text-primary transition-colors">进入后台</a>
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { publicTheme } from '/src/public/theme.js'
+Alpine.data('landingPage', () => ({
+  ...publicTheme(),
+  mobileMenuOpen: false,
+}))
+window.Alpine = Alpine
+Alpine.start()
+</script>
+</body>
+</html>

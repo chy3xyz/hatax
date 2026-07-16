@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="forumNewPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>发帖 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-2xl px-4 py-10">
+  <div class="site-card p-6 sm:p-8">
+    <h1 class="text-xl font-bold">发帖</h1>
+    <p class="mt-1 text-sm text-stone-400">帖子进入论坛讨论；长文请去「写博客」。</p>
+    <form @submit.prevent="submit()" class="mt-6 space-y-5">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">分区</label>
+        <select x-model="categoryId" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm dark:border-stone-700">
+          <template x-for="c in categories" :key="c.id">
+            <option :value="c.id" x-text="c.name"></option>
+          </template>
+        </select>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">标题</label>
+        <input x-model="title" type="text" maxlength="120"
+          class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700"
+          placeholder="一句话概括你的问题或分享">
+      </div>
+      <div>
+        <div class="mb-1.5 flex items-center justify-between">
+          <label class="block text-sm font-medium">标签 <span class="font-normal text-stone-400">最多 5 个</span></label>
+          <span class="text-xs text-stone-400" x-text="selectedTags.length + ' / 5'"></span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <template x-for="tg in tags" :key="tg.slug">
+            <button type="button" @click="toggleTag(tg.slug)"
+              class="rounded-full px-3 py-1.5 text-xs font-medium transition"
+              :class="selectedTags.includes(tg.slug) ? 'text-white shadow-sm' : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300'"
+              :style="selectedTags.includes(tg.slug) ? ('background:' + tg.color) : ''"
+              x-text="'#' + tg.name"></button>
+          </template>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <input x-model="customTag" @keydown.enter.prevent="addCustomTag()" type="text" maxlength="24"
+            class="flex-1 rounded-xl border border-stone-200 bg-transparent px-3 py-2 text-sm dark:border-stone-700"
+            placeholder="自定义标签，回车添加">
+          <button type="button" @click="addCustomTag()" class="rounded-xl border border-stone-200 px-3 py-2 text-sm dark:border-stone-700">添加</button>
+        </div>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">内容（Markdown）</label>
+        <textarea x-model="body" rows="12"
+          class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 font-mono text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700"
+          placeholder="支持 **加粗**、列表、代码块…"></textarea>
+      </div>
+      <p class="text-sm text-red-500" x-show="error" x-text="error"></p>
+      <button type="submit" :disabled="submitting"
+        class="w-full rounded-xl bg-primary py-2.5 font-semibold text-white disabled:opacity-50">发布帖子</button>
+    </form>
+  </div>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome } from '/src/public/site.js'
+import { apiFetch, loginUrl, isLoggedIn } from '/src/public/api.js'
+
+window.forumNewPage = function forumNewPage() {
+  return {
+    ...siteChrome('create'),
+    categories: [],
+    tags: [],
+    categoryId: '',
+    selectedTags: [],
+    customTag: '',
+    title: '',
+    body: '',
+    submitting: false,
+    error: '',
+    async init() {
+      if (!isLoggedIn()) {
+        location.replace(loginUrl('/pages/forum-new.html'))
+        return
+      }
+      const [cats, tags] = await Promise.all([
+        apiFetch('/api/forum/categories'),
+        apiFetch('/api/forum/tags'),
+      ])
+      if (cats.json.code === 0) {
+        this.categories = cats.json.data || []
+        if (this.categories[0]) this.categoryId = String(this.categories[0].id)
+      }
+      if (tags.json.code === 0) this.tags = tags.json.data || []
+    },
+    toggleTag(slug) {
+      if (this.selectedTags.includes(slug)) {
+        this.selectedTags = this.selectedTags.filter((s) => s !== slug)
+        return
+      }
+      if (this.selectedTags.length >= 5) {
+        this.error = '最多选择 5 个标签'
+        return
+      }
+      this.error = ''
+      this.selectedTags = [...this.selectedTags, slug]
+    },
+    addCustomTag() {
+      const raw = String(this.customTag || '').trim().toLowerCase().replace(/\s+/g, '-')
+      if (!raw) return
+      if (this.selectedTags.length >= 5) {
+        this.error = '最多选择 5 个标签'
+        return
+      }
+      if (!this.selectedTags.includes(raw)) this.selectedTags = [...this.selectedTags, raw]
+      if (!this.tags.some((t) => t.slug === raw)) {
+        this.tags = [...this.tags, { slug: raw, name: raw, color: '#64748b', topicCount: 0 }]
+      }
+      this.customTag = ''
+      this.error = ''
+    },
+    async submit() {
+      this.error = ''
+      if (!this.title.trim() || !this.body.trim()) {
+        this.error = '标题与内容必填'
+        return
+      }
+      this.submitting = true
+      const { json } = await apiFetch('/api/forum/topics', {
+        method: 'POST',
+        body: JSON.stringify({
+          categoryId: Number(this.categoryId),
+          title: this.title,
+          bodyMd: this.body,
+          tags: this.selectedTags,
+        }),
+      })
+      this.submitting = false
+      if (json.code !== 0) { this.error = json.msg || '发帖失败'; return }
+      location.href = '/pages/forum-topic.html?id=' + json.data.id
+    },
+  }
+}
+
+window.Alpine = Alpine
+Alpine.start()
+</script>
+</body>
+</html>

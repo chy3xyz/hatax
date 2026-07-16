@@ -1,0 +1,97 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>菜单管理</title>
+</head>
+<body>
+<div id="page-content" x-data="menuPage" class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto mb-4" aria-label="Breadcrumb">
+ <a href="/admin/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline" x-text="$store.i18n.menuTitle('dashboard')">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+ </nav>
+
+ <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+ <div>
+   <h1 class="text-2xl font-bold" x-text="$store.i18n.t('menu.menu')">菜单管理</h1>
+   <p class="text-sm text-gray-500 mt-1">侧栏目录多国语：中文 / English 字段需完整配置</p>
+ </div>
+ <div class="flex flex-wrap items-center gap-2">
+ <button type="button" @click="expandAll()" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">展开全部</button>
+ <button type="button" @click="collapseAll()" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">折叠全部</button>
+ <button type="button" @click="reloadFromSource()" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">同步侧栏</button>
+ <button type="button" @click="save()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors">保存修改</button>
+ </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+ <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex flex-wrap gap-3 items-center justify-between">
+ <span class="text-sm text-gray-500">缺失英文或中文标题的项会标红，保存前请补齐</span>
+ <span class="text-xs text-amber-600" x-show="missingI18nCount > 0" x-text="'缺字段 ' + missingI18nCount + ' 项'"></span>
+ </div>
+ <div class="overflow-x-auto">
+ <table class="w-full text-left text-sm">
+ <thead class="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 uppercase">
+ <tr class="border-b border-gray-200 dark:border-gray-700">
+ <th class="px-4 py-3 w-12"></th>
+ <th class="px-4 py-3">标识 key</th>
+ <th class="px-4 py-3">中文标题</th>
+ <th class="px-4 py-3">English</th>
+ <th class="px-4 py-3">路径</th>
+ <th class="px-4 py-3 w-20 text-center">排序</th>
+ <th class="px-4 py-3 w-20 text-center">可见</th>
+ </tr>
+ </thead>
+ <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+ <template x-for="row in flatRows" :key="row._uid">
+ <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40"
+   :class="!row.titleZh || !row.titleEn ? 'bg-red-50/60 dark:bg-red-900/10' : ''">
+   <td class="px-4 py-2">
+     <button type="button" x-show="row.children?.length" @click="toggle(row._uid)" class="text-gray-400 hover:text-primary">
+       <svg class="w-4 h-4 transition-transform" :class="expanded.has(row._uid) ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+     </button>
+   </td>
+   <td class="px-4 py-2 font-mono text-xs" :style="'padding-left:' + (12 + row._depth * 20) + 'px'" x-text="row.key"></td>
+   <td class="px-4 py-2">
+     <input x-model="row.titleZh" @input="markDirty(row)" class="w-full min-w-[8rem] px-2 py-1.5 text-sm rounded border border-gray-200 dark:border-gray-700 bg-transparent"
+       :class="!row.titleZh ? 'border-red-400' : ''" placeholder="中文">
+   </td>
+   <td class="px-4 py-2">
+     <input x-model="row.titleEn" @input="markDirty(row)" class="w-full min-w-[8rem] px-2 py-1.5 text-sm rounded border border-gray-200 dark:border-gray-700 bg-transparent"
+       :class="!row.titleEn ? 'border-red-400' : ''" placeholder="English">
+   </td>
+   <td class="px-4 py-2 text-xs text-gray-500 truncate max-w-[12rem]" x-text="row.path || '—'"></td>
+   <td class="px-4 py-2 text-center">
+     <input type="number" x-model.number="row.sort" class="w-16 px-2 py-1 text-sm rounded border border-gray-200 dark:border-gray-700 bg-transparent text-center">
+   </td>
+   <td class="px-4 py-2 text-center">
+     <button type="button" @click="row.visible = !row.visible" class="text-xs px-2 py-0.5 rounded-full"
+       :class="row.visible ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+       x-text="row.visible ? '显示' : '隐藏'"></button>
+   </td>
+ </tr>
+ </template>
+ </tbody>
+ </table>
+ </div>
+ <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 text-sm text-gray-500"
+   x-text="'共 ' + menus.length + ' 个分组 · ' + leafCount + ' 个菜单项'"></div>
+ </div>
+</div>
+</body>
+</html>

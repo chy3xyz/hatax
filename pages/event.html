@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="eventDetailPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>活动 — HatTax</title>
+  <style>
+    .font-ui { font-family: "DM Sans", system-ui, sans-serif; }
+    .prose-event h2 { font-size: 1.15rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+    .prose-event h3 { font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.4rem; }
+    .prose-event p { margin: 0.5rem 0; line-height: 1.7; }
+    .prose-event ul, .prose-event ol { padding-left: 1.25rem; margin: 0.5rem 0; }
+    .prose-event ul { list-style: disc; }
+    .prose-event ol { list-style: decimal; }
+  </style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+  <a href="/pages/events.html" class="site-link text-sm">← 活动中心</a>
+
+  <div x-show="loading" class="py-24 text-center text-stone-400">加载中…</div>
+  <div x-show="error && !event" class="py-24 text-center text-red-500" x-text="error"></div>
+
+  <template x-if="event">
+    <div class="mt-6 animate-fade-in">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="site-chip" x-text="event.categoryLabel"></span>
+        <span class="site-chip" x-text="event.modeLabel"></span>
+        <span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+          x-text="event.feePoints === 0 ? '免费' : (event.feePoints + ' 积分')"></span>
+        <span class="site-chip" x-show="event.registered">已报名</span>
+      </div>
+      <h1 class="mt-3 text-3xl font-bold tracking-tight" x-text="event.title"></h1>
+      <p class="mt-2 text-stone-500" x-text="event.subtitle" x-show="event.subtitle"></p>
+      <p class="mt-3 text-stone-500 dark:text-stone-400" x-text="event.summary"></p>
+
+      <div class="site-card mt-6 space-y-2 p-5 text-sm">
+        <p><span class="text-stone-400">时间</span> · <span x-text="timeRange"></span></p>
+        <p><span class="text-stone-400">地点</span> · <span x-text="event.location || '待定'"></span></p>
+        <p x-show="event.signupDeadline"><span class="text-stone-400">报名截止</span> · <span x-text="formatDate(event.signupDeadline, true)"></span></p>
+        <p x-show="event.capacity > 0">
+          <span class="text-stone-400">名额</span> ·
+          <span x-text="event.signupCount + ' / ' + event.capacity + '（余 ' + event.seatsLeft + '）'"></span>
+        </p>
+        <p x-show="event.capacity === 0"><span class="text-stone-400">名额</span> · 不限</p>
+        <p x-show="event.registered && event.onlineUrl">
+          <span class="text-stone-400">线上入口</span> ·
+          <a :href="event.onlineUrl" target="_blank" rel="noopener" class="text-primary hover:underline" x-text="event.onlineUrl"></a>
+        </p>
+      </div>
+
+      <div class="prose-event mt-8 text-sm text-stone-600 dark:text-stone-300" x-html="event.bodyHtml"></div>
+
+      <div class="site-card mt-8 p-5 sm:p-6">
+        <template x-if="event.registered">
+          <div class="space-y-3">
+            <p class="font-semibold text-emerald-600">你已成功报名</p>
+            <p class="text-sm text-stone-500" x-show="event.signup">
+              联系人 <span x-text="event.signup.contactName"></span>
+              · <span x-text="event.signup.contactPhone"></span>
+            </p>
+            <button type="button" @click="cancel()" :disabled="busy"
+              class="rounded-xl border border-stone-300 px-4 py-2 text-sm dark:border-stone-600"
+              x-show="!event.ended">取消报名</button>
+          </div>
+        </template>
+
+        <template x-if="!event.registered">
+          <div class="space-y-4">
+            <h2 class="text-lg font-bold">报名参加</h2>
+            <p class="text-sm text-stone-400" x-show="!event.signupOpen" x-text="closedReason"></p>
+            <template x-if="event.signupOpen">
+              <div class="space-y-3">
+                <div>
+                  <label class="mb-1 block text-sm">联系人姓名</label>
+                  <input x-model="form.contactName" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2 text-sm dark:border-stone-700">
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm">联系电话</label>
+                  <input x-model="form.contactPhone" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2 text-sm dark:border-stone-700">
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm">备注（可选）</label>
+                  <textarea x-model="form.note" rows="2" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2 text-sm dark:border-stone-700"></textarea>
+                </div>
+                <p class="text-sm text-stone-400" x-show="loggedIn">
+                  当前积分 <strong class="text-primary" x-text="user?.points ?? '—'"></strong>
+                  <span x-show="event.feePoints > 0" x-text="' · 报名将消耗 ' + event.feePoints + ' 积分'"></span>
+                </p>
+                <template x-if="!loggedIn">
+                  <a :href="loginUrl(authReturn())" class="inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white">登录后报名</a>
+                </template>
+                <template x-if="loggedIn">
+                  <button type="button" @click="signup()" :disabled="busy"
+                    class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+                    x-text="busy ? '提交中…' : (event.feePoints > 0 ? '积分报名' : '免费报名')"></button>
+                </template>
+              </div>
+            </template>
+            <p class="text-sm text-red-500" x-show="formError" x-text="formError"></p>
+            <p class="text-sm text-emerald-600" x-show="formOk" x-text="formOk"></p>
+          </div>
+        </template>
+      </div>
+    </div>
+  </template>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome, formatDate } from '/src/public/site.js'
+import { apiFetch, getUser, setUser, isLoggedIn, loginUrl } from '/src/public/api.js'
+
+window.eventDetailPage = function eventDetailPage() {
+  return {
+    ...siteChrome('events'),
+    formatDate,
+    loading: true,
+    error: '',
+    event: null,
+    busy: false,
+    formError: '',
+    formOk: '',
+    form: { contactName: '', contactPhone: '', note: '' },
+    get timeRange() {
+      if (!this.event) return ''
+      const a = formatDate(this.event.startsAt, true)
+      if (!this.event.endsAt) return a
+      return a + ' ~ ' + formatDate(this.event.endsAt, true)
+    },
+    get closedReason() {
+      if (!this.event) return ''
+      if (this.event.ended) return '活动已结束'
+      if (this.event.full) return '名额已满'
+      if (this.event.status === 'closed') return '报名已关闭'
+      return '当前不可报名'
+    },
+    async init() {
+      if (isLoggedIn()) {
+        const me = await apiFetch('/api/community/me')
+        if (me.json.code === 0) {
+          setUser({
+            id: me.json.data.id,
+            username: me.json.data.username,
+            displayName: me.json.data.displayName,
+            points: me.json.data.points,
+          })
+          this.user = getUser()
+          this.loggedIn = true
+          this.form.contactName = me.json.data.displayName || me.json.data.username || ''
+        }
+      }
+      const id = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('slug')
+      if (!id) {
+        this.loading = false
+        this.error = '缺少活动参数'
+        return
+      }
+      const { json } = await apiFetch('/api/events/' + encodeURIComponent(id))
+      this.loading = false
+      if (json.code !== 0) {
+        this.error = json.msg || '加载失败'
+        return
+      }
+      this.event = json.data
+    },
+    async signup() {
+      this.formError = ''
+      this.formOk = ''
+      if (!isLoggedIn()) {
+        location.href = loginUrl(this.authReturn())
+        return
+      }
+      if (!this.form.contactName.trim() || !this.form.contactPhone.trim()) {
+        this.formError = '请填写姓名和电话'
+        return
+      }
+      const tip = this.event.feePoints > 0
+        ? `确认消耗 ${this.event.feePoints} 积分报名「${this.event.title}」？`
+        : `确认报名「${this.event.title}」？`
+      if (!confirm(tip)) return
+      this.busy = true
+      const { json } = await apiFetch('/api/events/' + this.event.id + '/signup', {
+        method: 'POST',
+        body: JSON.stringify(this.form),
+      })
+      this.busy = false
+      if (json.code !== 0) {
+        this.formError = json.msg || '报名失败'
+        return
+      }
+      this.formOk = json.msg || '报名成功'
+      this.event = json.data.event
+      if (json.data.member?.points != null) {
+        setUser({ ...getUser(), points: json.data.member.points })
+        this.user = getUser()
+      }
+    },
+    async cancel() {
+      if (!confirm('确认取消报名？已消耗积分不退还。')) return
+      this.busy = true
+      const { json } = await apiFetch('/api/events/' + this.event.id + '/cancel', {
+        method: 'POST',
+        body: '{}',
+      })
+      this.busy = false
+      if (json.code !== 0) {
+        this.formError = json.msg || '取消失败'
+        return
+      }
+      this.formOk = '已取消报名'
+      this.event = json.data
+    },
+  }
+}
+
+Alpine.start()
+</script>
+</body>
+</html>

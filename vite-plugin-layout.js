@@ -12,6 +12,18 @@ import path from 'path'
  * The plugin extracts the title, extra head content, and body content,
  * then injects them into components/layout/app-shell.html.
  */
+function resolveIncludes(html) {
+  const includeDir = path.resolve(process.cwd(), 'components/layout')
+  return html.replace(/<!--\s*include:\s*([\w/-]+)\s*-->/g, (_m, name) => {
+    const file = path.join(includeDir, `${name}.html`)
+    if (!fs.existsSync(file)) {
+      console.warn(`[layout] include not found: ${name}.html`)
+      return ''
+    }
+    return resolveIncludes(fs.readFileSync(file, 'utf-8'))
+  })
+}
+
 export default function layoutPlugin() {
   const shellPath = path.resolve(process.cwd(), 'components/layout/app-shell.html')
   let shellHtml = ''
@@ -23,8 +35,11 @@ export default function layoutPlugin() {
         shellHtml = fs.readFileSync(shellPath, 'utf-8')
       }
     },
-    transformIndexHtml(html, ctx) {
-      // Only process pages that opt-in
+    transformIndexHtml(html, _ctx) {
+      // Partial includes work on all pages: <!-- include: site-nav -->
+      html = resolveIncludes(html)
+
+      // Only process pages that opt-in to app-shell wrap
       if (!html.trimStart().startsWith('<!-- layout: app-shell -->')) {
         return html
       }
@@ -56,12 +71,12 @@ export default function layoutPlugin() {
       const bodyContent = bodyMatch ? bodyMatch[1].trim() : ''
 
       // Build result
-      let result = shellHtml
-        .replace('__PAGE_TITLE__', pageTitle)
-        .replace('<!-- __EXTRA_HEAD__ -->', extraHead || '')
-        .replace('__PAGE_CONTENT__', bodyContent)
-
-      return result
+      return resolveIncludes(
+        shellHtml
+          .replace('__PAGE_TITLE__', pageTitle)
+          .replace('<!-- __EXTRA_HEAD__ -->', extraHead || '')
+          .replace('__PAGE_CONTENT__', bodyContent),
+      )
     }
   }
 }

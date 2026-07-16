@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="taskDetailPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>任务 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+  <a href="/pages/tasks.html" class="site-link text-sm">← 任务中心</a>
+
+  <div x-show="loading" class="py-24 text-center text-stone-400">加载中…</div>
+  <div x-show="error && !task" class="py-24 text-center text-red-500" x-text="error"></div>
+
+  <template x-if="task">
+    <div class="mt-6 animate-fade-in">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="site-chip" x-text="task.typeLabel"></span>
+        <span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+          x-text="'+' + task.rewardPoints + ' 积分'"></span>
+      </div>
+      <h1 class="mt-3 text-3xl font-bold tracking-tight" x-text="task.title"></h1>
+      <p class="mt-3 text-stone-500 dark:text-stone-400" x-text="task.description"></p>
+
+      <div class="site-card mt-8 space-y-5 p-5 sm:p-6">
+        <!-- READ -->
+        <template x-if="task.type === 'read'">
+          <div class="space-y-4">
+            <a :href="task.config.url" target="_blank" rel="noopener"
+              class="inline-flex rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white dark:bg-white dark:text-stone-900">打开文章</a>
+            <p class="text-sm text-stone-400">计时中：<span class="font-semibold text-stone-700 dark:text-stone-200" x-text="readSeconds"></span> / <span x-text="task.config.minSeconds || 20"></span> 秒</p>
+            <div class="h-2 overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
+              <div class="h-full bg-primary transition-all" :style="'width:' + Math.min(100, readSeconds / (task.config.minSeconds || 20) * 100) + '%'"></div>
+            </div>
+          </div>
+        </template>
+
+        <!-- VIDEO -->
+        <template x-if="task.type === 'video'">
+          <div class="space-y-3">
+            <video x-ref="media" class="w-full rounded-xl bg-black" controls playsinline
+              :src="task.config.url" @timeupdate="onMediaProgress()" @loadedmetadata="onMediaMeta()"></video>
+            <p class="text-sm text-stone-400">进度 <span x-text="Math.floor(mediaPercent)"></span>%（需 ≥ <span x-text="task.config.minPercent || 80"></span>%）</p>
+          </div>
+        </template>
+
+        <!-- AUDIO -->
+        <template x-if="task.type === 'audio'">
+          <div class="space-y-3">
+            <audio x-ref="media" class="w-full" controls
+              :src="task.config.url" @timeupdate="onMediaProgress()" @loadedmetadata="onMediaMeta()"></audio>
+            <p class="text-sm text-stone-400">进度 <span x-text="Math.floor(mediaPercent)"></span>%（需 ≥ <span x-text="task.config.minPercent || 80"></span>%）</p>
+          </div>
+        </template>
+
+        <!-- QUIZ -->
+        <template x-if="task.type === 'quiz'">
+          <div class="space-y-5">
+            <template x-for="(q, qi) in (task.config.questions || [])" :key="q.id">
+              <div>
+                <p class="text-sm font-semibold" x-text="(qi + 1) + '. ' + q.prompt"></p>
+                <div class="mt-2 space-y-2">
+                  <template x-for="(opt, oi) in q.options" :key="oi">
+                    <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-stone-200 px-3 py-2 text-sm dark:border-stone-700"
+                      :class="answers[q.id] === oi && 'border-primary bg-primary/5'">
+                      <input type="radio" class="accent-primary" :name="'q'+q.id"
+                        :checked="answers[q.id] === oi" @click="answers[q.id] = oi">
+                      <span x-text="opt"></span>
+                    </label>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- POST -->
+        <template x-if="task.type === 'post'">
+          <div class="space-y-3 text-sm text-stone-500">
+            <p x-text="task.config.tip || '发表符合要求的帖子后，回到本页提交任务。'"></p>
+            <a href="/pages/forum-new.html" class="inline-flex rounded-xl bg-primary px-4 py-2.5 font-semibold text-white">去发帖</a>
+            <p class="text-xs text-stone-400">要求：标题 ≥ <span x-text="task.config.minTitleLen || 4"></span> 字，正文 ≥ <span x-text="task.config.minBodyLen || 10"></span> 字</p>
+          </div>
+        </template>
+
+        <p class="text-sm text-red-500" x-show="error" x-text="error"></p>
+        <p class="text-sm text-emerald-600" x-show="success" x-text="success"></p>
+
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button type="button" @click="ensureStarted()" x-show="!done && !started"
+            class="rounded-xl border border-stone-200 px-4 py-2.5 text-sm font-medium dark:border-stone-700">开始任务</button>
+          <button type="button" @click="submit()" :disabled="submitting || done"
+            class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            x-text="done ? '已完成' : (submitting ? '提交中…' : '提交并领取积分')"></button>
+        </div>
+      </div>
+    </div>
+  </template>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome } from '/src/public/site.js'
+import { apiFetch, qs, isLoggedIn, loginUrl, getUser, setUser } from '/src/public/api.js'
+
+window.taskDetailPage = function taskDetailPage() {
+  return {
+    ...siteChrome('tasks'),
+    loading: true,
+    error: '',
+    success: '',
+    task: null,
+    submitting: false,
+    readSeconds: 0,
+    mediaPercent: 0,
+    answers: {},
+    _timer: null,
+    get started() {
+      return this.task?.progress?.status === 'in_progress' || this.task?.progress?.status === 'completed'
+    },
+    get done() {
+      return this.task?.progress?.status === 'completed'
+    },
+    async init() {
+      const id = qs('id')
+      if (!id) { this.error = '缺少任务 id'; this.loading = false; return }
+      if (!isLoggedIn()) {
+        location.replace(loginUrl('/pages/task.html?id=' + encodeURIComponent(id)))
+        return
+      }
+      const { json } = await apiFetch('/api/tasks/' + id)
+      this.loading = false
+      if (json.code !== 0) { this.error = json.msg || '加载失败'; return }
+      this.task = json.data
+      document.title = (this.task.title || '任务') + ' — HatTax'
+      if (this.task.type === 'read') this.startReadTimer()
+      if (!this.started && !this.done) await this.ensureStarted(true)
+    },
+    startReadTimer() {
+      if (this._timer || this.done) return
+      this.readSeconds = Number(this.task?.progress?.progress?.seconds || 0)
+      this._timer = setInterval(() => {
+        if (this.done) { clearInterval(this._timer); return }
+        this.readSeconds += 1
+        if (this.readSeconds % 5 === 0) {
+          apiFetch('/api/tasks/' + this.task.id + '/progress', {
+            method: 'POST',
+            body: JSON.stringify({ seconds: this.readSeconds }),
+          }).catch(() => {})
+        }
+      }, 1000)
+    },
+    onMediaMeta() {},
+    onMediaProgress() {
+      const el = this.$refs.media
+      if (!el || !el.duration) return
+      this.mediaPercent = (el.currentTime / el.duration) * 100
+      if (Math.floor(this.mediaPercent) % 5 === 0) {
+        apiFetch('/api/tasks/' + this.task.id + '/progress', {
+          method: 'POST',
+          body: JSON.stringify({ percent: this.mediaPercent }),
+        }).catch(() => {})
+      }
+    },
+    async ensureStarted(silent = false) {
+      this.error = ''
+      const { json } = await apiFetch('/api/tasks/' + this.task.id + '/start', { method: 'POST', body: '{}' })
+      if (json.code !== 0) {
+        if (!silent) this.error = json.msg || '无法开始'
+        return
+      }
+      this.task = json.data
+      if (this.task.type === 'read') this.startReadTimer()
+    },
+    async submit() {
+      this.error = ''
+      this.success = ''
+      this.submitting = true
+      let payload = {}
+      if (this.task.type === 'read') payload = { seconds: this.readSeconds }
+      if (this.task.type === 'video' || this.task.type === 'audio') payload = { percent: this.mediaPercent }
+      if (this.task.type === 'quiz') payload = { answers: this.answers }
+      const { json } = await apiFetch('/api/tasks/' + this.task.id + '/complete', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      this.submitting = false
+      if (json.code !== 0) {
+        this.error = json.msg || '提交失败'
+        return
+      }
+      this.task = json.data.task
+      this.success = json.msg || '完成'
+      if (json.data.member) {
+        const u = getUser() || {}
+        setUser({ ...u, points: json.data.member.points })
+        this.user = getUser()
+      }
+      if (this._timer) clearInterval(this._timer)
+    },
+    destroy() {
+      if (this._timer) clearInterval(this._timer)
+    },
+  }
+}
+Alpine.start()
+</script>
+</body>
+</html>

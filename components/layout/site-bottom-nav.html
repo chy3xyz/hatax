@@ -1,0 +1,11 @@
+<!-- Mobile bottom tab bar -->
+<nav class="site-bottom-nav md:hidden" aria-label="底部导航">
+  <template x-for="item in bottomNavItems" :key="'b-' + item.key">
+    <a :href="item.href"
+      class="site-bottom-item"
+      :class="(active === item.key || (item.key === 'create' && active === 'create')) && 'site-bottom-item-active'">
+      <span class="site-bottom-icon" x-html="navIcon(item.icon)"></span>
+      <span x-text="item.label"></span>
+    </a>
+  </template>
+</nav>

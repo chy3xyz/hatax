@@ -1,0 +1,76 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>角色权限</title>
+</head>
+<body>
+<div id="page-content" x-data="rolePage()" class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease;`">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto" aria-label="Breadcrumb">
+ <a href="/admin/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline">首页</span>
+ </a>
+ <div class="flex items-center gap-1"><svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <span class="font-medium text-gray-700 dark:text-gray-200">角色权限</span></div>
+ </nav>
+
+ <div class="flex justify-between items-center mb-6">
+ <h1 class="text-2xl font-bold">角色权限</h1>
+ <button type="button" @click="addRole()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">+ 新增角色</button>
+ </div>
+
+ <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+ <div class="lg:col-span-1 space-y-2">
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-1">
+ <template x-for="role in roles" :key="role.id">
+ <div class="sidebar-item" :class="{ active: selected?.id === role.id }" @click="selectRole(role)">
+ <span x-text="role.name"></span>
+ </div>
+ </template>
+ <div x-show="!roles.length" class="text-sm text-gray-400 px-2 py-4">加载中…</div>
+ </div>
+ </div>
+
+ <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden" x-show="selected">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+ <h3 class="font-semibold" x-text="'角色：' + (selected?.name || '')"></h3>
+ <p class="text-sm text-gray-500 mt-1" x-text="selected?.description || ''"></p>
+ </div>
+ <div class="p-4">
+ <div class="space-y-4">
+ <template x-for="group in permGroups" :key="group.key">
+ <div>
+ <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+ <span class="font-medium text-sm" x-text="group.label"></span>
+ <label class="flex items-center gap-2 cursor-pointer text-sm">
+ <input type="checkbox" class="w-4 h-4 rounded text-primary"
+  :checked="group.items.every(i => selected.permissions.includes(i.key))"
+  @change="toggleGroup(group, $event.target.checked)">
+ <span>全选</span>
+ </label>
+ </div>
+ <div class="pl-4 space-y-2 mt-2">
+ <template x-for="item in group.items" :key="item.key">
+ <label class="flex items-center gap-2 cursor-pointer text-sm">
+ <input type="checkbox" class="w-4 h-4 rounded text-primary"
+  :checked="selected.permissions.includes(item.key)"
+  @change="togglePerm(item.key, $event.target.checked)">
+ <span x-text="item.label"></span>
+ </label>
+ </template>
+ </div>
+ </div>
+ </template>
+ </div>
+ <div class="flex justify-end gap-3 mt-6">
+ <button type="button" @click="save()" :disabled="saving"
+  class="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">保存</button>
+ </div>
+ </div>
+ </div>
+ </div>
+</div>
+</body>
+</html>

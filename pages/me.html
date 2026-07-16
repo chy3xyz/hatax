@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="communityMe()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>个人中心 — HatTax 社区</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+  <div x-show="loading" class="py-20 text-center text-stone-400">加载中…</div>
+  <div x-show="error && !profile" class="py-20 text-center text-red-500" x-text="error"></div>
+
+  <template x-if="profile">
+    <div class="animate-fade-in space-y-8">
+      <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+        <div class="flex items-center gap-4">
+          <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-stone-800 text-2xl font-bold text-white dark:bg-stone-200 dark:text-stone-900"
+            x-text="avatarChar(profile.displayName || profile.username)"></div>
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight" x-text="profile.displayName"></h1>
+            <p class="text-sm text-stone-400">@<span x-text="profile.username"></span>
+              · 加入于 <span x-text="formatDate(profile.createdAt)"></span></p>
+          </div>
+        </div>
+        <div class="site-card flex items-center gap-6 px-5 py-4">
+          <div>
+            <p class="text-xs uppercase tracking-wider text-stone-400">积分</p>
+            <p class="text-3xl font-bold text-primary" x-text="profile.points"></p>
+          </div>
+          <div class="h-10 w-px bg-stone-200 dark:bg-stone-700"></div>
+          <div class="grid grid-cols-5 gap-3 text-center text-sm">
+            <div><p class="font-semibold" x-text="profile.stats?.works ?? 0"></p><p class="text-xs text-stone-400">博客</p></div>
+            <div><p class="font-semibold" x-text="profile.stats?.topics ?? 0"></p><p class="text-xs text-stone-400">帖子</p></div>
+            <div><p class="font-semibold" x-text="profile.stats?.replies ?? 0"></p><p class="text-xs text-stone-400">回复</p></div>
+            <div><p class="font-semibold" x-text="profile.followingCount ?? 0"></p><p class="text-xs text-stone-400">关注</p></div>
+            <div><p class="font-semibold" x-text="profile.followerCount ?? 0"></p><p class="text-xs text-stone-400">粉丝</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <a href="/pages/create.html" class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90">创作</a>
+        <a href="/pages/tasks.html" class="rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium dark:border-stone-700">任务中心</a>
+        <a href="/pages/work-new.html" class="rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium dark:border-stone-700">写博客</a>
+        <a href="/pages/forum-new.html" class="rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium dark:border-stone-700">发帖</a>
+        <a href="/pages/messages.html" class="rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium dark:border-stone-700">
+          私信
+          <span x-show="profile.unreadMessages" class="ml-1 rounded-full bg-primary px-1.5 text-[10px] text-white" x-text="profile.unreadMessages"></span>
+        </a>
+        <a :href="'/pages/user.html?id=' + profile.id" class="rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium dark:border-stone-700">公开主页</a>
+      </div>
+
+      <div class="flex gap-2 overflow-x-auto border-b border-stone-200 dark:border-stone-800">
+        <button type="button" @click="tab='profile'" class="shrink-0 px-4 py-2.5 text-sm font-medium"
+          :class="tab==='profile' ? 'border-b-2 border-primary text-primary' : 'text-stone-500'">资料</button>
+        <button type="button" @click="switchTab('works')" class="shrink-0 px-4 py-2.5 text-sm font-medium"
+          :class="tab==='works' ? 'border-b-2 border-primary text-primary' : 'text-stone-500'">我的博客</button>
+        <button type="button" @click="switchTab('social')" class="shrink-0 px-4 py-2.5 text-sm font-medium"
+          :class="tab==='social' ? 'border-b-2 border-primary text-primary' : 'text-stone-500'">关注 / 粉丝</button>
+        <button type="button" @click="tab='points'" class="shrink-0 px-4 py-2.5 text-sm font-medium"
+          :class="tab==='points' ? 'border-b-2 border-primary text-primary' : 'text-stone-500'">积分</button>
+        <button type="button" @click="tab='password'" class="shrink-0 px-4 py-2.5 text-sm font-medium"
+          :class="tab==='password' ? 'border-b-2 border-primary text-primary' : 'text-stone-500'">修改密码</button>
+      </div>
+
+      <!-- Profile -->
+      <section x-show="tab==='profile'" class="site-card p-6">
+        <h2 class="font-semibold">编辑资料</h2>
+        <p class="mt-1 text-sm text-stone-400">用户名不可更改。显示名会用于博客与论坛署名。</p>
+        <div x-show="profileMsg" class="mt-3 rounded-lg px-3 py-2 text-sm"
+          :class="profileOk ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300'"
+          x-text="profileMsg"></div>
+        <form @submit.prevent="saveProfile" class="mt-5 space-y-4 max-w-lg">
+          <div>
+            <label class="mb-1 block text-sm font-medium">显示名</label>
+            <input x-model="form.displayName" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm dark:border-stone-700">
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium">邮箱</label>
+            <input x-model="form.email" type="email" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm dark:border-stone-700">
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium">简介</label>
+            <textarea x-model="form.bio" rows="3" maxlength="200" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm dark:border-stone-700"></textarea>
+          </div>
+          <button type="submit" :disabled="saving" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+            x-text="saving ? '保存中…' : '保存'"></button>
+        </form>
+      </section>
+
+      <!-- Works -->
+      <section x-show="tab==='works'" class="site-card overflow-hidden">
+        <div class="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-800">
+          <span class="text-sm font-semibold">我的博客</span>
+          <a href="/pages/work-new.html" class="text-sm text-primary">写博客</a>
+        </div>
+        <div x-show="worksLoading" class="px-4 py-10 text-center text-sm text-stone-400">加载中…</div>
+        <template x-if="!worksLoading && !works.length">
+          <p class="px-4 py-10 text-center text-sm text-stone-400">还没有博客，去 <a href="/pages/work-new.html" class="text-primary">发表第一篇</a></p>
+        </template>
+        <template x-for="w in works" :key="w.id">
+          <a :href="w.status === 'published' ? '/pages/blog-post.html?slug=' + encodeURIComponent(w.slug) : '#'"
+            class="flex items-center justify-between gap-3 border-b border-stone-100 px-4 py-3 hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/40">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium" x-text="w.title"></p>
+              <p class="text-xs text-stone-400" x-text="formatDate(w.publishedAt || w.createdAt) + (w.status === 'draft' ? ' · 草稿' : '')"></p>
+            </div>
+            <span class="shrink-0 text-xs text-stone-400" x-text="(w.viewCount || 0) + ' 阅读'"></span>
+          </a>
+        </template>
+      </section>
+
+      <!-- Social -->
+      <section x-show="tab==='social'" class="grid gap-4 sm:grid-cols-2">
+        <div class="site-card overflow-hidden">
+          <div class="border-b border-stone-200 px-4 py-3 text-sm font-semibold dark:border-stone-800">我关注的</div>
+          <template x-if="!following.length"><p class="px-4 py-8 text-center text-sm text-stone-400">暂无</p></template>
+          <template x-for="u in following" :key="'f'+u.id">
+            <a :href="'/pages/user.html?id=' + u.id" class="flex items-center gap-3 border-b border-stone-100 px-4 py-3 hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/40">
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-stone-800 text-xs font-bold text-white" x-text="avatarChar(u.displayName)"></div>
+              <div class="min-w-0"><p class="truncate text-sm font-medium" x-text="u.displayName"></p><p class="text-xs text-stone-400" x-text="'@' + u.username"></p></div>
+            </a>
+          </template>
+        </div>
+        <div class="site-card overflow-hidden">
+          <div class="border-b border-stone-200 px-4 py-3 text-sm font-semibold dark:border-stone-800">粉丝</div>
+          <template x-if="!followers.length"><p class="px-4 py-8 text-center text-sm text-stone-400">暂无</p></template>
+          <template x-for="u in followers" :key="'g'+u.id">
+            <a :href="'/pages/user.html?id=' + u.id" class="flex items-center gap-3 border-b border-stone-100 px-4 py-3 hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/40">
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-stone-800 text-xs font-bold text-white" x-text="avatarChar(u.displayName)"></div>
+              <div class="min-w-0"><p class="truncate text-sm font-medium" x-text="u.displayName"></p><p class="text-xs text-stone-400" x-text="'@' + u.username"></p></div>
+            </a>
+          </template>
+        </div>
+      </section>
+
+      <!-- Points -->
+      <section x-show="tab==='points'" class="space-y-4">
+        <div class="site-card p-5">
+          <h2 class="font-semibold">积分规则</h2>
+          <ul class="mt-3 grid gap-2 sm:grid-cols-2 text-sm text-stone-600 dark:text-stone-300">
+            <template x-for="(rule, key) in (profile.pointRules || {})" :key="key">
+              <li class="flex justify-between rounded-lg bg-stone-50 px-3 py-2 dark:bg-stone-800/50">
+                <span x-text="rule.reason"></span>
+                <span class="font-semibold text-primary" x-text="'+' + rule.delta"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+        <div class="site-card overflow-hidden">
+          <div class="border-b border-stone-200 px-5 py-3 text-sm font-semibold dark:border-stone-800">积分流水</div>
+          <template x-if="!logs.length">
+            <p class="px-5 py-10 text-center text-sm text-stone-400">暂无记录</p>
+          </template>
+          <ul class="divide-y divide-stone-100 dark:divide-stone-800">
+            <template x-for="log in logs" :key="log.id">
+              <li class="flex items-center justify-between px-5 py-3 text-sm">
+                <div>
+                  <p class="font-medium" x-text="log.reason"></p>
+                  <p class="text-xs text-stone-400" x-text="formatDate(log.createdAt, true)"></p>
+                </div>
+                <span class="font-semibold" :class="log.delta > 0 ? 'text-emerald-600' : 'text-red-500'"
+                  x-text="(log.delta > 0 ? '+' : '') + log.delta"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Password -->
+      <section x-show="tab==='password'" class="site-card p-6">
+        <h2 class="font-semibold">修改密码</h2>
+        <div x-show="pwdMsg" class="mt-3 rounded-lg px-3 py-2 text-sm"
+          :class="pwdOk ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300'"
+          x-text="pwdMsg"></div>
+        <form @submit.prevent="changePassword" class="mt-5 space-y-4 max-w-lg">
+          <div>
+            <label class="mb-1 block text-sm font-medium">原密码</label>
+            <input x-model="pwd.oldPassword" type="password" autocomplete="current-password" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm dark:border-stone-700">
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium">新密码</label>
+            <input x-model="pwd.newPassword" type="password" autocomplete="new-password" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm dark:border-stone-700">
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium">确认新密码</label>
+            <input x-model="pwd.confirm" type="password" autocomplete="new-password" class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm dark:border-stone-700">
+          </div>
+          <button type="submit" :disabled="pwdSaving" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+            x-text="pwdSaving ? '提交中…' : '更新密码'"></button>
+        </form>
+      </section>
+    </div>
+  </template>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome, formatDate, avatarChar } from '/src/public/site.js'
+import { apiFetch, isLoggedIn, loginUrl, setUser, getUser } from '/src/public/api.js'
+
+function communityMe() {
+  return {
+    ...siteChrome('me'),
+    formatDate,
+    avatarChar,
+    loading: true,
+    error: '',
+    profile: null,
+    tab: 'profile',
+    form: { displayName: '', email: '', bio: '' },
+    saving: false,
+    profileMsg: '',
+    profileOk: false,
+    logs: [],
+    following: [],
+    followers: [],
+    works: [],
+    worksLoading: false,
+    pwd: { oldPassword: '', newPassword: '', confirm: '' },
+    pwdSaving: false,
+    pwdMsg: '',
+    pwdOk: false,
+    async init() {
+      if (!isLoggedIn()) {
+        location.replace(loginUrl('/pages/me.html'))
+        return
+      }
+      const { json } = await apiFetch('/api/community/me')
+      this.loading = false
+      if (json.code !== 0) {
+        this.error = json.msg || '加载失败'
+        return
+      }
+      this.profile = json.data
+      this.form = {
+        displayName: json.data.displayName || '',
+        email: json.data.email || '',
+        bio: json.data.bio || '',
+      }
+      setUser({
+        id: json.data.id,
+        username: json.data.username,
+        displayName: json.data.displayName,
+        points: json.data.points,
+      })
+      this.displayName = json.data.displayName
+      this.user = getUser()
+      await this.loadPoints()
+    },
+    async switchTab(name) {
+      this.tab = name
+      if (name === 'social') await this.loadSocial()
+      if (name === 'works') await this.loadWorks()
+    },
+    async loadWorks() {
+      this.worksLoading = true
+      const { json } = await apiFetch('/api/blog/works/mine')
+      this.worksLoading = false
+      if (json.code === 0) this.works = json.data?.rows || []
+    },
+    async loadSocial() {
+      const [a, b] = await Promise.all([
+        apiFetch('/api/community/me/following'),
+        apiFetch('/api/community/me/followers'),
+      ])
+      if (a.json.code === 0) this.following = a.json.data || []
+      if (b.json.code === 0) this.followers = b.json.data || []
+    },
+    async loadPoints() {
+      const { json } = await apiFetch('/api/community/me/points')
+      if (json.code === 0) this.logs = json.data.logs || []
+    },
+    async saveProfile() {
+      this.profileMsg = ''
+      this.saving = true
+      const { json } = await apiFetch('/api/community/me', {
+        method: 'PUT',
+        body: JSON.stringify(this.form),
+      })
+      this.saving = false
+      this.profileOk = json.code === 0
+      this.profileMsg = json.msg || (json.code === 0 ? '已保存' : '保存失败')
+      if (json.code === 0) {
+        this.profile = json.data
+        setUser({
+          id: json.data.id,
+          username: json.data.username,
+          displayName: json.data.displayName,
+          points: json.data.points,
+        })
+        this.displayName = json.data.displayName
+        this.user = getUser()
+      }
+    },
+    async changePassword() {
+      this.pwdMsg = ''
+      if (this.pwd.newPassword !== this.pwd.confirm) {
+        this.pwdOk = false
+        this.pwdMsg = '两次输入的新密码不一致'
+        return
+      }
+      this.pwdSaving = true
+      const { json } = await apiFetch('/api/community/me/password', {
+        method: 'POST',
+        body: JSON.stringify({
+          oldPassword: this.pwd.oldPassword,
+          newPassword: this.pwd.newPassword,
+        }),
+      })
+      this.pwdSaving = false
+      this.pwdOk = json.code === 0
+      this.pwdMsg = json.msg || (json.code === 0 ? '密码已更新' : '修改失败')
+      if (json.code === 0) this.pwd = { oldPassword: '', newPassword: '', confirm: '' }
+    },
+  }
+}
+
+window.Alpine = Alpine
+Alpine.data('communityMe', communityMe)
+Alpine.start()
+</script>
+</body>
+</html>

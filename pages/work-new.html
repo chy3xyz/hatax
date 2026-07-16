@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="workNewPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>写博客 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-2xl px-4 py-10">
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">Work</p>
+      <h1 class="mt-1 text-2xl font-bold">写博客</h1>
+      <p class="mt-1 text-sm text-stone-400">文章会发布到博客频道，与论坛共用社区账号。</p>
+    </div>
+    <a href="/pages/create.html" class="site-link text-sm">← 创作中心</a>
+  </div>
+
+  <div class="site-card p-6 sm:p-8">
+    <form @submit.prevent="submit()" class="space-y-5">
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">标题</label>
+        <input x-model="title" type="text" maxlength="120"
+          class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700"
+          placeholder="给文章起一个清晰的标题">
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">摘要 <span class="font-normal text-stone-400">可选</span></label>
+        <input x-model="excerpt" type="text" maxlength="200"
+          class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700"
+          placeholder="一两句话介绍文章">
+      </div>
+      <div>
+        <div class="mb-1.5 flex items-center justify-between">
+          <label class="block text-sm font-medium">标签 <span class="font-normal text-stone-400">最多 5 个</span></label>
+          <span class="text-xs text-stone-400" x-text="selectedTags.length + ' / 5'"></span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <template x-for="tg in tags" :key="tg.slug">
+            <button type="button" @click="toggleTag(tg.slug)"
+              class="rounded-full px-3 py-1.5 text-xs font-medium transition"
+              :class="selectedTags.includes(tg.slug) ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900' : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300'"
+              x-text="tg.name"></button>
+          </template>
+        </div>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-medium">正文（Markdown）</label>
+        <textarea x-model="body" rows="14"
+          class="w-full rounded-xl border border-stone-200 bg-transparent px-3 py-2.5 font-mono text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700"
+          placeholder="支持 **加粗**、列表、代码块…"></textarea>
+      </div>
+      <p class="text-sm text-red-500" x-show="error" x-text="error"></p>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <button type="submit" :disabled="submitting"
+          class="flex-1 rounded-xl bg-primary py-2.5 font-semibold text-white disabled:opacity-50">发布博客</button>
+        <button type="button" @click="submit('draft')" :disabled="submitting"
+          class="rounded-xl border border-stone-200 px-4 py-2.5 text-sm dark:border-stone-700 disabled:opacity-50">存为草稿</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome } from '/src/public/site.js'
+import { apiFetch, loginUrl, isLoggedIn } from '/src/public/api.js'
+
+window.workNewPage = function workNewPage() {
+  return {
+    ...siteChrome('create'),
+    tags: [],
+    selectedTags: [],
+    title: '',
+    excerpt: '',
+    body: '',
+    submitting: false,
+    error: '',
+    async init() {
+      if (!isLoggedIn()) {
+        location.replace(loginUrl('/pages/work-new.html'))
+        return
+      }
+      const res = await apiFetch('/api/blog/tags')
+      if (res.json.code === 0) this.tags = res.json.data || []
+    },
+    toggleTag(slug) {
+      if (this.selectedTags.includes(slug)) {
+        this.selectedTags = this.selectedTags.filter((s) => s !== slug)
+        return
+      }
+      if (this.selectedTags.length >= 5) {
+        this.error = '最多选择 5 个标签'
+        return
+      }
+      this.error = ''
+      this.selectedTags = [...this.selectedTags, slug]
+    },
+    async submit(status = 'published') {
+      if (!this.title.trim()) {
+        this.error = '请填写标题'
+        return
+      }
+      if (status === 'published' && !this.body.trim()) {
+        this.error = '请填写正文'
+        return
+      }
+      this.submitting = true
+      this.error = ''
+      try {
+        const res = await apiFetch('/api/blog/works', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: this.title.trim(),
+            excerpt: this.excerpt.trim(),
+            bodyMd: this.body,
+            tags: this.selectedTags,
+            status,
+          }),
+        })
+        if (res.json.code !== 0) {
+          this.error = res.json.msg || '发布失败'
+          return
+        }
+        const post = res.json.data
+        if (status === 'draft') {
+          location.href = '/pages/me.html'
+          return
+        }
+        location.href = '/pages/blog-post.html?slug=' + encodeURIComponent(post.slug)
+      } catch (e) {
+        this.error = e.message || '网络错误'
+      } finally {
+        this.submitting = false
+      }
+    },
+  }
+}
+Alpine.start()
+</script>
+</body>
+</html>

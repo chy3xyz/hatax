@@ -10,8 +10,18 @@
 
 @layer base {
   * { box-sizing: border-box; }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
-    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300;
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white;
+  }
+  /* Intentional theme toggles only — avoid animating FOUC corrections */
+  html.theme-ready body {
+    @apply transition-colors duration-200;
   }
   /* Sidebar-aware content margin (stable across HTMX swaps) */
   html.sidebar-open #page-content {
@@ -87,6 +97,217 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-.animate-fade-in { animation: fade-in 0.2s ease-out; }
+  .animate-fade-in { animation: fade-in 0.2s ease-out; }
 .animate-slide-up { animation: slide-up 0.3s ease-out; }
 .animate-scale-in { animation: scale-in 0.2s ease-out; }
+
+/* —— Public site (blog / forum) —— */
+@layer components {
+  .site-shell {
+    @apply min-h-screen bg-[#f7f6f3] pb-20 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:pb-0;
+  }
+  .site-nav {
+    @apply sticky top-0 z-40 border-b border-stone-200/80 bg-[#f7f6f3]/90 backdrop-blur-md dark:border-stone-800 dark:bg-stone-950/90;
+  }
+  .site-bottom-nav {
+    @apply fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-stone-200/90 bg-[#f7f6f3]/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-stone-800 dark:bg-stone-950/95;
+  }
+  .site-bottom-item {
+    @apply flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] text-stone-400 transition;
+  }
+  .site-bottom-item-active {
+    @apply text-primary;
+  }
+  .site-bottom-icon {
+    @apply flex h-6 w-6 items-center justify-center;
+  }
+  .site-promo-banner {
+    @apply relative isolate overflow-hidden border-b border-stone-200/80 dark:border-stone-800;
+    min-height: 11.5rem;
+    background-color: #1c1917;
+    background-image: var(--banner-image);
+    background-size: cover;
+    background-position: center;
+  }
+  .site-promo-banner::before {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(105deg, rgba(28,25,23,.92) 0%, rgba(28,25,23,.72) 48%, rgba(28,25,23,.35) 100%);
+  }
+  .site-promo-inner {
+    @apply relative mx-auto flex max-w-5xl flex-col justify-end gap-3 px-4 py-8 sm:px-6 sm:py-10;
+    min-height: 11.5rem;
+  }
+  .site-promo-eyebrow {
+    @apply text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-300/80;
+  }
+  .site-promo-title {
+    @apply max-w-xl text-2xl font-bold tracking-tight text-white sm:text-3xl;
+  }
+  .site-promo-desc {
+    @apply max-w-lg text-sm leading-relaxed text-stone-300 sm:text-[15px];
+  }
+  .site-promo-actions {
+    @apply mt-1 flex flex-wrap items-center gap-3;
+  }
+  .site-promo-cta {
+    @apply inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-stone-900 transition hover:bg-stone-100;
+  }
+  .site-promo-ghost {
+    @apply inline-flex items-center rounded-xl border border-white/30 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/10;
+  }
+  .site-promo-badge {
+    @apply absolute right-4 top-4 z-10 rounded-full border border-white/20 bg-black/30 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/80 backdrop-blur sm:right-6 sm:top-5;
+  }
+  .catalog-toolbar {
+    @apply mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+  .catalog-filters {
+    @apply flex flex-wrap gap-2;
+  }
+  .catalog-filter {
+    @apply rounded-full border border-stone-200/90 bg-white px-3.5 py-1.5 text-xs font-medium text-stone-500 transition hover:border-stone-300 hover:text-stone-800 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400 dark:hover:text-stone-200;
+  }
+  .catalog-filter-active {
+    @apply border-stone-900 bg-stone-900 text-white hover:border-stone-900 hover:text-white dark:border-white dark:bg-white dark:text-stone-900 dark:hover:text-stone-900;
+  }
+  .catalog-grid {
+    @apply grid gap-5 sm:grid-cols-2;
+  }
+  .catalog-card {
+    @apply relative flex flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white transition duration-300 dark:border-stone-800 dark:bg-stone-900;
+    box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
+  }
+  .catalog-card:hover {
+    @apply -translate-y-0.5 border-stone-300 dark:border-stone-600;
+    box-shadow: 0 12px 28px -12px rgba(28, 25, 23, 0.18);
+  }
+  .dark .catalog-card:hover {
+    box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.55);
+  }
+  .catalog-cover {
+    @apply relative aspect-[16/9] overflow-hidden bg-stone-200 dark:bg-stone-800;
+  }
+  .catalog-cover img {
+    @apply h-full w-full object-cover transition duration-500;
+  }
+  .catalog-card:hover .catalog-cover img {
+    transform: scale(1.04);
+  }
+  .catalog-cover-fallback {
+    @apply absolute inset-0 bg-gradient-to-br from-stone-700 via-stone-800 to-stone-950;
+  }
+  .catalog-cover-fallback.video {
+    background: linear-gradient(135deg, #0f766e 0%, #134e4a 45%, #1c1917 100%);
+  }
+  .catalog-cover-fallback.article {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 45%, #1c1917 100%);
+  }
+  .catalog-cover-fallback.conference {
+    background: linear-gradient(135deg, #b45309 0%, #78350f 50%, #1c1917 100%);
+  }
+  .catalog-cover-fallback.healing {
+    background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 50%, #1c1917 100%);
+  }
+  .catalog-cover-fallback.online {
+    background: linear-gradient(135deg, #0369a1 0%, #0c4a6e 50%, #1c1917 100%);
+  }
+  .catalog-cover-fallback.meetup,
+  .catalog-cover-fallback.other {
+    background: linear-gradient(135deg, #57534e 0%, #292524 55%, #1c1917 100%);
+  }
+  .catalog-cover-badge {
+    @apply absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-stone-800 shadow-sm backdrop-blur dark:bg-stone-950/80 dark:text-stone-100;
+  }
+  .catalog-body {
+    @apply flex flex-1 flex-col gap-3 p-5;
+  }
+  .catalog-title {
+    @apply text-[1.05rem] font-bold leading-snug tracking-tight text-stone-900 transition dark:text-white;
+  }
+  .catalog-card:hover .catalog-title {
+    color: var(--primary);
+  }
+  .catalog-subtitle {
+    @apply text-sm text-stone-500 dark:text-stone-400;
+  }
+  .catalog-desc {
+    @apply line-clamp-2 text-sm leading-relaxed text-stone-500 dark:text-stone-400;
+  }
+  .catalog-meta {
+    @apply mt-auto flex items-center justify-between gap-3 border-t border-stone-100 pt-3.5 text-xs text-stone-400 dark:border-stone-800;
+  }
+  .catalog-price {
+    @apply flex items-baseline gap-1 font-bold text-primary;
+  }
+  .catalog-price-free {
+    @apply font-bold text-emerald-600 dark:text-emerald-400;
+  }
+  .catalog-cta {
+    @apply inline-flex items-center gap-1 font-semibold text-primary opacity-80 transition;
+  }
+  .catalog-card:hover .catalog-cta {
+    opacity: 1;
+  }
+  .task-card-icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300;
+  }
+  .event-date {
+    @apply flex h-[4.25rem] w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-stone-900 text-white dark:bg-white dark:text-stone-900;
+  }
+  .event-date-month {
+    @apply text-[10px] font-semibold uppercase tracking-wider opacity-70;
+  }
+  .event-date-day {
+    @apply text-xl font-bold leading-none;
+  }
+  .site-link {
+    @apply text-sm text-stone-500 transition-colors hover:text-stone-900 dark:text-stone-400 dark:hover:text-white;
+  }
+  .site-link-active {
+    @apply text-sm font-semibold text-stone-900 dark:text-white;
+  }
+  .site-chip {
+    @apply inline-flex items-center rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-xs text-stone-600 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300;
+  }
+  .site-card {
+    @apply rounded-2xl border border-stone-200/90 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900;
+  }
+  .site-prose {
+    @apply text-[1.05rem] leading-8 text-stone-700 dark:text-stone-300;
+  }
+  .site-prose h1 { @apply mb-4 mt-10 text-3xl font-bold tracking-tight text-stone-900 dark:text-white; }
+  .site-prose h2 { @apply mb-3 mt-8 text-2xl font-bold tracking-tight text-stone-900 dark:text-white; }
+  .site-prose h3 { @apply mb-2 mt-6 text-xl font-semibold text-stone-900 dark:text-white; }
+  .site-prose p { @apply my-4; }
+  .site-prose ul { @apply my-4 list-disc space-y-1 pl-6; }
+  .site-prose ol { @apply my-4 list-decimal space-y-1 pl-6; }
+  .site-prose a { @apply text-primary underline-offset-2 hover:underline; }
+  .site-prose code {
+    @apply rounded bg-stone-100 px-1.5 py-0.5 text-[0.9em] dark:bg-stone-800;
+  }
+  .site-prose pre {
+    @apply my-5 overflow-x-auto rounded-xl bg-stone-900 p-4 text-sm leading-6 text-stone-100;
+  }
+  .site-prose pre code { @apply bg-transparent p-0 text-inherit; }
+  .site-prose hr { @apply my-10 border-stone-200 dark:border-stone-800; }
+  .site-prose strong { @apply font-semibold text-stone-900 dark:text-white; }
+  .forum-floor {
+    @apply font-mono text-xs text-stone-400;
+  }
+  .forum-hero {
+    @apply relative overflow-hidden rounded-3xl border border-stone-200/80 bg-gradient-to-br from-white via-[#f7f6f3] to-sky-50/80 p-6 sm:p-8 dark:border-stone-800 dark:from-stone-900 dark:via-stone-950 dark:to-sky-950/30;
+  }
+  .forum-stat {
+    @apply rounded-2xl border border-stone-200/90 bg-white/80 px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-stone-800 dark:bg-stone-900/80;
+  }
+  .forum-sort-btn {
+    @apply rounded-full px-3.5 py-1.5 text-sm transition;
+  }
+  .forum-sort-btn-active {
+    @apply bg-stone-900 text-white dark:bg-white dark:text-stone-900;
+  }
+  .forum-topic-row {
+    @apply flex gap-4 px-5 py-4 transition hover:bg-stone-50/90 dark:hover:bg-stone-800/50;
+  }
+}

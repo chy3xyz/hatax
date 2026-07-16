@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="communityRegister()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>注册 — HatTax 社区</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui min-h-screen">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto flex max-w-md flex-col px-4 py-16 sm:px-6">
+  <p class="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">Community</p>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight">加入社区</h1>
+  <p class="mt-2 text-sm text-stone-500">注册后即可发帖、回复与点赞。与管理后台账号完全独立。</p>
+
+  <form @submit.prevent="submit" class="site-card mt-8 space-y-4 p-6">
+    <div x-show="error" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300" x-text="error"></div>
+    <div>
+      <label class="mb-1 block text-sm font-medium">用户名</label>
+      <input x-model="username" autocomplete="username" placeholder="3–24 位字母数字下划线" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700 dark:bg-stone-900">
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium">显示名 <span class="font-normal text-stone-400">可选</span></label>
+      <input x-model="displayName" autocomplete="nickname" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700 dark:bg-stone-900">
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium">邮箱 <span class="font-normal text-stone-400">可选</span></label>
+      <input x-model="email" type="email" autocomplete="email" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700 dark:bg-stone-900">
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium">密码</label>
+      <input x-model="password" type="password" autocomplete="new-password" placeholder="至少 6 位" class="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-primary/30 focus:ring-2 dark:border-stone-700 dark:bg-stone-900">
+    </div>
+    <button type="submit" :disabled="loading" class="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50" x-text="loading ? '注册中…' : '注册并登录'"></button>
+    <p class="text-center text-sm text-stone-500">已有账号？ <a :href="loginHref" class="text-primary hover:underline">登录</a></p>
+  </form>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome } from '/src/public/site.js'
+import {
+  apiFetch,
+  setToken,
+  setCsrf,
+  setUser,
+  isLoggedIn,
+  consumeRedirect,
+  loginUrl,
+  ensureCsrf,
+} from '/src/public/api.js'
+
+if (isLoggedIn()) location.replace(consumeRedirect('/pages/forum.html'))
+ensureCsrf()
+
+function communityRegister() {
+  return {
+    ...siteChrome('home'),
+    username: '',
+    displayName: '',
+    email: '',
+    password: '',
+    loading: false,
+    error: '',
+    get loginHref() {
+      return loginUrl(new URLSearchParams(location.search).get('redirect') || '/pages/forum.html')
+    },
+    async submit() {
+      this.error = ''
+      this.loading = true
+      const { json } = await apiFetch('/api/community/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          username: this.username.trim(),
+          displayName: this.displayName.trim(),
+          email: this.email.trim(),
+          password: this.password,
+        }),
+      })
+      this.loading = false
+      if (json.code !== 0 || !json.data?.token) {
+        this.error = json.msg || '注册失败'
+        return
+      }
+      setToken(json.data.token)
+      if (json.data.csrfToken) setCsrf(json.data.csrfToken)
+      setUser(json.data.user)
+      location.href = consumeRedirect('/pages/forum.html')
+    },
+  }
+}
+
+window.Alpine = Alpine
+Alpine.data('communityRegister', communityRegister)
+Alpine.start()
+</script>
+</body>
+</html>

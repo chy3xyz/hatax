@@ -1,6 +1,6 @@
 # HatTax Admin — Lightweight Admin Dashboard
 
-> Production-ready admin dashboard template. **13KB of business logic + Vite + Alpine.js + HTMX + Tailwind CSS.**
+> Production-ready admin dashboard template. **Vite + Alpine.js + HTMX + Tailwind CSS** — modular `src/`, auth guard, CSRF headers, XSS-safe toasts.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Vite](https://img.shields.io/badge/vite-6.x-646CFF)](https://vitejs.dev)
@@ -16,9 +16,11 @@
 
 ## Features
 
+- **Auth guard** — `sessionStorage` token + `requireAuth()`; HTMX attaches `Authorization` / `X-CSRF-Token`; 401 → login.
+- **Modular JS** — `src/auth`, `i18n`, `menu`, `store`, `notify`, `htmx-setup`, `components`, page modules.
 - **Zero-build-overhead UI reactivity** — Alpine.js handles state (sidebar, tabs, theme, modals). No virtual DOM.
 - **Partial-page navigation** — HTMX swaps only the content area. Layout stays, no full-page reload flicker.
-- **Build-time layout injection** — Shell template + Vite plugin. One `<aside>` change propagates to all 18 pages automatically.
+- **Build-time layout injection** — Shell template + Vite plugin. One `<aside>` change propagates to all pages automatically.
 - **Dark mode + 7 theme colors** — CSS custom properties drive `bg-primary` / `text-primary`. Toggle persists to localStorage.
 - **Multi-tab browsing** — Open pages in tabs, close individually or batch (left/right/all), right-click context menu.
 - **Command palette** — `⌘K` fuzzy-search across all menu items.
@@ -39,73 +41,48 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-org/hatax-admin.git
-cd hatax-admin
 npm install
-npm run dev
+npm run dev:full    # Vite（默认 :3485，可用 VITE_PORT）+ Hono API :8790
 ```
 
-Open `http://localhost:3000` — redirects to dashboard.
+- 官网 / 用户端：`http://localhost:3490/pages/index.html`（或当前 Vite 端口）
+- 管理后台：`http://localhost:3490/admin/login.html`
 
-**Test credentials**: `admin` / `123456` (demo only; replace with real auth in production).
+**Test credentials**: `admin` / `123456`
+
+```bash
+npm run build && NODE_ENV=production npm start   # Hono serves dist/ + /api
+```
 
 ## Project Structure
 
 ```
 .
-├── index.html                     # Entry — redirects to /pages/dashboard.html
-├── package.json                   # 3 runtime deps, 4 dev deps
-├── vite.config.js                 # Multi-page input + layout plugin
-├── vite-plugin-layout.js          # Build-time shell injection
-├── tailwind.config.js             # Dark mode, content paths, safelist
-├── main.js                        # Alpine store, components, router (~700 lines)
-├── style.css                      # Tailwind directives, theme variables, animations
-├── components/
-│   └── layout/
-│       ├── app-shell.html         # Single source of truth for layout
-│       ├── header.html            # Reference (not used at runtime)
-│       ├── sidebar.html           # Reference
-│       ├── tab-bar.html           # Reference
-│       ├── footer.html            # Reference
-│       └── breadcrumb.html        # Reference
-│   └── ui/                        # UI component references
-│       ├── button.html
-│       ├── modal.html
-│       ├── drawer.html
-│       ├── table.html
-│       ├── form-item.html
-│       ├── icon-picker.html
-│       └── skeleton.html
-├── pages/                         # Content fragments (layout injected at build)
-│   ├── dashboard.html             # Analytics + ECharts
-│   ├── user.html                  # User CRUD
-│   ├── role.html                  # Role & permission
-│   ├── menu.html                  # Menu tree editor
-│   ├── dept.html                  # Department management
-│   ├── dict.html                  # Dictionary management
-│   ├── table.html                 # Data table (Alpine-reactive)
-│   ├── form-basic.html            # Basic form
-│   ├── form-advanced.html         # Advanced form
-│   ├── profile.html               # User profile
-│   ├── login-log.html             # Login audit log
-│   ├── op-log.html                # Operation audit log
-│   ├── about.html                 # About page
-│   ├── login.html                 # Standalone login (no layout shell)
-│   ├── lock.html                  # Lock screen
-│   ├── error-403.html             # 403 Forbidden
-│   ├── error-404.html             # 404 Not Found
-│   └── error-500.html             # 500 Server Error
-└── mock-api/                      # HTMX demo endpoints (replace with real backend)
-    ├── user-list.html
-    ├── user-add.html
-    └── user/
+├── index.html                     # Entry — redirects to /pages/index.html
+├── package.json
+├── vite.config.js                 # Multi-page: admin/* + pages/*
+├── vite-plugin-layout.js          # Admin pages: <!-- layout: app-shell -->
+├── main.js                        # Admin bootstrap (auth + modules)
+├── src/
+│   ├── auth.js                    # /pages/* public; /admin/* gated
+│   ├── menu.js / store.js / …
+│   └── admin/                     # Admin Alpine page modules
+├── admin/                         # 管理后台（需登录，注入 app-shell）
+│   ├── login.html / dashboard.html / user.html …
+│   └── error-*.html
+├── pages/                         # 官网 / 落地页 / 用户端（公开，无 shell）
+│   ├── index.html                 # 官网首页
+│   ├── blog.html / forum.html     # 博客 / 论坛骨架
+│   └── …
+├── components/layout/app-shell.html
+└── public/mock-api/
 ```
 
 ## Architecture
 
 ### Build-time layout injection
 
-Pages are **content fragments** — they contain only the `<main>` content area. A Vite plugin (`vite-plugin-layout.js`) wraps each fragment with `components/layout/app-shell.html` at build time.
+Pages are **content fragments** — they contain only the content area. A Vite plugin (`vite-plugin-layout.js`) wraps each fragment with `components/layout/app-shell.html` at build time.
 
 ```
 Page source (50-200 lines)         Built output (~600 lines)
@@ -164,10 +141,10 @@ Single Alpine store (`Alpine.store('app')`) holds:
 
 ```js
 // MENU_MAP
-'my-page': { group: 'My Group', title: 'My Page', path: '/pages/my-page.html', ... },
+'my-page': { group: 'My Group', title: 'My Page', path: '/admin/my-page.html', ... },
 
 // MENU_GROUPS
-{ title: 'My Group', items: [{ name: 'my-page', title: 'My Page', path: '/pages/my-page.html', icon: '...' }] }
+{ title: 'My Group', items: [{ name: 'my-page', title: 'My Page', path: '/admin/my-page.html', icon: '...' }] }
 ```
 
 3. Build — layout injected automatically.
@@ -183,13 +160,36 @@ npm run preview   # Preview the built output
 
 This is a **frontend template**. Before production deployment:
 
-- [ ] Replace `mock-api/` with a real backend
-- [ ] Implement server-side authentication (JWT, session, OAuth)
-- [ ] Add CSRF protection for all mutating requests
-- [ ] Add Content Security Policy headers
-- [ ] Replace hardcoded test credentials in `login.html`
-- [ ] Add rate limiting on login endpoints
-- [ ] Audit `x-html` usage — currently uses hardcoded data, must sanitize if data comes from API
+- [x] Client auth gate (`requireAuth`) + HTMX 401 handling
+- [x] CSRF token meta + `X-CSRF-Token` on HTMX requests (validate server-side)
+- [x] XSS-safe toast (`textContent`, not `innerHTML` for message body)
+- [ ] Replace `public/mock-api/` with a real backend
+- [ ] Implement server-side authentication (JWT / session / OAuth)
+- [ ] Set Content-Security-Policy **HTTP headers** (not only meta)
+- [ ] Replace hardcoded demo credentials in `login.html`
+- [ ] Rate-limit login endpoints
+- [ ] Sanitize any `x-html` / HTML fragments from the API
+
+## Scripts
+
+```bash
+npm run dev:full     # frontend + Hono together
+npm run dev          # Vite only (:3000, proxies /api → :8787)
+npm run dev:server   # Hono only (:8787)
+npm run build && npm start   # production (set NODE_ENV=production)
+npm run lint
+npm run format
+```
+
+## Backend (Hono)
+
+| Endpoint | Notes |
+|----------|--------|
+| `POST /api/auth/login` | JWT + CSRF cookie |
+| `GET /api/users` | HTMX HTML table rows |
+| `POST/PUT/DELETE /api/users` | CSRF required |
+
+See `AGENTS.md` and `server/` for details. Data is in-memory (`server/db/store.js`) — swap for SQLite/Postgres when ready.
 
 ## Browser Support
 
@@ -201,4 +201,4 @@ MIT License — see [LICENSE](LICENSE) file.
 
 ## Acknowledgments
 
-Inspired by [Vue Vben Admin](https://github.com/vbenjs/vue-vben-admin) layout patterns. Built with the philosophy that admin dashboards don't need React or Vue — 15KB of Alpine + 10KB of HTMX is sufficient for 95% of use cases.
+Inspired by [Vue Vben Admin](https://github.com/vbenjs/vue-vben-admin) layout patterns. Built with the philosophy that admin dashboards don't need React or Vue — Alpine + HTMX is sufficient for most use cases.

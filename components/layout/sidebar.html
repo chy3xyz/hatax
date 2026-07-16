@@ -8,7 +8,7 @@
         <div class="px-4 py-1.5 text-[10px] font-bold text-gray-300 dark:text-gray-600 uppercase tracking-widest"
              x-show="$store.app.sidebarOpen"
              x-transition>
-          <span x-text="group.title"></span>
+          <span x-text="$store.i18n.menuTitle(group.name, group.title)"></span>
         </div>
         <div class="space-y-0.5">
           <template x-for="item in group.items" :key="item.name">
@@ -16,7 +16,7 @@
                  :class="{ active: $store.app.activeMenu === item.name }"
                  @click="$store.app.navigate(item); $store.app.mobileMenuOpen = false">
               <div class="w-5 h-5 flex-shrink-0" x-html="item.icon"></div>
-              <span x-show="$store.app.sidebarOpen || !$store.app.mobileMenuOpen" x-text="item.title"></span>
+              <span x-show="$store.app.sidebarOpen || !$store.app.mobileMenuOpen" x-text="$store.i18n.menuTitle(item.name, item.title)"></span>
             </div>
           </template>
         </div>

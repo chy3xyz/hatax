@@ -1,0 +1,108 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>表格列表</title>
+  
+</head>
+<body>
+<div id="page-content" x-data class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease; -webkit-transition: margin-left 0.3s ease;`"
+ x-data="tablePage()">
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 overflow-x-auto mb-4" aria-label="Breadcrumb">
+ <a href="/admin/dashboard.html" class="flex items-center gap-1 hover:text-primary transition-colors flex-shrink-0">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+ <span class="hidden sm:inline">首页</span>
+ </a>
+ <template x-for="(crumb, i) in $store.app.breadcrumbs.slice(1)" :key="i">
+ <div class="flex items-center gap-1 flex-shrink-0">
+ <svg class="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+ <a x-show="crumb.path && crumb.path !== '#'"
+ :href="crumb.path"
+ class="hover:text-primary transition-colors whitespace-nowrap"
+ x-text="crumb.title"></a>
+ <span x-show="!crumb.path || crumb.path === '#'"
+ class="text-gray-700 dark:text-gray-200 font-medium whitespace-nowrap"
+ x-text="crumb.title"></span>
+ </div>
+ </template>
+</nav>
+
+
+ <div class="flex justify-between items-center mb-4">
+ <h1 class="text-2xl font-bold">表格列表</h1>
+ <button @click="exportData()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+ 导出
+ </button>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+ <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
+ <input x-model="keyword" @keyup.enter="search()" placeholder="搜索关键词" class="px-3 py-2 border rounded flex-1 max-w-xs dark:bg-gray-800 dark:border-gray-600">
+ <select x-model="filterStatus" class="px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600">
+ <option>全部</option><option>启用</option><option>禁用</option>
+ </select>
+ <select x-model="filterType" class="px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600">
+ <option>全部</option><option>A类</option><option>B类</option><option>C类</option><option>D类</option>
+ </select>
+ <input type="date" x-model="filterDate" class="px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600">
+ <button @click="search()" class="px-4 py-2 bg-primary text-white rounded">查询</button>
+ <button @click="reset()" class="px-4 py-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">重置</button>
+ </div>
+
+ <div class="overflow-x-auto">
+ <table class="w-full text-left">
+ <thead class="bg-gray-50 dark:bg-gray-800">
+ <tr class="border-b border-gray-200 dark:border-gray-700 text-sm">
+ <th class="px-4 py-3"><input type="checkbox" :checked="isAllSelected()" @change="toggleAll($event)" class="w-4 h-4 rounded"></th>
+ <th class="px-4 py-3 cursor-pointer select-none hover:text-primary" @click="toggleSort('id')">
+ ID <span x-text="sortField==='id' ? (sortDir==='asc'?'↑':'↓') : '↕'"></span>
+ </th>
+ <th class="px-4 py-3">名称</th>
+ <th class="px-4 py-3">类型</th>
+ <th class="px-4 py-3">状态</th>
+ <th class="px-4 py-3">创建时间</th>
+ <th class="px-4 py-3">操作</th>
+ </tr>
+ </thead>
+ <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+ <template x-for="row in paged" :key="row.id">
+ <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+ <td class="px-4 py-3"><input type="checkbox" :checked="isSelected(row.id)" @change="toggleRow(row.id)" class="w-4 h-4 rounded"></td>
+ <td class="px-4 py-3" x-text="row.id"></td>
+ <td class="px-4 py-3 font-medium" x-text="row.name"></td>
+ <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs" :class="row.typeClass" x-text="row.type"></span></td>
+ <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs" :class="row.statusClass" x-text="row.status"></span></td>
+ <td class="px-4 py-3 text-sm text-gray-500" x-text="row.date"></td>
+ <td class="px-4 py-3">
+ <button @click="Alpine.notify.info('编辑 ' + row.name)" class="text-blue-500 hover:underline text-sm mr-2">编辑</button>
+ <button @click="deleteRow(row.id)" class="text-red-500 hover:underline text-sm">删除</button>
+ </td>
+ </tr>
+ </template>
+ <tr x-show="paged.length === 0">
+ <td colspan="7" class="px-4 py-12 text-center text-gray-400">
+ <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+ <div>暂无数据</div>
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+
+ <div class="p-4 flex justify-between items-center border-t border-gray-200 dark:border-gray-700">
+ <span class="text-sm text-gray-500">共 <span x-text="total"></span> 条记录，已选 <span x-text="selectedIds.size"></span> 条</span>
+ <div class="flex gap-1">
+ <button @click="currentPage = Math.max(1, currentPage-1)" :disabled="currentPage === 1" class="px-3 py-1 border rounded text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50">上一页</button>
+ <template x-for="p in Array.from({length: totalPages}, (_,i)=>i+1)" :key="p">
+ <button @click="currentPage = p" class="px-3 py-1 border rounded text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" :class="currentPage === p ? 'bg-primary text-white border-primary' : ''" x-text="p"></button>
+ </template>
+ <button @click="currentPage = Math.min(totalPages, currentPage+1)" :disabled="currentPage === totalPages" class="px-3 py-1 border rounded text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50">下一页</button>
+ </div>
+ </div>
+ </div>
+ </div>
+
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!-- layout: app-shell -->
+<html>
+<head>
+  <title>博客管理</title>
+</head>
+<body>
+<div id="page-content" class="pt-28 p-6"
+ :class="$store.app.sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'"
+ :style="`transition: margin-left 0.3s ease`"
+ x-data="blogAdminPage">
+
+ <nav class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-6" aria-label="Breadcrumb">
+   <a href="/admin/dashboard.html" class="hover:text-primary">首页</a>
+   <span class="mx-1">/</span>
+   <span class="text-gray-700 dark:text-gray-200 font-medium">博客管理</span>
+ </nav>
+
+ <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+   <h1 class="text-2xl font-bold">博客管理</h1>
+   <div class="flex flex-wrap gap-2">
+     <input x-model="q" @keydown.enter="load()" type="search" placeholder="搜索…" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+     <select x-model="authorKind" @change="load()" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       <option value="">全部来源</option>
+       <option value="admin">官方</option>
+       <option value="community">社区博客</option>
+     </select>
+     <select x-model="status" @change="load()" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       <option value="">全部状态</option>
+       <option value="published">已发布</option>
+       <option value="draft">草稿</option>
+     </select>
+     <button type="button" @click="openCreate()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">+ 写博客</button>
+     <a href="/pages/blog.html" target="_blank" class="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm hover:border-primary">前台预览</a>
+   </div>
+ </div>
+
+ <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+   <table class="w-full text-left">
+     <thead class="bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 uppercase">
+       <tr>
+         <th class="px-4 py-3">标题</th>
+         <th class="px-4 py-3">来源</th>
+         <th class="px-4 py-3">状态</th>
+         <th class="px-4 py-3">作者</th>
+         <th class="px-4 py-3">时间</th>
+         <th class="px-4 py-3">操作</th>
+       </tr>
+     </thead>
+     <tbody>
+       <template x-if="!rows.length">
+         <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">暂无博客</td></tr>
+       </template>
+       <template x-for="p in rows" :key="p.id">
+         <tr class="border-b border-gray-100 dark:border-gray-800">
+           <td class="px-4 py-3 text-sm font-medium">
+             <span x-text="p.title"></span>
+             <span x-show="p.featured" class="ml-1 text-[10px] text-amber-600">精选</span>
+           </td>
+           <td class="px-4 py-3">
+             <span class="text-xs px-2 py-0.5 rounded-full"
+               :class="p.authorKind === 'community' ? 'bg-sky-100 text-sky-700' : 'bg-violet-100 text-violet-700'"
+               x-text="p.authorKind === 'community' ? '社区' : '官方'"></span>
+           </td>
+           <td class="px-4 py-3">
+             <span class="text-xs px-2 py-0.5 rounded-full"
+               :class="p.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'"
+               x-text="p.status === 'published' ? '已发布' : '草稿'"></span>
+           </td>
+           <td class="px-4 py-3 text-sm text-gray-500">
+             <template x-if="p.authorKind === 'community' && p.authorId">
+               <a :href="'/pages/user.html?id=' + p.authorId" target="_blank" class="text-primary hover:underline" x-text="p.authorName"></a>
+             </template>
+             <template x-if="p.authorKind !== 'community'">
+               <span x-text="p.authorName"></span>
+             </template>
+           </td>
+           <td class="px-4 py-3 text-sm text-gray-500" x-text="(p.publishedAt || p.updatedAt || '').slice(0,16)"></td>
+           <td class="px-4 py-3 text-sm whitespace-nowrap">
+             <a :href="'/pages/blog-post.html?slug=' + encodeURIComponent(p.slug)" target="_blank" class="text-primary hover:underline mr-3">预览</a>
+             <button type="button" class="text-blue-500 hover:underline mr-3" :data-edit-post="p.id">编辑</button>
+             <button type="button" class="text-red-500 hover:underline" :data-del-post="p.id">删除</button>
+           </td>
+         </tr>
+       </template>
+     </tbody>
+   </table>
+ </div>
+ <p class="mt-3 text-xs text-gray-400">共 <span x-text="total"></span> 篇</p>
+
+ <div x-show="modalOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display:none">
+   <div class="absolute inset-0 bg-black/40" @click="modalOpen=false"></div>
+   <div class="relative bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-xl">
+     <h2 class="text-lg font-bold mb-4" x-text="form.id ? '编辑博客' : '写博客'"></h2>
+     <div class="space-y-4">
+       <div>
+         <label class="block text-sm mb-1">标题</label>
+         <input x-model="form.title" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div class="grid grid-cols-3 gap-3">
+         <div>
+           <label class="block text-sm mb-1">Slug</label>
+           <input x-model="form.slug" placeholder="可空自动生成" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+         </div>
+         <div>
+           <label class="block text-sm mb-1">状态</label>
+           <select x-model="form.status" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+             <option value="draft">草稿</option>
+             <option value="published">发布</option>
+           </select>
+         </div>
+         <div>
+           <label class="block text-sm mb-1">精选</label>
+           <select x-model="form.featured" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+             <option value="0">否</option>
+             <option value="1">是</option>
+           </select>
+         </div>
+       </div>
+       <div>
+         <label class="block text-sm mb-1">摘要</label>
+         <input x-model="form.excerpt" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div>
+         <label class="block text-sm mb-1">标签（逗号分隔 slug）</label>
+         <input x-model="form.tags" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent">
+       </div>
+       <div>
+         <label class="block text-sm mb-1">正文 Markdown</label>
+         <textarea x-model="form.bodyMd" rows="12" class="w-full px-3 py-2 font-mono text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent"></textarea>
+       </div>
+       <div class="flex justify-end gap-2">
+         <button type="button" @click="modalOpen=false" class="px-4 py-2 border rounded-lg text-sm">取消</button>
+         <button type="button" @click="save()" :disabled="saving" class="px-4 py-2 bg-primary text-white rounded-lg text-sm disabled:opacity-50">保存</button>
+       </div>
+     </div>
+   </div>
+ </div>
+</div>
+</body>
+</html>

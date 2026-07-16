@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="coursesPage()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>知识课程 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<section class="site-promo-banner"
+  style="--banner-image: url('https://images.unsplash.com/photo-1516321318423-f06f68554912?auto=format&fit=crop&w=1600&q=80')">
+  <span class="site-promo-badge">广告位</span>
+  <div class="site-promo-inner">
+    <p class="site-promo-eyebrow">Knowledge · 知识课程</p>
+    <h1 class="site-promo-title">用积分解锁视频课与文章课</h1>
+    <p class="site-promo-desc">系统化学习路径，试看后再兑换。适合品牌投放课程合作与内容赞助。</p>
+    <div class="site-promo-actions">
+      <a href="/pages/tasks.html" class="site-promo-cta">先做任务赚积分</a>
+      <a href="/pages/events.html" class="site-promo-ghost">线下活动</a>
+      <div class="ml-auto hidden rounded-xl bg-white/10 px-4 py-2 text-sm text-white backdrop-blur sm:block" x-show="loggedIn">
+        积分 <span class="font-bold" x-text="user?.points ?? '—'"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+  <div class="catalog-toolbar">
+    <div>
+      <h2 class="text-base font-semibold text-stone-900 dark:text-white">课程目录</h2>
+      <p class="mt-1 text-sm text-stone-500 dark:text-stone-400">免费试看课时可先体验，再决定是否兑换。</p>
+    </div>
+    <div class="site-card px-4 py-2 text-sm sm:hidden" x-show="loggedIn">
+      <span class="text-stone-400">积分</span>
+      <span class="ml-2 font-bold text-primary" x-text="user?.points ?? '—'"></span>
+    </div>
+  </div>
+
+  <div class="catalog-filters mb-7">
+    <button type="button" @click="setType('')" class="catalog-filter" :class="!type && 'catalog-filter-active'">全部</button>
+    <button type="button" @click="setType('video')" class="catalog-filter" :class="type==='video' && 'catalog-filter-active'">视频课</button>
+    <button type="button" @click="setType('article')" class="catalog-filter" :class="type==='article' && 'catalog-filter-active'">文章课</button>
+    <button type="button" @click="onlyMine = !onlyMine" class="catalog-filter" :class="onlyMine && 'catalog-filter-active'" x-show="loggedIn">已购 / 免费</button>
+  </div>
+
+  <div x-show="loading" class="py-20 text-center text-stone-400">加载中…</div>
+  <div x-show="error" class="py-12 text-center text-red-500" x-text="error"></div>
+
+  <div x-show="!loading && !error" class="catalog-grid">
+    <template x-for="c in filtered" :key="c.id">
+      <a :href="'/pages/course.html?id=' + c.id" class="catalog-card">
+        <div class="catalog-cover">
+          <template x-if="c.coverUrl">
+            <img :src="c.coverUrl" :alt="c.title" loading="lazy">
+          </template>
+          <div class="catalog-cover-fallback" :class="c.type" x-show="!c.coverUrl">
+            <div class="absolute inset-0 flex items-end p-4">
+              <p class="text-sm font-medium text-white/80" x-text="c.typeLabel"></p>
+            </div>
+          </div>
+          <span class="catalog-cover-badge" x-text="c.typeLabel"></span>
+          <span class="catalog-cover-badge !left-auto right-3" x-show="c.purchased"
+            x-text="c.pricePoints === 0 ? '免费' : '已解锁'"></span>
+        </div>
+        <div class="catalog-body">
+          <div>
+            <h2 class="catalog-title" x-text="c.title"></h2>
+            <p class="catalog-subtitle mt-1" x-show="c.subtitle" x-text="c.subtitle"></p>
+            <p class="catalog-desc mt-2" x-text="c.summary"></p>
+          </div>
+          <div class="catalog-meta">
+            <div class="flex items-center gap-3">
+              <template x-if="c.pricePoints === 0">
+                <span class="catalog-price-free">免费</span>
+              </template>
+              <template x-if="c.pricePoints > 0">
+                <span class="catalog-price"><span x-text="c.pricePoints"></span><span class="text-[10px] font-semibold uppercase tracking-wider text-stone-400">积分</span></span>
+              </template>
+              <span x-text="(c.lessonCount || 0) + ' 课时'"></span>
+            </div>
+            <span class="catalog-cta">查看 <span aria-hidden="true">→</span></span>
+          </div>
+        </div>
+      </a>
+    </template>
+  </div>
+
+  <p x-show="!loading && !filtered.length" class="py-16 text-center text-stone-400">暂无课程</p>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome } from '/src/public/site.js'
+import { apiFetch, getUser, setUser, isLoggedIn } from '/src/public/api.js'
+
+window.coursesPage = function coursesPage() {
+  return {
+    ...siteChrome('courses'),
+    loading: true,
+    error: '',
+    rows: [],
+    type: '',
+    onlyMine: false,
+    get filtered() {
+      let list = this.rows
+      if (this.type) list = list.filter((c) => c.type === this.type)
+      if (this.onlyMine) list = list.filter((c) => c.purchased)
+      return list
+    },
+    async init() {
+      if (isLoggedIn()) {
+        const me = await apiFetch('/api/community/me')
+        if (me.json.code === 0) {
+          setUser({
+            id: me.json.data.id,
+            username: me.json.data.username,
+            displayName: me.json.data.displayName,
+            points: me.json.data.points,
+          })
+          this.user = getUser()
+        }
+      }
+      const { json } = await apiFetch('/api/courses')
+      this.loading = false
+      if (json.code !== 0) {
+        this.error = json.msg || '加载失败'
+        return
+      }
+      this.rows = json.data || []
+    },
+    setType(t) { this.type = t },
+  }
+}
+
+Alpine.start()
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html :class="{ 'dark': darkMode }" x-data="createHub()">
+<head>
+  <script src="/theme-boot.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <title>创作中心 — HatTax</title>
+  <style>.font-ui { font-family: "DM Sans", system-ui, sans-serif; }</style>
+</head>
+<body class="site-shell font-ui">
+
+<!-- include: site-nav -->
+
+<main class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+  <div class="mb-8">
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400">Create</p>
+    <h1 class="mt-2 text-3xl font-bold tracking-tight">创作中心</h1>
+    <p class="mt-2 text-stone-500 dark:text-stone-400">博客与论坛已打通：写<strong class="font-medium text-stone-800 dark:text-stone-200">博客</strong>进入博客频道；在<strong class="font-medium text-stone-800 dark:text-stone-200">论坛</strong>发帖开启讨论。</p>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <a :href="workHref" class="site-card group block p-6 transition hover:border-stone-400 dark:hover:border-stone-600">
+      <p class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Blog</p>
+      <h2 class="mt-2 text-xl font-bold group-hover:text-primary">写博客</h2>
+      <p class="mt-2 text-sm leading-relaxed text-stone-500 dark:text-stone-400">长文、教程、实践笔记。发布后出现在博客频道，支持标签与阅读时长。</p>
+      <p class="mt-6 text-sm font-medium text-primary">去写博客 →</p>
+    </a>
+    <a :href="topicHref" class="site-card group block p-6 transition hover:border-stone-400 dark:hover:border-stone-600">
+      <p class="text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">Forum</p>
+      <h2 class="mt-2 text-xl font-bold group-hover:text-primary">发帖</h2>
+      <p class="mt-2 text-sm leading-relaxed text-stone-500 dark:text-stone-400">提问、讨论、求助。发布后进入论坛分区，可挂标签、楼层回复与点赞。</p>
+      <p class="mt-6 text-sm font-medium text-primary">去发帖 →</p>
+    </a>
+  </div>
+
+  <p x-show="!loggedIn" class="mt-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+    创作需要社区账号。
+    <a :href="loginUrl('/pages/create.html')" class="font-medium underline">登录</a>
+    或
+    <a :href="registerUrl('/pages/create.html')" class="font-medium underline">注册</a>
+  </p>
+</main>
+
+<script type="module">
+import Alpine from 'alpinejs'
+import { siteChrome } from '/src/public/site.js'
+import { isLoggedIn, loginUrl } from '/src/public/api.js'
+
+window.createHub = function createHub() {
+  return {
+    ...siteChrome('create'),
+    get workHref() {
+      return this.loggedIn ? this.workNewUrl : loginUrl('/pages/work-new.html')
+    },
+    get topicHref() {
+      return this.loggedIn ? this.topicNewUrl : loginUrl('/pages/forum-new.html')
+    },
+  }
+}
+Alpine.start()
+</script>
+</body>
+</html>
