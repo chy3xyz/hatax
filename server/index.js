@@ -1,11 +1,10 @@
 import { Hono } from 'hono'
-import { serve } from '@hono/node-server'
-import { serveStatic } from '@hono/node-server/serve-static'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { secureHeaders } from 'hono/secure-headers'
 import { config } from './config.js'
 import './db/sqlite.js'
+import { serveDist } from './lib/static.js'
 import { authRoutes } from './routes/auth.js'
 import { userRoutes } from './routes/users.js'
 import { roleRoutes } from './routes/roles.js'
@@ -17,6 +16,7 @@ import { communityRoutes } from './routes/community.js'
 import { taskRoutes } from './routes/tasks.js'
 import { courseRoutes } from './routes/courses.js'
 import { eventRoutes } from './routes/events.js'
+import { aiRoutes } from './routes/ai.js'
 import { seedTasksIfEmpty } from './db/tasks.js'
 import { seedCoursesIfEmpty } from './db/courses.js'
 import { seedEventsIfEmpty } from './db/events.js'
@@ -60,6 +60,8 @@ app.get('/api/health', (c) =>
     msg: 'ok',
     data: {
       service: 'hatax',
+      runtime: 'bun',
+      compiled: config.isCompiled,
       db: 'sqlite',
       time: new Date().toISOString(),
     },
@@ -77,16 +79,21 @@ app.route('/api/forum', forumRoutes)
 app.route('/api/tasks', taskRoutes)
 app.route('/api/courses', courseRoutes)
 app.route('/api/events', eventRoutes)
+app.route('/api/ai', aiRoutes)
 
 if (config.isProd) {
-  app.use('/*', serveStatic({ root: './dist' }))
-  app.get('*', serveStatic({ path: './dist/index.html' }))
+  app.use('*', serveDist(config.distDir))
+  app.get('*', async (c) => {
+    const index = Bun.file(`${config.distDir}/index.html`)
+    if (await index.exists()) return new Response(index)
+    return c.text('Not Found', 404)
+  })
 } else {
   app.get('/', (c) =>
     c.json({
       code: 0,
-      msg: 'HatTax API (dev). Frontend: Vite — npm run dev:full',
-      data: { db: config.dbPath },
+      msg: 'HatTax API (dev). Frontend: Vite — bun run dev:full',
+      data: { db: config.dbPath, runtime: 'bun' },
     }),
   )
 }
@@ -103,8 +110,11 @@ app.onError((err, c) => {
   return c.json({ code: 500, msg: config.isProd ? 'Internal Error' : err.message }, 500)
 })
 
-const port = config.port
-console.log(`HatTax Hono listening on http://localhost:${port} (sqlite: ${config.dbPath})`)
-serve({ fetch: app.fetch, port })
+console.log(
+  `HatTax Hono (Bun${config.isCompiled ? ' compiled' : ''}) listening on http://localhost:${config.port} (sqlite: ${config.dbPath})`,
+)
 
-export default app
+export default {
+  port: config.port,
+  fetch: app.fetch,
+}

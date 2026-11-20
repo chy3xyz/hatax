@@ -1,19 +1,36 @@
-import fs from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { config as loadEnv } from 'dotenv'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const root = path.resolve(__dirname, '..')
-const isProd = process.env.NODE_ENV === 'production'
+/** True when running inside a `bun build --compile` binary */
+export const isCompiled =
+  typeof import.meta.path === 'string' && import.meta.path.includes('$bunfs')
 
-// Dev: load .env / .env.local. Production: rely on real process env only.
-if (!isProd) {
-  loadEnv({ path: path.join(root, '.env') })
-  loadEnv({ path: path.join(root, '.env.local'), override: true })
+/**
+ * Project / embed root:
+ * - source: repo root (parent of server/)
+ * - compiled with --asset ./dist: virtual root that contains dist/
+ */
+function resolveRoot() {
+  if (isCompiled) return import.meta.dir
+  return path.resolve(import.meta.dir, '..')
 }
 
-const jwtSecret = process.env.JWT_SECRET || ''
+const root = resolveRoot()
+
+function resolveDistDir() {
+  const embedded = path.join(import.meta.dir, 'dist')
+  if (existsSync(embedded)) return embedded
+  const project = path.join(root, 'dist')
+  if (existsSync(project)) return project
+  return project
+}
+
+const isProd =
+  isCompiled ||
+  (Bun.env.NODE_ENV || process.env.NODE_ENV) === 'production'
+
+// Bun loads .env automatically when present. Production / compiled still require a strong secret.
+const jwtSecret = Bun.env.JWT_SECRET || process.env.JWT_SECRET || ''
 const WEAK = new Set([
   '',
   'hatax-dev-secret-change-me',
@@ -37,14 +54,29 @@ if (isProd) {
   console.warn('[warn] JWT_SECRET not set — using insecure development default')
 }
 
+// Mutable DB stays on the host filesystem (cwd), never inside the read-only binary.
+const dbPath =
+  Bun.env.DB_PATH ||
+  process.env.DB_PATH ||
+  path.join(process.cwd(), 'data', 'hatax.db')
+
 export const config = {
-  port: Number(process.env.PORT || 8790),
+  port: Number(Bun.env.PORT || process.env.PORT || 8790),
   jwtSecret: jwtSecret || 'hatax-dev-secret-change-me',
-  jwtExpiresIn: process.env.JWT_EXPIRES || '8h',
+  jwtExpiresIn: Bun.env.JWT_EXPIRES || process.env.JWT_EXPIRES || '8h',
   csrfHeader: 'x-csrf-token',
   isProd,
-  dbPath: process.env.DB_PATH || path.join(root, 'data', 'hatax.db'),
-  distDir: path.join(root, 'dist'),
+  isCompiled,
+  dbPath,
+  distDir: resolveDistDir(),
+  root,
+  /** OpenAI-compatible API (optional). Without a key, CS still aggregates site content. */
+  aiApiKey: Bun.env.AI_API_KEY || process.env.AI_API_KEY || '',
+  aiBaseUrl:
+    Bun.env.AI_BASE_URL || process.env.AI_BASE_URL || 'https://api.openai.com/v1',
+  aiModel: Bun.env.AI_MODEL || process.env.AI_MODEL || 'gpt-4o-mini',
+  aiTimeoutMs: Number(Bun.env.AI_TIMEOUT_MS || process.env.AI_TIMEOUT_MS || 25000),
+  aiRateLimit: Number(Bun.env.AI_RATE_LIMIT || process.env.AI_RATE_LIMIT || 20),
 }
 
-fs.mkdirSync(path.dirname(config.dbPath), { recursive: true })
+mkdirSync(path.dirname(config.dbPath), { recursive: true })

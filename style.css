@@ -310,4 +310,62 @@
   .forum-topic-row {
     @apply flex gap-4 px-5 py-4 transition hover:bg-stone-50/90 dark:hover:bg-stone-800/50;
   }
+
+  /* —— AI customer service FAB —— */
+  .cs-root {
+    @apply fixed bottom-[4.75rem] right-4 z-50 flex flex-col items-end gap-3 md:bottom-6 md:right-6;
+  }
+  .cs-fab {
+    @apply flex h-12 w-12 items-center justify-center rounded-full bg-stone-900 text-white shadow-lg shadow-stone-900/25 transition hover:scale-105 hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:shadow-white/10;
+  }
+  .cs-panel {
+    @apply flex h-[min(32rem,70vh)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-stone-200/90 bg-[#f7f6f3] shadow-2xl dark:border-stone-700 dark:bg-stone-900;
+  }
+  .cs-panel-head {
+    @apply flex items-center justify-between border-b border-stone-200/80 px-4 py-3 dark:border-stone-700;
+  }
+  .cs-icon-btn {
+    @apply rounded-lg px-2 py-1 text-stone-400 hover:bg-stone-200/70 hover:text-stone-700 dark:hover:bg-stone-800;
+  }
+  .cs-messages {
+    @apply flex-1 space-y-3 overflow-y-auto px-3 py-3;
+  }
+  .cs-bubble-user {
+    @apply ml-8 rounded-2xl rounded-br-md bg-stone-900 px-3 py-2 text-sm text-white dark:bg-white dark:text-stone-900;
+  }
+  .cs-bubble-bot {
+    @apply mr-6 rounded-2xl rounded-bl-md bg-white px-3 py-2 text-sm text-stone-700 shadow-sm dark:bg-stone-800 dark:text-stone-200;
+  }
+  .cs-typing {
+    @apply flex gap-1 py-1;
+  }
+  .cs-typing span {
+    @apply h-1.5 w-1.5 animate-bounce rounded-full bg-stone-400;
+  }
+  .cs-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .cs-typing span:nth-child(3) { animation-delay: 0.3s; }
+  .cs-sources {
+    @apply mt-2 space-y-1 border-t border-stone-100 pt-2 dark:border-stone-700;
+  }
+  .cs-source-link {
+    @apply flex items-start gap-1.5 text-xs text-primary hover:underline;
+  }
+  .cs-source-tag {
+    @apply shrink-0 rounded bg-stone-100 px-1 py-0.5 text-[10px] text-stone-500 dark:bg-stone-700 dark:text-stone-300;
+  }
+  .cs-suggests {
+    @apply flex flex-wrap gap-1.5 border-t border-stone-200/80 px-3 py-2 dark:border-stone-700;
+  }
+  .cs-chip {
+    @apply rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] text-stone-600 hover:border-stone-400 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300;
+  }
+  .cs-input-row {
+    @apply flex gap-2 border-t border-stone-200/80 p-3 dark:border-stone-700;
+  }
+  .cs-input {
+    @apply min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary dark:border-stone-600 dark:bg-stone-950;
+  }
+  .cs-send {
+    @apply rounded-xl bg-stone-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-40 dark:bg-white dark:text-stone-900;
+  }
 }

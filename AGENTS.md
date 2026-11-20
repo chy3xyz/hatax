@@ -1,118 +1,134 @@
-# AGENTS.md — HatTax 全栈（Vite + Alpine + HTMX + Tailwind + Hono + SQLite）
+# AGENTS.md — HatTax (Vite + Alpine + HTMX + Tailwind + Hono + Bun + SQLite)
 
-> 面向 AI 编程助手。描述**当前代码库**的真实结构与约定。
+Conventions for coding agents. This file describes the repository as it is.
 
 ---
 
-## 一、概述
+## 1. Overview
 
-| 层 | 技术 |
-|----|------|
-| 前端 | Vite 6 · Alpine 3 · HTMX 1 · Tailwind 3 · ECharts |
-| 后端 | Hono 4 · jose JWT · bcryptjs · **better-sqlite3** |
+| Layer | Stack |
+|-------|--------|
+| Frontend | Vite 6, Alpine 3, HTMX 1, Tailwind 3, ECharts |
+| Backend | **Bun**, Hono 4 (`hono/bun`), jose JWT, `Bun.password` (bcrypt), **bun:sqlite** |
 
 ```bash
-npm install
-cp .env.example .env          # 开发可改 JWT_SECRET
-npm run dev:full              # Vite（VITE_PORT，常用 3490）+ Hono :8790
+bun install
+cp .env.example .env   # optional JWT_SECRET override in development
+bun run dev:full       # Vite (VITE_PORT, often 3490) + Hono :8790
 
-# 生产
-export JWT_SECRET='至少32位随机串'
+# Production (source)
+export JWT_SECRET='at least 32 random characters'
 export NODE_ENV=production
-npm run build && npm start
+bun run build && bun start
+
+# Linux VPS single binary
+bun run compile          # release/hatax-linux-x64 (embed dist/)
+# bun run compile:musl   # Alpine
 ```
 
-演示账号：`admin` / `123456`  
-数据库文件：`data/hatax.db`（首次启动自动建表 + seed）
+Demo accounts: admin `admin` / `123456`, community `demo` / `123456`.  
+Database: `data/hatax.db` (created and seeded on first boot).
 
-**路径约定**
+**Docs:** [README.md](README.md) · [docs/](docs/README.md) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
-| 前缀 | 用途 | 鉴权 |
-|------|------|------|
-| `/pages/*` | 官网、落地页、论坛/博客等用户端 | 公开 |
-| `/admin/*` | 管理后台 | 需 token（login/lock/error 除外） |
-| `/` | 跳转到 `/pages/index.html` | — |
+| Prefix | Role | Auth |
+|--------|------|------|
+| `/pages/*` | Public site, blog, forum, tasks, courses, events | Public reads |
+| `/admin/*` | Operator UI | Token required, except login, lock, and error pages |
+| `/` | Redirects to `/pages/index.html` | — |
 
 ---
 
-## 二、结构
+## 2. Layout
 
 ```
-admin/                # 管理后台 HTML（layout: app-shell）
-pages/                # 公开站点 HTML（独立页面，不注入 shell）
+admin/          # Admin HTML (layout: app-shell)
+pages/          # Public HTML (no shell)
 server/
-  config.js           # dotenv（仅非 production）+ JWT_SECRET 强校验
-  db/ … routes/ … views/
+  config.js     # Bun.env / process.env; JWT_SECRET enforced in production
+  index.js      # export default { port, fetch } for Bun.serve
+  db/  routes/  views/  lib/
 src/
-  auth.js             # PUBLIC_PREFIXES=/pages/ ；admin 登录页白名单
-  admin/              # demo-pages / api-pages / user-form
+  auth.js       # PUBLIC_PREFIXES=/pages/ ; admin login allowlist
+  admin/        # Alpine page modules
 ```
 
 ---
 
-## 三、API
+## 3. API
 
-| 路径 | 说明 |
-|------|------|
-| `POST /api/auth/login` | JWT + CSRF；写入 login_logs |
-| `GET/POST/PUT/DELETE /api/users` | 用户；写操作记 op_logs |
-| `GET/POST/PUT/DELETE /api/roles` | 角色 + permissions JSON |
-| `GET/POST/PUT/DELETE /api/depts` | 部门树；默认 HTML，`?format=json` |
-| `GET /api/blog/posts` | 公开博客列表；`?admin=1` 需登录含草稿 |
-| `GET /api/blog/posts/:slug` | 文章详情（Markdown→HTML） |
-| `POST/PUT/DELETE /api/blog/posts` | 博客写操作（JWT+CSRF） |
-| `GET /api/forum/categories` | 论坛分区 |
-| `GET /api/forum/topics` | 主题列表 |
-| `GET /api/forum/topics/:id` | 主题+回复 |
-| `POST /api/forum/topics` · replies · likes | 发帖/回复/点赞（JWT+CSRF） |
+Envelope: `{ code, msg, data }`. `code === 0` is success.
 
-信封：`{ code, msg, data }`，`code === 0` 成功。
+| Path | Notes |
+|------|--------|
+| `POST /api/auth/login` | Admin JWT + CSRF; writes `login_logs` |
+| `POST /api/community/login` | Community JWT (`aud=community`) |
+| `GET/POST/PUT/DELETE /api/users` | Staff users; writes go to `op_logs` |
+| `GET/POST/PUT/DELETE /api/roles` | Roles and `permissions` JSON |
+| `GET/POST/PUT/DELETE /api/depts` | Tree; HTML by default, `?format=json` |
+| `GET /api/blog/posts` | Public list; `?admin=1` includes drafts |
+| `GET /api/blog/posts/:slug` | Markdown to HTML |
+| `POST /api/blog/works` | Community article |
+| `POST/PUT/DELETE /api/blog/posts` | Official posts (admin JWT + CSRF) |
+| `GET /api/forum/categories` | Categories |
+| `GET /api/forum/topics` | Topic list |
+| `GET /api/forum/topics/:id` | Topic and replies |
+| `POST /api/forum/topics`, replies, likes | Community JWT + CSRF |
+| `/api/tasks` `/api/courses` `/api/events` | See `docs/api.md` |
+| `GET/POST /api/ai/*` | Customer service: status, search, chat (site aggregate ± optional LLM) |
 
-公开站：`/pages/blog.html` · `/pages/forum.html`  
-管理：`/admin/blog.html` · `/admin/forum.html`  
-设计：`docs/blog-forum-design.md`
-
----
-
-## 四、JWT_SECRET
-
-- **开发**：可读 `.env`；未设置则用弱默认并 warn  
-- **生产**：`NODE_ENV=production` 时**不读** `.env`；未设置或弱密钥（&lt;32 字符 / 已知占位）→ **进程退出**
+Public: `/pages/blog.html`, `/pages/forum.html`.  
+Admin: `/admin/blog.html`, `/admin/forum.html`.  
+Design: `docs/blog-forum-design.md`.
 
 ---
 
-## 五、前端对接
+## 4. JWT_SECRET
 
-- 用户列表 / 部门树：HTMX → `/api/users`、`/api/depts`
-- 角色 / 登录日志 / 操作日志：Alpine `rolePage` / `loginLogPage` / `opLogPage` → JSON API
-- 写请求：`Authorization` + `X-CSRF-Token`
-
----
-
-## 六、注意
-
-- `data/*.db` 已 gitignore  
-- 重置库：删 `data/hatax.db*` 后重启  
-- admin 用户与 admin 角色不可删  
+- **Development:** Bun loads `.env` automatically. A missing secret uses a weak default and logs a warning.
+- **Production:** `NODE_ENV=production` must use real process env. Missing, short (<32), or known placeholder secrets **exit the process**.
 
 ---
 
-## Learned User Preferences
+## 5. Frontend wiring
 
-- 完善/改造类任务默认按生产级标准推进（鉴权、持久化、生产环境密钥校验等一并落地）
-- 管理后台统一放在 `/admin/*`，面向用户的官网/落地页/论坛/博客前端统一放在 `/pages/*`
-- 产品方向：社区博客 + 论坛、任务积分、知识付费课程、活动报名；公开浏览 + 管理端维护
-- 论坛/社区用户与后台管理账号分离：社区自有登录注册，后台只管内容与运营
-- 公开站移动端优先底栏主导航，顶栏用汉堡菜单折叠
+- User list and department tree: HTMX to `/api/users` and `/api/depts`
+- Roles, login log, operation log: Alpine `rolePage`, `loginLogPage`, `opLogPage`
+- Writes: `Authorization` plus `X-CSRF-Token`
+- Admin menu copy: `src/i18n.js` `menu.*` for `zh` and `en`
 
-## Learned Workspace Facts
+---
 
-- Vite 默认端口为 `3485`（可用 `VITE_PORT` 覆盖）；日常常用 `3490`；Hono API 默认 `8790`；`npm run dev:full` 同时启动前后端
-- 开发时前端默认直连 `http://localhost:8790`（`VITE_API_BASE`）；只起 Vite 不起 Hono 时登录与写操作会失败
-- CORS 已放行常见 Vite 源（含 `3485` / `3490`）
-- 社区演示账号 `demo` / `123456`；JWT `aud` 区分 community 与 admin（后台仍为 `admin` / `123456`）
-- 内容命名：导航与页面统一用「博客 / 论坛」；创作入口 `/pages/create.html`，社区发博客走 `POST /api/blog/works`
-- 任务系统：`/pages/tasks.html` · `/admin/tasks.html` · `/api/tasks`（阅读/音视频/答题/发帖赚积分）
-- 知识付费：`/pages/courses.html` · `/admin/courses.html` · `/api/courses`（积分购买视频课/文章课）
-- 活动报名：`/pages/events.html` · `/admin/events.html` · `/api/events`
-- 社区能力含积分、关注/粉丝、私信、标签；个人中心 `/pages/me.html`，公开主页 `/pages/user.html`
+## 6. Notes
+
+- Runtime is **Bun** (not Node). Entry is `export default { port, fetch }`. Production static files via `server/lib/static.js` (works with `bun build --compile --asset ./dist`).
+- `bun run compile` → `release/hatax-linux-x64`. DB stays on host (`./data` or `DB_PATH`), not inside the binary.
+- `data/*.db` and `release/` are gitignored
+- Reset the database by deleting `data/hatax.db*` and restarting
+- The `admin` user and `admin` role cannot be deleted
+- Dictionary, form demos, and table demo are templates. AI 客服 is real: `/api/ai` + public FAB (`components/layout/site-cs.html`)
+- Optional LLM: `AI_API_KEY` + `AI_BASE_URL` + `AI_MODEL` (OpenAI-compatible). Without a key, chat still returns ranked site hits
+
+---
+
+## Learned user preferences
+
+- Treat completion work as production-grade: auth, persistence, and production secret checks belong in the same change
+- Admin UI lives under `/admin/*`. Public marketing, forum, and blog pages live under `/pages/*`
+- Product scope: community blog and forum, point tasks, point-paid courses, event signups. Public browsing, admin operations
+- Community accounts are separate from staff accounts. Admin operates content; it does not replace member login
+- Public mobile UI uses a bottom bar. The top bar collapses behind a hamburger
+
+## Learned workspace facts
+
+- Use **Bun** (`bun install`, `bun run …`). Lockfile is `bun.lock`. Do not reintroduce Node-only deps (`@hono/node-server`, `better-sqlite3`, `bcryptjs`, `dotenv`)
+- Vite defaults to port `3485` (`VITE_PORT` overrides it). Day-to-day work often uses `3490`. Hono defaults to `8790`. `bun run dev:full` starts both
+- In development the browser calls `http://localhost:8790` via `VITE_API_BASE`. Login and writes fail if Hono is not running
+- CORS allows common Vite origins, including `3485` and `3490`
+- Community demo account `demo` / `123456`. JWT `aud` splits community and admin (staff remains `admin` / `123456`)
+- Nav labels are Blog and Forum. Compose entry is `/pages/create.html`. Community articles use `POST /api/blog/works`
+- Tasks: `/pages/tasks.html`, `/admin/tasks.html`, `/api/tasks` (read, audio, video, quiz, post)
+- Courses: `/pages/courses.html`, `/admin/courses.html`, `/api/courses` (points unlock video or article lessons)
+- Events: `/pages/events.html`, `/admin/events.html`, `/api/events`
+- Members have points, follows, DMs, and tags. Profile: `/pages/me.html`. Public profile: `/pages/user.html`
+- Passwords: `Bun.password` with `{ algorithm: 'bcrypt', cost: 10 }` so existing bcryptjs hashes still verify

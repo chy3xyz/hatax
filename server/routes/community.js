@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import bcrypt from 'bcryptjs'
 import { randomUUID } from 'node:crypto'
+import { verifyPasswordAsync } from '../lib/password.js'
 import { AUD_COMMUNITY, signToken } from '../lib/jwt.js'
 import {
   findMemberByUsername,
@@ -97,7 +97,7 @@ communityRoutes.post('/login', async (c) => {
   }
 
   const member = findMemberByUsername(username)
-  if (!member || !(await bcrypt.compare(password, member.passwordHash))) {
+  if (!member || !(await verifyPasswordAsync(password, member.passwordHash))) {
     return c.json({ code: 401, msg: '用户名或密码错误' }, 401)
   }
   if (member.status === 'disabled') {

@@ -1,5 +1,8 @@
 import { publicTheme } from './theme.js'
 import { isLoggedIn, loginUrl, registerUrl, getUser, logout } from './api.js'
+import { csChatState } from './cs-chat.js'
+
+export { csChatState }
 
 export function formatDate(value, withTime = false) {
   if (!value) return ''
@@ -58,6 +61,7 @@ export function siteChrome(active = '') {
   const user = getUser()
   return {
     ...publicTheme(),
+    ...csChatState(),
     active,
     mobileMenuOpen: false,
     loggedIn: isLoggedIn(),

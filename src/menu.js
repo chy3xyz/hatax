@@ -13,7 +13,7 @@ export const MENU_MAP = {
   'table': { group: '列表页', title: '表格列表', path: '/admin/table.html', breadcrumbs: [{ title: '列表页', path: '#' }, { title: '表格列表', path: '/admin/table.html' }] },
   'profile': { group: '个人页', title: '个人中心', path: '/admin/profile.html', breadcrumbs: [{ title: '个人中心', path: '/admin/profile.html' }] },
   'about': { group: '其他', title: '关于', path: '/admin/about.html', breadcrumbs: [{ title: '其他', path: '#' }, { title: '关于', path: '/admin/about.html' }] },
-  'ai-chat': { group: '其他', title: 'AI 助手', path: '/admin/ai-chat.html', breadcrumbs: [{ title: '其他', path: '#' }, { title: 'AI 助手', path: '/admin/ai-chat.html' }] },
+  'ai-chat': { group: '其他', title: 'AI 客服', path: '/admin/ai-chat.html', breadcrumbs: [{ title: '其他', path: '#' }, { title: 'AI 客服', path: '/admin/ai-chat.html' }] },
   'blog': { group: '内容管理', title: '博客管理', path: '/admin/blog.html', breadcrumbs: [{ title: '内容管理', path: '#' }, { title: '博客管理', path: '/admin/blog.html' }] },
   'forum': { group: '内容管理', title: '论坛管理', path: '/admin/forum.html', breadcrumbs: [{ title: '内容管理', path: '#' }, { title: '论坛管理', path: '/admin/forum.html' }] },
   'forum-categories': { group: '内容管理', title: '分区管理', path: '/admin/forum-categories.html', breadcrumbs: [{ title: '内容管理', path: '#' }, { title: '分区管理', path: '/admin/forum-categories.html' }] },
@@ -75,7 +75,7 @@ export const MENU_GROUPS = [
   },
   { name: 'other',
     title: '其他', items: [
-      { name: 'ai-chat', title: 'AI 助手', path: '/admin/ai-chat.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
+      { name: 'ai-chat', title: 'AI 客服', path: '/admin/ai-chat.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5M21 12a9 9 0 1 1-3.2-6.9L21 5v7z"></path></svg>' },
       { name: 'about', title: '关于', path: '/admin/about.html', icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' },
     ]
   },

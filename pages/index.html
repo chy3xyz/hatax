@@ -178,11 +178,15 @@
   </div>
 </footer>
 
+<!-- include: site-cs -->
+
 <script type="module">
 import Alpine from 'alpinejs'
 import { publicTheme } from '/src/public/theme.js'
+import { csChatState } from '/src/public/cs-chat.js'
 Alpine.data('landingPage', () => ({
   ...publicTheme(),
+  ...csChatState(),
   mobileMenuOpen: false,
 }))
 window.Alpine = Alpine

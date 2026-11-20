@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import { hashPassword } from '../lib/password.js'
 import { db } from './sqlite.js'
 
 function mapUser(row) {
@@ -66,7 +66,7 @@ export function createUser(data) {
     )
     .run(
       data.username.trim(),
-      bcrypt.hashSync(data.password || '123456', 10),
+      hashPassword(data.password || '123456'),
       data.phone.trim(),
       data.email || '',
       data.role || 'user',

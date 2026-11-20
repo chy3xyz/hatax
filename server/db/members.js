@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+import { hashPassword, verifyPassword } from '../lib/password.js'
 import { db } from './sqlite.js'
 
 export const POINT_RULES = {
@@ -74,7 +74,7 @@ export function registerMember({ username, password, email, displayName }) {
   if (mail && findMemberByEmail(mail)) throw new Error('邮箱已被注册')
 
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-  const hash = bcrypt.hashSync(pass, 10)
+  const hash = hashPassword(pass)
   const welcome = POINT_RULES.register.delta
   const info = db
     .prepare(
@@ -128,12 +128,12 @@ export function changeMemberPassword(id, { oldPassword, newPassword }) {
   if (!row) throw new Error('账号不存在')
   if (!oldPassword || !newPassword) throw new Error('请填写原密码与新密码')
   if (String(newPassword).length < 6) throw new Error('新密码至少 6 位')
-  if (!bcrypt.compareSync(String(oldPassword), row.password_hash)) {
+  if (!verifyPassword(String(oldPassword), row.password_hash)) {
     throw new Error('原密码不正确')
   }
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
   db.prepare(`UPDATE community_members SET password_hash = ?, updated_at = ? WHERE id = ?`).run(
-    bcrypt.hashSync(String(newPassword), 10),
+    hashPassword(String(newPassword)),
     now,
     id,
   )

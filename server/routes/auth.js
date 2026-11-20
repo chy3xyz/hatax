@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import bcrypt from 'bcryptjs'
 import { randomUUID } from 'node:crypto'
 import { AUD_ADMIN, signToken } from '../lib/jwt.js'
+import { verifyPasswordAsync } from '../lib/password.js'
 import { findUserByUsername, publicUser } from '../db/users.js'
 import { addLoginLog } from '../db/logs.js'
 import { ADMIN_ROLES, setCsrfCookie } from '../middleware/auth.js'
@@ -33,7 +33,7 @@ authRoutes.post('/login', async (c) => {
   }
 
   const user = findUserByUsername(username)
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  if (!user || !(await verifyPasswordAsync(password, user.passwordHash))) {
     addLoginLog({
       username: username || 'unknown',
       ip,

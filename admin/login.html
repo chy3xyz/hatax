@@ -141,7 +141,7 @@
        if (json.data.csrfToken) setCsrfToken(json.data.csrfToken)
        location.href = consumeRedirect('/admin/dashboard.html')
      } catch {
-       this.error = '无法连接服务器，请确认已启动 Hono（npm run server）'
+       this.error = '无法连接服务器，请确认已启动 Hono（bun run server）'
        this.loading = false
      }
    }

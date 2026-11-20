@@ -1,13 +1,14 @@
 {
   "name": "hatax-admin",
-  "version": "1.2.0",
-  "description": "Full-stack admin — Vite + Alpine + HTMX + Tailwind frontend, Hono API backend (JWT + CSRF + HTML fragments).",
+  "version": "1.3.0",
+  "description": "Full-stack community platform — blog, forum, tasks, courses, events. Vite + Alpine + HTMX + Hono + Bun + SQLite.",
   "type": "module",
   "license": "MIT",
   "author": "HatTax",
   "keywords": [
     "admin-dashboard",
     "hono",
+    "bun",
     "alpinejs",
     "htmx",
     "tailwindcss",
@@ -15,30 +16,28 @@
     "fullstack"
   ],
   "scripts": {
-    "dev": "vite",
-    "dev:server": "node --watch server/index.js",
-    "dev:full": "concurrently -n web,api -c cyan,magenta \"npm run dev\" \"npm run dev:server\"",
-    "server": "node server/index.js",
-    "start": "NODE_ENV=production node server/index.js",
-    "build": "vite build",
-    "preview": "vite preview",
-    "lint": "eslint main.js src server --ext .js",
-    "format": "prettier --write \"**/*.{js,html,css,md,json}\" --ignore-path .gitignore"
+    "dev": "bunx --bun vite",
+    "dev:server": "bun --hot server/index.js",
+    "dev:full": "bunx concurrently -n web,api -c cyan,magenta \"bun run dev\" \"bun run dev:server\"",
+    "server": "bun server/index.js",
+    "start": "NODE_ENV=production bun server/index.js",
+    "build": "bunx --bun vite build",
+    "preview": "bunx --bun vite preview",
+    "compile": "bun scripts/compile.js linux-x64",
+    "compile:musl": "bun scripts/compile.js linux-x64-musl",
+    "compile:arm64": "bun scripts/compile.js linux-arm64",
+    "compile:local": "bun scripts/compile.js darwin-arm64",
+    "lint": "bunx eslint main.js src server --ext .js",
+    "format": "bunx prettier --write \"**/*.{js,html,css,md,json}\" --ignore-path .gitignore"
   },
   "dependencies": {
-    "@hono/node-server": "^2.0.8",
     "alpinejs": "^3.14.7",
-    "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.11.1",
-    "dotenv": "^17.4.2",
     "echarts": "^6.1.0",
     "hono": "^4.12.28",
     "htmx.org": "^1.9.12",
     "jose": "^6.2.3"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/better-sqlite3": "^7.6.13",
     "autoprefixer": "^10.4.20",
     "concurrently": "^10.0.3",
     "eslint": "^9.18.0",
@@ -47,5 +46,9 @@
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.11"
-  }
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "packageManager": "bun@1.4.5"
 }

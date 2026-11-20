@@ -1,19 +1,49 @@
-import fs from 'node:fs'
+import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import Database from 'better-sqlite3'
-import bcrypt from 'bcryptjs'
+import { Database as BunDatabase } from 'bun:sqlite'
+import { hashPassword } from '../lib/password.js'
 import { config } from '../config.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const dataDir = path.resolve(__dirname, '../../data')
-const dbPath = config.dbPath || path.join(dataDir, 'hatax.db')
+const dbPath = config.dbPath
+mkdirSync(path.dirname(dbPath), { recursive: true })
 
-fs.mkdirSync(path.dirname(dbPath), { recursive: true })
+const raw = new BunDatabase(dbPath, { create: true })
+raw.exec('PRAGMA journal_mode = WAL')
+raw.exec('PRAGMA foreign_keys = ON')
 
-export const db = new Database(dbPath)
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
+/** better-sqlite3-compatible facade over bun:sqlite */
+function wrapStatement(stmt) {
+  return {
+    get(...params) {
+      return stmt.get(...params)
+    },
+    all(...params) {
+      return stmt.all(...params)
+    },
+    run(...params) {
+      const result = stmt.run(...params)
+      return {
+        changes: Number(result.changes ?? 0),
+        lastInsertRowid: Number(result.lastInsertRowid ?? 0),
+      }
+    },
+  }
+}
+
+export const db = {
+  prepare(sql) {
+    return wrapStatement(raw.prepare(sql))
+  },
+  exec(sql) {
+    return raw.exec(sql)
+  },
+  transaction(fn) {
+    return raw.transaction(fn)
+  },
+  pragma(pragma) {
+    raw.exec(`PRAGMA ${pragma}`)
+  },
+}
 
 export function migrate() {
   db.exec(`
@@ -220,9 +250,9 @@ export function migrate() {
   migrateContentExtras()
   migrateCommunityAuth()
   migrateCommunityProfile()
+  seedCommunityIfEmpty()
   migrateCommunitySocial()
   migrateForumTags()
-  seedCommunityIfEmpty()
   migrateCommunityTasks()
   migrateKnowledgeCourses()
   migrateCommunityEvents()
@@ -356,7 +386,7 @@ function migrateCommunitySocial() {
   // Second demo user for follow/DM smoke
   const alice = db.prepare(`SELECT id FROM community_members WHERE username = 'alice'`).get()
   if (!alice) {
-    const hash = bcrypt.hashSync('123456', 10)
+    const hash = hashPassword('123456')
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
     db.prepare(
       `INSERT INTO community_members
@@ -420,9 +450,9 @@ function migrateForumTags() {
 }
 
 function seedCommunityIfEmpty() {
-  const count = db.prepare(`SELECT COUNT(*) AS c FROM community_members`).get().c
-  if (count > 0) return
-  const hash = bcrypt.hashSync('123456', 10)
+  const existing = db.prepare(`SELECT id FROM community_members WHERE username = 'demo'`).get()
+  if (existing) return
+  const hash = hashPassword('123456')
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
   db.prepare(
     `INSERT INTO community_members
@@ -477,7 +507,7 @@ function seedIfEmpty() {
   const roleCount = db.prepare('SELECT COUNT(*) AS c FROM roles').get().c
   if (roleCount > 0) return
 
-  const hash = bcrypt.hashSync('123456', 10)
+  const hash = hashPassword('123456')
   const allPerms = JSON.stringify([
     'system:user',
     'system:role',

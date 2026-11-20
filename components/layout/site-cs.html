@@ -1,0 +1,78 @@
+<!-- Floating AI customer-service widget (needs cs* fields from siteChrome / csChatState) -->
+<div class="cs-root" x-cloak>
+  <div
+    x-show="csOpen"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0 translate-y-3"
+    x-transition:enter-end="opacity-100 translate-y-0"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100 translate-y-0"
+    x-transition:leave-end="opacity-0 translate-y-3"
+    class="cs-panel"
+    role="dialog"
+    aria-label="社区客服"
+  >
+    <header class="cs-panel-head">
+      <div>
+        <p class="text-sm font-semibold text-stone-900 dark:text-white">社区客服</p>
+        <p class="text-[11px] text-stone-500" x-text="csLlm ? '站内汇聚 + 大模型总结' : '站内内容快速汇聚'"></p>
+      </div>
+      <button type="button" class="cs-icon-btn" @click="csOpen = false" aria-label="关闭">✕</button>
+    </header>
+
+    <div class="cs-messages" x-ref="csMessages">
+      <template x-for="(msg, i) in csMessages" :key="i">
+        <div :class="msg.role === 'user' ? 'cs-bubble-user' : 'cs-bubble-bot'">
+          <div x-show="msg.loading" class="cs-typing">
+            <span></span><span></span><span></span>
+          </div>
+          <div x-show="!msg.loading" class="whitespace-pre-wrap" x-text="msg.content"></div>
+          <template x-if="!msg.loading && msg.sources && msg.sources.length">
+            <ul class="cs-sources">
+              <template x-for="(s, si) in msg.sources" :key="si">
+                <li>
+                  <a :href="s.url" class="cs-source-link">
+                    <span class="cs-source-tag" x-text="s.typeLabel"></span>
+                    <span x-text="s.title"></span>
+                  </a>
+                </li>
+              </template>
+            </ul>
+          </template>
+        </div>
+      </template>
+    </div>
+
+    <div class="cs-suggests" x-show="csMessages.length <= 1">
+      <template x-for="s in csSuggestions" :key="s">
+        <button type="button" class="cs-chip" @click="csAsk(s)" x-text="s"></button>
+      </template>
+    </div>
+
+    <form class="cs-input-row" @submit.prevent="csSend()">
+      <input
+        type="text"
+        class="cs-input"
+        x-model="csInput"
+        :disabled="csSending"
+        placeholder="问社区：积分、课程、活动…"
+        maxlength="1000"
+        autocomplete="off"
+      />
+      <button type="submit" class="cs-send" :disabled="csSending || !csInput.trim()">发送</button>
+    </form>
+  </div>
+
+  <button
+    type="button"
+    class="cs-fab"
+    @click="csToggle()"
+    :aria-expanded="csOpen"
+    aria-label="打开社区客服"
+  >
+    <svg x-show="!csOpen" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5M21 12a9 9 0 1 1-3.2-6.9L21 5v7z"/>
+    </svg>
+    <span x-show="csOpen" class="text-lg leading-none">✕</span>
+  </button>
+</div>
